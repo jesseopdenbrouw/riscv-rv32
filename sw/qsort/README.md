@@ -6,5 +6,5 @@ so in simulation, scroll to the end of the RAM
 
 # Status
 
-Works in simulation
+Works in simulation and on the DE0-CV board.
 
