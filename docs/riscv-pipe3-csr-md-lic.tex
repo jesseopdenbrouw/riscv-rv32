@@ -151,30 +151,34 @@ A block diagram of the core is shown in Figure~\ref{fig:blockdiagram}.
 \draw[-latex] (12,-2) -- ++(2,0);
  
 
-% EX
+% ID/EX
 \draw (14,4) node[xshift=0.3cm,yshift=10pt] {ID/EX} rectangle node {} (15,-8);
-\draw[] (15,-5) -- ++(3,0) coordinate (w) -- ++(0,5.333);
+\draw[] (15,-5) -- ++(3,0) coordinate (w) -- ++(0,3.000);
 \draw[-latex] (w) -- ++(0,-4) -- ++(-19,0) -- ++(0,5.667) -- ++(1,0);
 \draw (17,3) rectangle node{fw} ++(1,-2);
 \draw[-latex] (15,2.667) -- ++(2,0);
 \draw[-latex] (15,1.667) -- ++(2,0);
 
 % ALU
-\draw[] (19,3) -- ++(1,-1) -- ++(0,-1.333) -- ++(-1,-1.0) -- ++(0,3.333);
-\draw[-latex] (18,0.333) -- ++(1,0);
+\draw[] (19,3) -- ++(1,-1) -- ++(0,-3.333) -- ++(-1,-1.0) -- cycle; %++(0,3.333);
+\draw[-latex] (18,-2.000) -- ++(1,0);
 \draw[-latex] (18,2.667) -- ++(1,0);
 \draw[-latex] (18,1.667) -- ++(1,0);
 \draw[-latex] (18.5,2.667) -- ++(0,3.5) -- ++(-20.5,0) -- ++(0,-7.667) -- ++(2,0);
+\draw[-latex] (18.0,0.5) node[left] {CSR} -- ++(1,0);
+\draw[-latex] (18.0,0.0) node[left] {MD} -- ++(1,0);
+\draw[-latex] (18.0,-0.5) node[left] {mem} -- ++(1,0);
+\draw[-latex] (18.0,-1.0) node[left] {ID/EX.PC} -- ++(1,0);
 
 % ALU out
-\draw[-latex] (20,1.333) -- ++(2,0) -- ++(0,-4.0) coordinate (x) -- ++(-2,0);
-\draw[] (20,-2+0.1667/2) rectangle node {fwrd} ++(-1,-1.5);
+\draw[-latex] (20,0.333) -- ++(2,0) -- ++(0,-7.0) coordinate (x) -- ++(-2,0);
+\draw[] (20,-6+0.1667/2) rectangle node {fwrd} ++(-1,-1.5);
 
-\draw[-latex] (19,-2.667) -- ++(-3,0) coordinate (z) -- ++(0,5) -- ++(1,0);
+\draw[-latex] (19,-6.667) -- ++(-3,0) coordinate (z) -- ++(0,9) -- ++(1,0);
 \draw[-latex] (16,1.333) -- ++(1,0);
 %\draw[-latex,red] (z) -- ++(0,-8) -- ++(-18,0) -- ++(0,8) -- ++(2,0);
 
-\draw[-latex] (x) -- ++(0,-7) -- ++(-13,0) coordinate (y) -- ++(0,10) -- ++(0.667,0) node[below,yshift=-7pt] {rd};
+\draw[-latex,] (x) -- ++(0,-3) -- ++(-13,0) coordinate (y) -- ++(0,10) -- ++(0.667,0) node[below,yshift=-7pt] {rd};
 ;
 \end{tikzpicture}
 \caption{Overview of the RISC-V core. Not all connections are shown.}
@@ -620,8 +624,8 @@ In the created directory, you will see the following directories:
 \lstinline|sw| -- Sample software programs, linker script, library and startup files \\
 \lstinline|docs| -- Documentation \\
 \lstinline|rtl| -- the VHDL description(s) \\
-\lstinline|olc| -- yes, really old files for backup \\
-\lstinline|retired| -- Descriptions that are not used anymore
+%\lstinline|olc| -- yes, really old files for backup \\
+%\lstinline|retired| -- Descriptions that are not used anymore
 
 Change directory to \lstinline|sw|. Make sure the RISC-V C compiler is available (see Section~\ref{sec:ccompiler}) and is in your path environment variable. Now enter the command \lstinline|make|. It will compile all programs and the support programs \lstinline|srec2vhdl| and \lstinline|upload|. To clean up the programs, issue the command \lstinline|make clean|.
 
