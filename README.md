@@ -97,7 +97,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Implement Supervisor Mode (this will take some time ;-)).
 * Smaller (in cells) divide unit.
 * Test more functions of the standard and mathematical libraries.
-* It is not possible to print `long long` (i.e. 64-bit) using `printf` et al. When using the format specifier `\%lld`, `printf` just prints `ld`. This due to lack of support in the `nano` library.
+* It is not possible to print `long long` (i.e. 64-bit) using `printf` et al. When using the format specifier `%lld`, `printf` just prints `ld`. This due to lack of support in the `nano` library.
 * Further optimize the ALU for size and speed. The ALU is single-cycle and determines the maximum clock speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 
