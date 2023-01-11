@@ -1,0 +1,25 @@
+/*
+ * handlers.h -- prototypes for handlers
+ *
+ * (c) 2022  Jesse E.J. op den Brouw
+ *
+ */
+
+#ifndef _HANDLERS_H
+#define _HANDLERS_H
+
+/* Debugger */
+void debugger(uint32_t stack_pointer);
+/* TIMER1 compare match T interrupt */
+void timer1_handler(void);
+/* External timer handler */
+void external_timer_handler(void);
+/* USART receive and/or transmit interrupt */
+void uart1_handler(void);
+/* TIMER2 compare match T/A/B/C interrupts */
+void timer2_handler(void);
+/* SPI1 transmission complete interrupt */
+void spi1_handler(void);
+/* I2C1 transmit and receive complete interrupt */
+void i2c1_handler(void);
+#endif

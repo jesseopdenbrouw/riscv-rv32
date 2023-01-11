@@ -1,0 +1,11 @@
+%rename link_gcc_c_sequence                libsys_link_gcc_c_sequence
+
+*libsys:
+-lthuasrv32
+
+*libsys_libc:
+%{!specs=nano.specs:-lc} %{specs=nano.specs:-lc_nano}
+
+*link_gcc_c_sequence:
+%(libsys_link_gcc_c_sequence) --start-group %G %(libsys_libc) %(libsys) --end-group
+
