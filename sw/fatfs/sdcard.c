@@ -151,38 +151,38 @@ uint8_t SD_readR1(void)
 /* Print R1 response */
 void SD_printR1(uint8_t r1)
 {
-	usart_puts("R1 status: ");
+	uart1_puts("R1 status: ");
 	if (r1 & 0x80) {
-		usart_puts("MSB = 1\r\n");
+		uart1_puts("MSB = 1\r\n");
 		return;
 	}
 	if (r1 == 0x00) {
-		usart_puts("Card ready\r\n");
+		uart1_puts("Card ready\r\n");
 		return;
 	}
 
 	if (r1 & 0x40) {
-		usart_puts("Parameter ");
+		uart1_puts("Parameter ");
 	}
 	if (r1 & 0x20) {
-		usart_puts("Address ");
+		uart1_puts("Address ");
 	}
 	if (r1 & 0x10) {
-		usart_puts("Erase seq");
+		uart1_puts("Erase seq");
 	}
 	if (r1 & 0x08) {
-		usart_puts("CRC ");
+		uart1_puts("CRC ");
 	}
 	if (r1 & 0x04) {
-		usart_puts("Illegal ");
+		uart1_puts("Illegal ");
 	}
 	if (r1 & 0x02) {
-		usart_puts("Erase reset ");
+		uart1_puts("Erase reset ");
 	}
 	if (r1 & 0x01) {
-		usart_puts("Idle");
+		uart1_puts("Idle");
 	}
-	usart_puts("\r\n");
+	uart1_puts("\r\n");
 }
 
 #endif
@@ -278,30 +278,30 @@ void SD_printR3(uint8_t *res)
 		return;
 	}
 
-	usart_puts("Card Power Up Status: ");
+	uart1_puts("Card Power Up Status: ");
 	if (res[1] & 0x80) {
-		usart_puts("READY\r\n");
-		usart_puts("CCS Status: ");
+		uart1_puts("READY\r\n");
+		uart1_puts("CCS Status: ");
 	        if (res[1] & 0x40) {
-			usart_puts("1\r\n");
+			uart1_puts("1\r\n");
 	       	} else {
-			usart_puts("0\r\n");
+			uart1_puts("0\r\n");
 		}
 	} else {
-		usart_puts("BUSY\r\n");
+		uart1_puts("BUSY\r\n");
 	}
 
-	usart_puts("VDD Window: ");
-	if (res[3] & 0x80) { usart_puts("2.7-2.8, "); }
-	if (res[2] & 0x01) { usart_puts("2.8-2.9, "); }
-	if (res[2] & 0x02) { usart_puts("2.9-3.0, "); }
-	if (res[2] & 0x04) { usart_puts("3.0-3.1, "); }
-	if (res[2] & 0x08) { usart_puts("3.1-3.2, "); }
-	if (res[2] & 0x10) { usart_puts("3.2-3.3, "); }
-	if (res[2] & 0x20) { usart_puts("3.3-3.4, "); }
-	if (res[2] & 0x40) { usart_puts("3.4-3.5, "); }
-	if (res[2] & 0x80) { usart_puts("3.5-3.6"); }
-	usart_puts("\r\n");
+	uart1_puts("VDD Window: ");
+	if (res[3] & 0x80) { uart1_puts("2.7-2.8, "); }
+	if (res[2] & 0x01) { uart1_puts("2.8-2.9, "); }
+	if (res[2] & 0x02) { uart1_puts("2.9-3.0, "); }
+	if (res[2] & 0x04) { uart1_puts("3.0-3.1, "); }
+	if (res[2] & 0x08) { uart1_puts("3.1-3.2, "); }
+	if (res[2] & 0x10) { uart1_puts("3.2-3.3, "); }
+	if (res[2] & 0x20) { uart1_puts("3.3-3.4, "); }
+	if (res[2] & 0x40) { uart1_puts("3.4-3.5, "); }
+	if (res[2] & 0x80) { uart1_puts("3.5-3.6"); }
+	uart1_puts("\r\n");
 }
 
 #endif
@@ -373,7 +373,7 @@ uint32_t SD_CMD910(uint8_t cmd, uint8_t *buf)
 	uint8_t ret = SD_readR1();
 #if SD_DEBUG == 1
 	snprintf(buffer, sizeof buffer, "CMD%d responded: 0x%02x\r\n", cmd, ret);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 #endif
 	if (ret != 0x00) {
 		return SD_ERROR;
@@ -389,15 +389,15 @@ uint32_t SD_CMD910(uint8_t cmd, uint8_t *buf)
 			SPI2_csdisable();
 			SPI2_transfer(0xff);
 #if SD_DEBUG == 1
-			usart_puts("Timeout reached on transport!\r\n");
+			uart1_puts("Timeout reached on transport!\r\n");
 #endif
 		}
 	}
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "CMD%d count: %u\r\n", cmd, count);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "CMD%d count: %lu\r\n", cmd, count);
+	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "CMD%d transport token: 0x%02x\r\n", cmd, ret);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 #endif
 	if (ret != 0xfe) {
 		return SD_ERROR;
@@ -418,10 +418,10 @@ uint32_t SD_CMD910(uint8_t cmd, uint8_t *buf)
 	SPI2_transfer(0xff);
 
 #if SD_DEBUG == 1
-	//usart_puts("Data: ");
+	//uart1_puts("Data: ");
 	for (int i = 0; i < 16; i++) {
 		snprintf(buffer, sizeof buffer, "%02x ", buf[i]);
-		usart_puts(buffer);
+		uart1_puts(buffer);
 	}
 #endif
 
@@ -468,7 +468,7 @@ uint32_t SD_initialize(void) {
 	res[0] = SD_CMD0();
 #if SD_DEBUG == 1
 	/* Print status from SD */
-	usart_puts("Go Idle: ");
+	uart1_puts("Go Idle: ");
 	SD_printR1(res[0]);
 #endif
 	if (res[0] > 1) {
@@ -478,10 +478,10 @@ uint32_t SD_initialize(void) {
 	/* Get IF conditions */
 	SD_CMD8(res);
 #if SD_DEBUG == 1
-	usart_puts("IF Conditions: ");
+	uart1_puts("IF Conditions: ");
 	SD_printR1(res[0]);
 	snprintf(buffer, sizeof buffer, "IF Conditions: Echo: %02x\r\n", res[4]);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 #endif
 	if (res[0] > 1) {
 		return SD_ERROR;
@@ -491,7 +491,7 @@ uint32_t SD_initialize(void) {
 	for (counter = 100; counter > 0; counter--) {
 		res[0] = SD_CMD55();
 #if SD_DEBUG == 1
-		usart_puts("APP cmd: ");
+		uart1_puts("APP cmd: ");
 		SD_printR1(res[0]);
 #endif
 		if (res[0] > 1) {
@@ -499,7 +499,7 @@ uint32_t SD_initialize(void) {
 		}
 		res[0] = SD_ACMD41();
 #if SD_DEBUG == 1
-		usart_puts("Operation conditions: ");
+		uart1_puts("Operation conditions: ");
 		SD_printR1(res[0]);
 #endif
 		if (res[0] > 1) {
@@ -512,14 +512,14 @@ uint32_t SD_initialize(void) {
 
 	if (counter == 0) {
 #if SD_DEBUG == 1
-		usart_puts("CMD55/ACMD41 failed!\r\n");
+		uart1_puts("CMD55/ACMD41 failed!\r\n");
 #endif
 		return SD_ERROR;
 	}
 
 	SD_CMD58(res);
 #if SD_DEBUG == 1
-	usart_puts("Get OCR: ");
+	uart1_puts("Get OCR: ");
 	SD_printR3(res);
 #endif
 	if (res[0] > 1) {
@@ -536,7 +536,7 @@ uint32_t SD_initialize(void) {
 	}
 #if SD_DEBUG == 1
 	snprintf(buffer, sizeof buffer, "CCS = %u, sectorsize = %u\r\n", ocr.ccs, ocr.sectorsize);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 #endif
 	if ((res[1] & 0x80) == 0x00) {
 		/* Card not ready, return error */
@@ -548,45 +548,45 @@ uint32_t SD_initialize(void) {
 
 	/* Get CSD (CMD9) */
 #if SD_DEBUG == 1
-	usart_puts("Getting CSD... ");
+	uart1_puts("Getting CSD... ");
 #endif
 	if (SD_CMD910(9, csdcid) == SD_SUCCESS) {
 #if SD_DEBUG == 1
-		usart_puts("success\r\n");
+		uart1_puts("success\r\n");
 #endif
 	} else {
 #if SD_DEBUG == 1
-		usart_puts("error\r\n");
+		uart1_puts("error\r\n");
 #endif
 		return SD_ERROR;
 	}
 	csd.version = ext_bits(csdcid, 127, 126) + 1;
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "CSD version: %u\r\n", csd.version);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "CSD version: %lu\r\n", csd.version);
+	uart1_puts(buffer);
 #endif
 	csd.capacity = (ext_bits(csdcid, 69, 48)+1);
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "Card size: %u\r\n", csd.capacity);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "Card size: %lu\r\n", csd.capacity);
+	uart1_puts(buffer);
 #endif
 	csd.speed = ext_bits(csdcid, 103, 96);
 #if SD_DEBUG == 1
 	snprintf(buffer, sizeof buffer, "Card speed: 0x%02x\r\n", csd.speed);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 #endif
 
 	/* Get CID (CMD10) */
 #if SD_DEBUG == 1
-	usart_puts("Getting CID... ");
+	uart1_puts("Getting CID... ");
 #endif
 	if (SD_CMD910(10, csdcid) == SD_SUCCESS) {
 #if SD_DEBUG == 1
-		usart_puts("success\r\n");
+		uart1_puts("success\r\n");
 #endif
 	} else {
 #if SD_DEBUG == 1
-		usart_puts("error\r\n");
+		uart1_puts("error\r\n");
 #endif
 		return SD_ERROR;
 	}
@@ -605,17 +605,17 @@ uint32_t SD_initialize(void) {
 	cid.mdt = ext_bits(csdcid, 19, 8);
 #if SD_DEBUG == 1
 	snprintf(buffer, sizeof buffer, "Manufacturer ID: 0x%02x\r\n", cid.mid);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "OEM ID: %s\r\n", cid.oid);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "Product name: %s\r\n", cid.pnm);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "Product revision (BCD): 0x%02x\r\n", cid.prv);
-	usart_puts(buffer);
-	snprintf(buffer, sizeof buffer, "Product serial: 0x%08x\r\n", cid.psn);
-	usart_puts(buffer);
+	uart1_puts(buffer);
+	snprintf(buffer, sizeof buffer, "Product serial: 0x%08lx\r\n", cid.psn);
+	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "Manufacturing date: 0x%04x\r\n", cid.mdt);
-	usart_puts(buffer);
+	uart1_puts(buffer);
 #endif
 
 	ocr.status = 1;
@@ -637,8 +637,8 @@ uint32_t SD_readsector(uint32_t sector, uint8_t *buf)
 	SPI2_transfer(0xff);
 
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "Reading sector %u ... ", sector);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "Reading sector %lu ... ", sector);
+	uart1_puts(buffer);
 #endif
 
 	// send CMD17
@@ -651,12 +651,12 @@ uint32_t SD_readsector(uint32_t sector, uint8_t *buf)
 		SPI2_csdisable();
 		SPI2_transfer(0xff);
 #if SD_DEBUG == 1
-		usart_puts("Error reading sector!\r\n");
+		uart1_puts("Error reading sector!\r\n");
 #endif
 		return SD_ERROR;
 	}
 #if SD_DEBUG == 1
-	usart_puts("CMD17 accepted, ");
+	uart1_puts("CMD17 accepted, ");
 #endif
 
 	/* Wait for token */
@@ -668,8 +668,8 @@ uint32_t SD_readsector(uint32_t sector, uint8_t *buf)
 		}
 	}
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "count = %d, token = %02x", count, ret);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "count = %ld, token = %02x", count, ret);
+	uart1_puts(buffer);
 #endif
 
 	if (count == 0) {
@@ -693,12 +693,12 @@ uint32_t SD_readsector(uint32_t sector, uint8_t *buf)
 #if SD_DEBUG == 1
 	for (int i = 0; i < 512; i++) {
 		if (i % 16 == 0) {
-			usart_puts("\r\n");
+			uart1_puts("\r\n");
 		}
 		snprintf(buffer, sizeof buffer, "%02x ", buf[i]);
-		usart_puts(buffer);
+		uart1_puts(buffer);
 	}
-	usart_puts("\r\n");
+	uart1_puts("\r\n");
 #endif
 	return SD_SUCCESS;
 }
@@ -718,8 +718,8 @@ uint32_t SD_writesector(uint32_t sector, const uint8_t *buf)
 	SPI2_transfer(0xff);
 
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "Writing sector %u ... ", sector);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "Writing sector %lu ... ", sector);
+	uart1_puts(buffer);
 #endif
 
 	// send CMD24
@@ -732,12 +732,12 @@ uint32_t SD_writesector(uint32_t sector, const uint8_t *buf)
 		SPI2_csdisable();
 		SPI2_transfer(0xff);
 #if SD_DEBUG == 1
-		usart_puts("Error writing sector!\r\n");
+		uart1_puts("Error writing sector!\r\n");
 #endif
 		return SD_ERROR;
 	}
 #if SD_DEBUG == 1
-	usart_puts("CMD24 accepted, ");
+	uart1_puts("CMD24 accepted, ");
 #endif
 	/* Write start token 0xFE */
 	SPI2_transfer(0xfe);
@@ -760,8 +760,8 @@ uint32_t SD_writesector(uint32_t sector, const uint8_t *buf)
 		}
 	}
 #if SD_DEBUG == 1
-	snprintf(buffer, sizeof buffer, "count = %d, token = %02x, ", count, ret);
-	usart_puts(buffer);
+	snprintf(buffer, sizeof buffer, "count = %ld, token = %02x, ", count, ret);
+	uart1_puts(buffer);
 #endif
 	if (count == 0) {
 		return SD_ERROR;
@@ -769,7 +769,7 @@ uint32_t SD_writesector(uint32_t sector, const uint8_t *buf)
 	
 	if ((ret & 0x1f) == 0x05) {
 #if SD_DEBUG == 1
-		usart_puts("Data accepted!\r\n");
+		uart1_puts("Data accepted!\r\n");
 #endif
 		/* Success, wait for card to store data */
 		count = SD_WRITE_TIMEOUT;
@@ -781,7 +781,7 @@ uint32_t SD_writesector(uint32_t sector, const uint8_t *buf)
 				SPI2_csdisable();
 				SPI2_transfer(0xff);
 #if SD_DEBUG == 1
-				usart_puts("Error timeout\r\n");
+				uart1_puts("Error timeout\r\n");
 #endif
 				return SD_ERROR;
 			}
@@ -793,7 +793,7 @@ uint32_t SD_writesector(uint32_t sector, const uint8_t *buf)
 		/* Data rejected due to write error */
 		// deassert chip select
 #if SD_DEBUG == 1
-		usart_puts("Data rejected due to write error\r\n");
+		uart1_puts("Data rejected due to write error\r\n");
 #endif
 		SPI2_transfer(0xff);
 		SPI2_csdisable();
@@ -827,3 +827,4 @@ uint32_t SD_getcsdver(void) {
 uint32_t SD_getstatus(void) {
 	return ocr.status;
 }
+
