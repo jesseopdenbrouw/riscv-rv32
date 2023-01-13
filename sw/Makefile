@@ -1,8 +1,8 @@
 #
 # General makefile that makes all targets
 #
-# First the srec2vhdl, srec2mif and upload
-# are made. srec2vhdl is needed for the
+# First the `srec2vhdl`, `srec2mif` and `upload`
+# are made. `srec2vhdl` is needed for the
 # next build steps. Next is the library.
 # Other targets depend on it.
 #
