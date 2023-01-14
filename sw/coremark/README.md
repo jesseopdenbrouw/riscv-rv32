@@ -5,7 +5,7 @@ CoreMark's primary goals are simplicity and providing a method for testing only 
 
 For a more compute-intensive version of CoreMark that uses larger datasets and execution loops taken from common applications, please check out EEMBC's [CoreMark-PRO](https://www.github.com/eembc/coremark-pro) benchmark, also on GitHub.
 
-This project folder is a port of CoreMark (from the official [GitHub repository](https://github.com/eembc/coremark)) for the processor.
+This project folder is a port of CoreMark (from the official [GitHub repository](https://github.com/eembc/coremark)) for the processor. Based on the NEORV32 version.
 
 # Building
 
