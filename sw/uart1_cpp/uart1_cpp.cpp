@@ -10,7 +10,8 @@
 #endif
 
 /* The Uart class */
-class Uart {
+class Uart
+{
 	protected:
 		Uart();
 	public:
@@ -22,7 +23,8 @@ class Uart {
 };
 
 /* UART11 class */
-class Uart1: public Uart {
+class Uart1: public Uart
+{
 	private:
 		Uart1();
     	friend class Uart;
@@ -31,16 +33,19 @@ class Uart1: public Uart {
 };
 
 /* Generic init code */
-Uart::Uart() {
+Uart::Uart()
+{
 }
 
-/* Get UART11 instance */
-Uart& Uart::getUart1() {
-	static Uart1 usart;
-	return usart;
+/* Get UART1 instance */
+Uart& Uart::getUart1()
+{
+	static Uart1 uart1;
+	return uart1;
 }
 
-Uart1::Uart1() {
+Uart1::Uart1()
+{
 	UART1->BAUD = F_CPU/BAUD_RATE - 1;
 }
 
@@ -74,3 +79,4 @@ int main(void)
 
 	uart1.print("Hello using C++\r\n");
 }
+
