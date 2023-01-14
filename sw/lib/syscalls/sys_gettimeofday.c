@@ -22,10 +22,10 @@ int _gettimeofday(struct timeval *tp, struct timezone *tz)
 	th = tl = tt = 0;
 
 	__asm__ volatile("1: rdtimeh %0\n"
-		         "   rdtime  %1\n"
-			 "   rdtimeh %2\n"
-		 	 "   bne %0, %2, 1b"
-			 : "+r" (th), "+r" (tl), "+r" (tt));
+                     "   rdtime  %1\n"
+                     "   rdtimeh %2\n"
+                     "   bne %0, %2, 1b"
+                     : "+r" (th), "+r" (tl), "+r" (tt));
 
 	thetime = ((uint64_t)th << 32ULL) | (uint64_t) tl;
 	usec = thetime % 1000000ULL;
