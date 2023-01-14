@@ -10,9 +10,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
-#include "io.h"
-#include "uart.h"
-#include "util.h"
+#include <thuasrv32.h>
 
 /* Should be loaded by the Makefile */
 #ifndef F_CPU
@@ -46,7 +44,7 @@ int main(void)
 	/* CS setup, CS hold, /16, 8 bits, mode 0 */
 	SPI1->CTRL = (0 << 20) | (0 << 12) | (3<<8) | (0<<4) | (0<<1);
 
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	uart1_puts("\r\nWriting EEPROM 25AA010\r\n");
 
