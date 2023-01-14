@@ -18,9 +18,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
-#include "io.h"
-#include "uart.h"
-#include "util.h"
+#include <thuasrv32.h>
 
 /* Should be loaded by the Makefile */
 #ifndef F_CPU
@@ -30,16 +28,35 @@
 #define BAUD_RATE (9600UL)
 #endif
 
+#define EEPROMREAD (0x03)
+
+/* Override the weak library function */
+void spi1_csenable(void)
+{
+	GPIOA->POUT &= ~(1<<15);
+}
+
+/* Override the weak library function */
+void spi1_csdisable(void)
+{
+	GPIOA->POUT |= 1<<15;
+}
+
 int main(void)
 {
 
 	/* Deactivate device, soft NSS high */
-	GPIOA->POUT |= 1<<15;
+	spi1_csdisable();
 
 	/* CS setup, CS hold, /16, 8 bits, mode 0 */
-	SPI1->CTRL = (0 << 20) | (0 << 12) | (3<<8) | (0<<4) | (0<<1);
+    spi1_init(SPI_CSSETUP(0) |
+              SPI_CSHOLD(0)  |
+              SPI_PRESCALER3 |
+              SPI_SIZE8      |
+              SPI_MODE0);
 
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	uart1_puts("\r\n");
 
@@ -48,31 +65,19 @@ int main(void)
 		for (uint32_t addr = 0x00; addr < 0x10; addr++) {
 
 			/* Activate device, soft NSS low */
-			GPIOA->POUT &= ~(1<<15);
+			spi1_csenable();
 
 			/* Send EEPROMREAD */
-			SPI1->DATA = 0x03; 
-
-			/* Wait for transmission complete */
-			while (!(SPI1->STAT & 0x08));
+			spi1_transfer(EEPROMREAD);
 
 			/* Send address */
-			SPI1->DATA = addr; 
-
-			/* Wait for transmission complete */
-			while (!(SPI1->STAT & 0x08));
+			spi1_transfer(addr);
 
 			/* Send dummy */
-			SPI1->DATA = 0x00; 
-
-			/* Wait for transmission complete */
-			while (!(SPI1->STAT & 0x08));
+			uint32_t read = spi1_transfer(0xff);
 
 			/* Deactivate device, soft NSS high */
-			GPIOA->POUT |= 1<<15;
-
-			/* Read out received data */
-			uint32_t read = SPI1->DATA;
+			spi1_csdisable();
 
 			/* Print out address, data and ASCII char */
 			uart1_puts("Address: 0x");
