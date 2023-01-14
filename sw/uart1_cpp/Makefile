@@ -36,9 +36,10 @@ HFILES = $(wildcard *.h)
 SRCS = $(wildcard *.c) $(CRT)
 # Find all C++ files and transform to object files
 SRCC = $(wildcard *.cpp)
-OBJS = $(patsubst %.c, %.o, $(SRCS)) $(patsubst %.cpp, %.o, $(SRCC))
+OBJS = $(sort $(patsubst %.c, %.o, $(SRCS)) $(patsubst %.cpp, %.o, $(SRCC)))
 # Object file startup
 OBJCRT = $(sort $(patsubst %.c, %.o, $(CRT)))
+
 
 .PHONY: all
 all: $(CRT) $(TARGET).elf
