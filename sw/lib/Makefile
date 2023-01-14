@@ -1,29 +1,39 @@
 #
-# Makefile for creating the system call + utilities library
-# for the THUAS RISC-V Minimal project.
-# See: https://github.com/jesseopdenbrouw/riscv-minimal
+# Makefile for creating the THUASRV32 library
+# for the THUAS RISC-V RV32 project.
+# See: https://github.com/jesseopdenbrouw/riscv-rv32
 #
 
-CC = riscv32-unknown-elf-gcc
-AR = riscv32-unknown-elf-ar
+# Include common defines
+COMMON_FILE = ../common.make
 
-CFLAGS = -I../include -Wall -O2 -g -march=rv32im -mabi=ilp32
+# Read in common settings
+ifneq ("$(wildcard $(COMMON_FILE))","")
+include $(COMMON_FILE)
+else
+endif
+
+CFLAGS = -I../include -Wall -O2 -g $(MARCHABISTRING)
 
 LIBTHUASRV32 = libthuasrv32.a
 SRC = $(wildcard */*.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
 
+.PHONY: all
 all:
 	make -C syscalls all
 	make -C uart all
 	make -C util all
 	make -C csr all
+	make -C spi all
 	$(AR) rsv $(LIBTHUASRV32) $(OBJ)
 
 
+.PHONY: clean
 clean:
 	make -C syscalls clean
 	make -C uart clean
 	make -C util clean
 	make -C csr clean
+	make -C spi clean
 	rm -f $(LIBTHUASRV32)
