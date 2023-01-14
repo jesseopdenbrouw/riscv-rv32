@@ -1,13 +1,19 @@
 #
-# Makefile for creating the system call + utilities library
-# for the THUAS RISC-V Minimal project.
-# See: https://github.com/jesseopdenbrouw/riscv-minimal
+# Makefile for creating the utilities library
+# for the THUAS RISC-V RV32 project.
+# See: https://github.com/jesseopdenbrouw/riscv-rv32
 #
 
-CC = riscv32-unknown-elf-gcc
-AR = riscv32-unknown-elf-ar
+# Include common defines
+COMMON_FILE = ../../common.make
 
-CFLAGS = -I../../include -Wall -O2 -g -march=rv32im -mabi=ilp32
+# Read in common settings
+ifneq ("$(wildcard $(COMMON_FILE))","")
+include $(COMMON_FILE)
+else
+endif
+
+CFLAGS = -I../../include -Wall -O2 -g $(MARCHABISTRING)
 
 SRC = $(wildcard *.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
