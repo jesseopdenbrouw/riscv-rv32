@@ -35,7 +35,7 @@ int main(void)
 
 	I2C1->CTRL = TRAN_SPEED << 16;
 
-	for (uint32_t i = 0x01; i < 0x7f; i++) {
+	for (uint32_t i = 0x01; i < 0x78; i++) {
 		/* Set START and STOP generation */
 		I2C1->CTRL |= (1 << 9) | (1 << 8);
 
