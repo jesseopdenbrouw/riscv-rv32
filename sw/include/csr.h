@@ -66,7 +66,7 @@ uint64_t csr_get_instret(void);
 })
 
 #define csr_clear(csr, val)						\
-				({								\
+({								                \
 	uint32_t __v = (uint32_t)(val);				\
 	__asm__ __volatile__ ("csrc " #csr ", %0"	\
 			      : : "rK" (__v)				\
