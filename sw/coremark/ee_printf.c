@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+/* Modified for THUASRV32 */
 /* Modified for the NEORV32 Processor - by Stephan Nolting */
 
 #include "coremark.h"
@@ -681,7 +682,7 @@ uart_send_char(char c)
        documentation.
     */
 
-  /* NEORV32-specific */
+  /* THUASRV32-specific */
   if (c == '\n') {
     uart1_putc('\r');
   }
