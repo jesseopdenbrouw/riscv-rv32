@@ -148,6 +148,7 @@ type control_type is record
     select_pc : std_logic;
     forwarda : std_logic;
     forwardb : std_logic;
+    -- Write x0 with 0 at startup if regs are in RAM
     reg0_write_once : std_logic;
     -- Determine the correct PC to be loaded into mepc on trap
     pc_to_mepc : data_type;
@@ -285,7 +286,7 @@ begin
                       (control.state = state_md) or
                       (control.state = state_exec and id_ex.md_start = '1')
                  else '0';
-    -- Needed for the instruction fetch for the ROM
+    -- Needed for the instruction fetch for the ROM or boot ROM
     O_stall <= control.stall;
 
     -- We need to flush if we are jumping/branching or servicing interrupts
@@ -846,10 +847,14 @@ begin
                             O_illegal_instruction_error <= '1';
                     end case;
                     
-                    -- Do not write if rd is x0, execpt for the very first
-                    -- time, which writes 0x00000000 to R0, because the core
-                    -- is executing a NOP (ADDI x0,x0,0)
-                    if control.reg0_write_once = '0' then
+                    -- When the registers use onboard RAM, the registers
+                    -- cannot be reset. In that case, we must write register
+                    -- x0 (zero) with 0x00000000. This needs to be done only
+                    -- once when the processor starts up. After that, register
+                    -- x0 is not written anymore. When the processor starts,
+                    -- it executes a NOP, which is ADDI x0,x0,0 so register x0
+                    -- is written with 0x00000000.
+                    if control.reg0_write_once = '0' and HAVE_REGISTERS_IN_RAM then
                         id_ex.rd_en <= '1';
                     elsif rd_v = "00000" then
                         id_ex.rd_en <= '0';
