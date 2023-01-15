@@ -88,16 +88,16 @@ This is work in progress. Things will certainly change in the future.
 \section{Introduction}
 This document describes the buildup of a simple, one core, RISC-V processor, completely written in VHDL. The core contains one HART (Hardware Thread). The processor is able to run a compiled C-program. C++ is supported but some concepts (\texttt{cout} with \texttt{iostream}, STL) create binaries that is too big to fit in the ROM. The processor can handle the RV32IM Base Integer Instruction Set as set forward in ``The RISC-V Instruction Set Manual Volume I: Unprivileged ISA''. The processor can handle traps (interrupts/exceptions). The aim is to synthesize for a clock frequency of 80\,MHz. The processor utilizes ROM, RAM and some simple I/O (including MTIME and MTIMECMP) effectively making it a microcontroller.
 
-The processor requires three clock cycles to complete an instruction, but the next instructions are fetched and decoded while the current instruction is executed. Jumps, calls and branches taken require three clock cycles because an new instruction has to be fetched. Also, two clock cycles are needed when reading ROM (data), RAM and I/O. ROM and RAM are implemented using onboard RAM block (which are buffered with an output register). The I/O output has a buffer register to speed up the processor. The processor has a basic Control and Status Registers set, offering [M]CYCLE and [M]CYCLEH (completed clock cycles), MTIME and MTIMEH (time since last reset, in microseconds, shadowed from memory mapped registers), [M]INSTRET and [M]INSTRETH (number of retired instructions), and a basic set of CSRs to handle traps. A hardware multiplication requires three clock cycles to complete. A hardware division requires 32+2 or 16+2 clock cycles to complete, depending on the settings. CSR operations require one clock cycle.
+The processor requires three clock cycles to complete an instruction, but the next instructions are fetched and decoded while the current instruction is executed. Jumps, calls and branches taken require three clock cycles because a new instruction has to be fetched. Also, two clock cycles are needed when reading ROM (data), RAM and I/O. ROM and RAM are implemented using onboard RAM block (which are buffered with an output register). The I/O output has a buffer register to speed up the processor. The processor has a basic Control and Status Registers set, offering [M]CYCLE and [M]CYCLEH (completed clock cycles), MTIME and MTIMEH (time since last reset, in microseconds, shadowed from memory mapped registers), [M]INSTRET and [M]INSTRETH (number of retired instructions), and a basic set of CSRs to handle traps. A hardware multiplication requires three clock cycles to complete. A hardware division requires 32+2 or 16+2 clock cycles to complete, depending on the settings. CSR operations require one clock cycle.
 
 The processor executes at top 1 CPI (clocks per instruction) with a sequential flow of instructions. A preliminary test with CoreMark showed a CPI of 1.52.
 
 \section{The processor}
-The RISC-V processors consist of one \textit{core} and some building blocks:
+The RISC-V processor consists of one \textit{core} and some building blocks:
 
 The core:
 \begin{itemize}
-\item The registers contain intermediate data for calculations. The registers may be placed in onboard RAM of ALM flip-flops.
+\item The registers contain intermediate data for calculations. The registers may be placed in onboard RAM or ALM flip-flops.
 \item The ALU is responsible for almost all computations in the processor.
 \item The PC is used to point to the currently fetched instruction (not the instruction that is currently being executed).
 \item The Instruction Decoder decodes the fetched instruction and provides control signals to other building blocks.
@@ -213,7 +213,7 @@ Register & Name & Purpose & Saver \\
 \end{tabular}
 \end{table}
 
-The register can optionally be put in onboard RAM blocks. This saves a lot of ALM flip-flops but possibly lowers the system frequency.
+The register can optionally be put in ALM flip-flops. This increases the ALM count, but may have a positive effect in the clock speed.
 
 \subsection{ALU}
 \label{sec:alu}
@@ -336,7 +336,7 @@ When a trap request is asserted, the trap vector is loaded in the next clock cyc
 \label{sec:addressdecoderanddatarouter}
 The Address Decoder and Data Router routes reads and writes to the ROM, bootloader ROM (only reads), RAM and the I/O. The processor uses a 32-bit linear address space for ROM, RAM and I/O. In the default setting, ROM starts at address 0x00000000 and the length is 64 kB. The bootloader ROM starts at address 0x10000000 and the length is 4 kB. Unused ROM addresses return 0x0000000. The RAM starts at address 0x20000000 and length is 32 kB. The I/O starts at address 0xF0000000 and the length is 16 kB by default.
 
-When data is read, the data is collected from the accessed memory and put on an internal bus to the ALU. The ALU can perform sign extension (byte and half word accesses) if needed. Please note that reading data from the RAM, (bootloader) ROM and I/O requires two clock cycles.
+When data is read, the data is collected from the accessed memory and put on an internal bus to the ALU. The ALU can perform sign extension (byte and half word accesses) if needed. Please note that reading data from the ROM, bootloader ROM, RAM and I/O requires two clock cycles.
 
 Note that instructions can only be fetched from ROM and boot ROM.
 
@@ -383,14 +383,14 @@ For trap handling, the following registers are implemented:
 
 The \lstinline|mcounteren| register are not implemented, because U-mode is not implemented. The \lstinline|menvcfg| and \lstinline|menvcfgh| are not implemented, because only M-mode is implemented.
 
-The trap handler (vector) address must be loaded by software at boot time. Both direct and vectored mode are supported. In direct mode all traps redirect to a single trap handler that has to handle both interrupts and exceptions. The most significant bit of \lstinline|mcause| is 1 when a trap occurred from an interrupt. In vectored mode, the addresses of \emph{interrupt handlers} are loaded from a jump table. Exceptions are redirected to a single handler. Note that the address of the jump table must be on a 4-byte boundary, and bit 0 of the jump table address has to be set to 1 for vectored mode.
+The trap handler (vector) address must be loaded by software at boot time. Both direct and vectored mode are supported. In direct mode all traps redirect to a single trap handler that has to handle both interrupts and exceptions. The most significant bit of \lstinline|mcause| is 1 when a trap occurred from an interrupt. In vectored mode, the addresses of \emph{interrupt handlers} are loaded from a jump table. Exceptions are redirected to a single handler. Note that the address of the jump table must be on a 4-byte boundary, and bit 0 of \lstinline|mtvec| must be set to 1 for vectored mode.
 
 Other CSRs are not implemented. Good synthesizers will remove unused CSRs.
 
 \subsection{Local Interrupt Control unit}
 The Local Interrupt Controller is responsible for selecting which trap request must be serviced by the core. Interrupts have higher priority than exceptions. The state of the serviced trap is visible in the CSR.
 
-The LIC can handle 16 local interrupts (numbered 16 to 31) and the Machine mode external timer interrupt (numbered 7). Other standard RISC-V interrupts (numbered 0 to 6 and 8 to 15) are not available. The external timer interrupt has the highest priority, followed (currently) by the SPI1, TIMER2, USART and TIMER1 interrupts.
+The LIC can handle 16 local interrupts (numbered 16 to 31) and the Machine mode external timer interrupt (numbered 7). Other standard RISC-V interrupts (numbered 0 to 6 and 8 to 15) are not available. The external timer interrupt has the highest priority, followed (currently) by the SPI1, I2C1, TIMER2, USART and TIMER1 interrupts.
 
 Exceptions are handled as set forward in Table 3.7 of ``The RISC-V Instruction Set Manual, Volume II: Privileged Architecture'': instruction access fault, instruction address misaligned, ECALL (M mode only), EBREAK, load/store address misaligned, load/store access fault. Note that ECALL and EBREAK are user instructions and can be interrupted by an interrupt (i.e. when the ECALL or EBREAK instruction is executing).
 
@@ -405,7 +405,7 @@ The stack pointer is fully implemented although the ISA does not provide pushes 
 \label{sec:rom}
 The ROM consists of bytes and is only word addressable for instructions. The ROM is byte, half word and word addressable when reading constant data. Half word and word entries are in Litte Endian format. When reading data from the ROM, half word accesses must be on 2-byte boundaries and word accesses must be on 4-byte boundaries. This simplifies the decoding circuitry. The ROM returns undefined data if an access is not aligned. The processor instantiates the ROM in onboard RAM. Rearranging half word and word data accesses in Big Endian format is handled by the ROM decoding unit. Reading ROM (both instructions and data) requires two clock cycles.  This is automatically handled by the processor. The pipeline is stalled for one clock cycle when reading from ROM (data).
 
-Note: the Cyclone V has 3,153,920 bits of onboard RAM available. Because of the 32-bit entries a maximum of 2,097,152 (65536 x 32) bits can be instantiated. This is equivalent to 262,144 bytes.
+Note: the Cyclone V 5CEBA4F23C7 has 3,153,920 bits of onboard RAM available. Because of the 32-bit entries a maximum of 2,097,152 (65536 x 32) bits can be instantiated. This is equivalent to 262,144 bytes.
 
 Note: instructions can only be fetched from the ROM and bootloader ROM. Note: when the bootloader is synthesized in the FPGA, the ROM may also be written with 32-bit data on 4-byte boundaries.
 
@@ -417,37 +417,37 @@ The bootloader ROM contains a small program to upload S-record files in the ROM.
 \label{sec:ram}
 The RAM consists of bytes and is byte, half word and word addressable. Half word and word entries are in Little Endian format. The RAM itself is made up of word (i.e. 32-bit) entries and is instantiated with onboard RAM blocks. Due to this fact, half word accesses are only permitted on 2-byte boundaries and word accesses are only permitted on 4-byte boundaries. The RAM returns undefined data if an access is not aligned. Writes will not take place if an access is unaligned. This simplifies the decoding circuitry. For the Cyclone V a maximum of 65536 words of RAM can be instantiated. Rearranging half word and word data accesses in Big Endian format is handled by the RAM decoding unit. The RAM cannot be used for program data.
 
-Note: the Cyclone V has 3,153,920 bits of onboard RAM available. Because of the 32-bit entries a maximum of 2,097,152 (65536 x 32) bits can be instantiated. This is equivalent to 262,144 bytes.
+Note: the Cyclone V 5CEBA4F23C7 has 3,153,920 bits of onboard RAM available. Because of the 32-bit entries a maximum of 2,097,152 (65536 x 32) bits can be instantiated. This is equivalent to 262,144 bytes.
 
 Reading the RAM (byte, half word, word) requires two clock cycles because the RAM output is buffered by a register. This is automatically handled by the processor. The pipeline is stalled for one clock cycle.
 
 \subsection{I/O}
 \label{sec/io}
-Currently, the I/O consists of one 32-bit data input and one 32-bit data output, a simple UART, a simple timer, a more elaborate timer, an minimal I\textsuperscript{2}C peripheral, a general purpose SPI peripheral with interrupt, a dedicated SPI peripheral for SD card access and the TIME and TIMEH memory mapped time registers. Note that the I/O can only be accessed as words and the addresses must be on 4-byte boundaries. If not on a 4-byte boundaries or not word size reads/writes, reads return undefined data whereas writes will not write data. A read requires two clock cycles (the pipeline is stalled for one clock cycle), a write requires one clock cycle. Note that not all I/O addresses are used.
+Currently, the I/O consists of one 32-bit data input and one 32-bit data output, a simple UART, a simple timer, a more elaborate timer, an minimal I\textsuperscript{2}C peripheral with interrupt, a general purpose SPI peripheral with interrupt, a dedicated SPI peripheral for SD card access and the TIME and TIMEH memory mapped time registers. Note that the I/O can only be accessed as words and the addresses must be on 4-byte boundaries. If not on a 4-byte boundaries or not word size reads/writes, reads return undefined data whereas writes will not write data. A read requires two clock cycles (the pipeline is stalled for one clock cycle), a write requires one clock cycle. Note that not all I/O addresses are used.
 
-The GPIO has separate inputs and output, both 32 bits. This is because some FPGAs/synthesizers don't allow buried tri-state signals, i.e.\@ the tri-state action must be done in the top level entity. Because of that, there is no data direction register. Currently the inputs come from the slide switches and the push buttons. Note that KEY4 a.k.a.\@ FPGA\_RESET is connected to the reset of the processor. The outputs are connected to the 10 red leds and to the two least significant 7-segment displays. Also two output pins are connected to facilitate software generated NSS signals.
+The GPIO has separate inputs and output, both 32 bits. This is because some FPGAs/synthesizers don't allow buried tri-state signals, i.e.\@ the tri-state action must be done in the top level entity. Because of that, there is no data direction register. Currently the inputs come from the slide switches and the push buttons. Note that KEY4 a.k.a.\@ FPGA\_RESET is connected to the reset of the processor. The outputs are connected to the 10 red leds and to the two least significant 7-segment displays. Also two output pins are connected to facilitate SPI software generated NSS signals.
 
-The UART can transmit and receive data at 7, 8 or 9 bits, no/even/odd parity and 1 or 2 stop bits. Tested speeds are 9600 bps, 115200 bps and 230400 bps. Several status flags are implemented to guide transmission. Note: more identical UARTs will be added. Receive and transmitted character (local) interrupts are provided (one vector). These interrupt requests must be negated by software. The UART does not provide hardware flow control.
+The UART can transmit and receive data at 7, 8 or 9 bits, no/even/odd parity and 1 or 2 stop bits. Tested speeds are 9600 bps, 115200 bps and 230400 bps. Several status flags are implemented to guide transmission. Receive and transmitted character (local) interrupts are provided (one vector). These interrupt requests must be negated by software. The UART does not provide hardware flow control.
 
 TIMER1 has a 32-bit time register and increments on every clock cycle. It does not have a prescaler. It counts up to compare match T register, after which is will be loaded with 0 again. A compare match (local) interrupt is provided (one vector). Whenever the timer count register is greater than or equal to the compare match T register, an interrupt request is asserted. The interrupt request has to be negated by software. A value of 0 in the compare match T register is valid: the counter does not count, but the compare match (local) interrupt is asserted.
 
 TIMER2 has a 16-bit time register and a 16-bit prescaler, and increments on every clock cycle. It counts up to compare match T register, after which is will be loaded with 0 again. Compare match (local) interrupts are provided (one vector). Whenever the timer count register is greater than or equal to the compare match T register, an interrupt request is asserted. The interrupt request has to be negated by software. The timer provides three more compare registers (A, B, C). Whenever the timer count register is greater than or equal to a compare register (A, B, C) the respective interrupt request is asserted. The interrupt requests have to be negated by software. A value of 0 in the compare match T register is valid: the counter does not count, but the compare match T (local) interrupt is asserted and the compare match interrupts (A, B, C) are asserted whenever the respective compare match register is 0. The prescaler is always preloaded: if the timer is off, the shadow prescaler register is directly written, if the timer is running, the preload register is written and the shadow register is updated at the the next CMPT match. The CMPT/A/B/C registers may optionally use a preload register. If preload is off, the shadow registers are directly written, if preload is on, the preload registers are written and the shadow registers are updated at the next CMPT match.
 
 \textbf{Preliminary!}
-I2C1 is a minimized I\textsuperscript{2}C controller peripheral (master-only). It cannot react to clock stretching and lost arbitration, so only modern targets (slaves) can be connected in a one-master-only system. Both Standard mode (Sm) with a transmission speed of up to 100 kbps and Fast mode (Fm) with a transmission speed of 400 kbps are implemented. Before sending the address byte, the send-start bit must be set and a START is send to the target when the address is written to the I2C1 data register. Before sending or receiving the last data byte, the send-stop bit must be set and a STOP is send to the target after the byte is send to the target or received by the controller. When the read-write bit is set to write, the controller may send another byte when the previous byte is send. When the read-write bit is set to read, the controller switches to read mode and will continuously send clock pulses to read data until the send-stop bit is activated (of course in the last byte to receive). After that, the controller may start transmission again. When reading data, the data from the target is always acknowledged. When an address byte is send and no target responds, a STOP is automatically send, unless the disable-stopbit-generation bit is active. In that case, no STOP is send and the controller may issue a repeated-START. The baud rate prescaler must be loaded with the number of system clock cycles of \textbf{one-half} bit time minus~1 for Standard mode and \textbf{one-third} bit time for Fast mode. Note that the prescaler is part of the control register CTRL and its value must be preserved when setting or clearing other bits.
+I2C1 is a minimal I\textsuperscript{2}C controller peripheral (master-only). It cannot react to clock stretching and lost arbitration, so only modern targets (slaves) can be connected in a one-master-only system. Both Standard mode (Sm) with a transmission speed of up to 100 kbps and Fast mode (Fm) with a transmission speed of 400 kbps are implemented. Before sending the address byte, the send-start bit must be set and a START is send to the target when the address is written to the I2C1 data register. Before sending or receiving the last data byte, the send-stop bit must be set and a STOP is send to the target after the byte is send to the target or received by the controller. When the read-write bit is set to write, the controller may send another byte when the previous byte is send. When the read-write bit is set to read, the controller switches to read mode and will continuously send clock pulses to read data until the send-stop bit is activated (of course in the last byte to receive). After that, the controller may start transmission again. When reading data, the data from the target is always acknowledged. When an address byte is send and no target responds, a STOP is automatically send, unless the disable-stopbit-generation bit is active. In that case, no STOP is send and the controller may issue a repeated-START. The baud rate prescaler must be loaded with the number of system clock cycles of \textbf{one-half} bit time minus~1 for Standard mode and \textbf{one-third} bit time minus 1 for Fast mode. Note that the prescaler is part of the control register CTRL and its value must be preserved when setting or clearing other bits.
 
 SPI1 is a full-fledged SPI master. It can transfer 8-bit, 16-bit, 24-bit and 32-bit data in one SPI cycle. It incorporates a programmable prescaler (from /2 to /256 in powers of 2) and all four phases of clock polarity (CPOL) and phase polarity (CPHA), hardware NSS (Slave Select, active low) and programmable Slave Select setup and hold time. It is possible to use a GPIO pin to use software-controlled NSS.
 
 SPI2 is a simple SPI master dedicated for the micro SC card reader. It can transfer 8-bit, 16-bit, 24-bit and 32-bit data in one SPI cycle. It does not have an hardware NSS signal and no interrupt capability. A single I/O pin is needed for NSS.
 
-The I/O incorporates memory mapped TIMEH:TIME and TIMECMPH:TIMECMP registers. Whenever TIMEH:TIME (as viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECMP (as viewed as a 64-bit register) an interrupt request is asserted (one vector). The interrupt request is negated if TIMEH:TIME is less than TIMECMPH:TIMECMP. This has to be handled by software.
+The I/O incorporates memory mapped TIMEH:TIME and TIMECMPH:TIMECMP registers. Whenever TIMEH:TIME (as viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECMP (as viewed as a 64-bit register) an interrupt request is asserted (one vector). The interrupt request is negated if TIMEH:TIME is less than TIMECMPH:TIMECMP. This has to be handled by software. Currently the TIMEH and TIME registers cannot be written.
 
 \subsection{Implemented instructions}
 For the processor, all RV32IM Unprivileged instructions are implemented but the FENCE instruction act as a no-operation (NOP). From the privileged instruction, ECALL and EBREAK are supported and execute an exception. MRET is used to return from an exception or an interrupt. WFI is not implemented and act as a no-operation (NOP).
 
 \section{The FPGA}
 For this project, we use the Cyclone V FPGA from Intel (formerly Altera). See \url{https://www.intel.com/content/www/us/en/products/details/fpga/cyclone/v.html}.
-The used Cyclone V is the 5CEFA4F23C7 which has 18480 ALMs available. It has 3080 kb of onboard RAM bits available which are used for RAM, ROM, (possibly) bootloader ROM and (possibly) the registers. Depending on the program and used resources, the compiled RISC-V processor uses about 3000 ALMs (about 17\,\%) and 1,343,488 bits of internal memory (43\,\%). The clock frequency is approximately 80\,MHz, which is sufficient for all program examples. Note that the DE0-CV board has a onboard clock generator with a frequency of 50\,MHz, so a PLL is needed to get a frequency of 80\,MHz. This FPGA is mounted on a Terasic DE0-CV board. The board has 10 switches, 4 push buttons, 1 reset push button, 10 leds, and 6 seven-segment displays. It also has two 2x20-pin headers to connect off-board devices. See \url{http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=921}. For downloading the bitstream file, the onboard USB-Blaster is used.
+The used Cyclone V is the 5CEBA4F23C7 which has 18480 ALMs available. It has 3080 kb of onboard RAM bits available which are used for RAM, ROM, (possibly) bootloader ROM and (possibly) the registers. Depending on the program and used resources, the compiled RISC-V processor uses about 2800 ALMs (about 16\,\%) and 1,343,488 bits of internal memory (43\,\%). The clock frequency is approximately 80\,MHz, which is sufficient for all program examples. Note that the DE0-CV board has a onboard clock generator with a frequency of 50\,MHz, so a PLL is needed to get a frequency of 80\,MHz. This FPGA is mounted on a Terasic DE0-CV board. The board has 10 switches, 4 push buttons, 1 reset push button, 10 leds, and 6 seven-segment displays. It also has two 2x20-pin headers to connect off-board devices. See \url{http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=921}. For downloading the bitstream file, the onboard USB-Blaster is used.
 
 Disabling the bootloader saves one copy of the ROM and the bootloader ROM. Then the used RAM is 786,432 bits (25\,\%). Disabling registers in RAM saves 2048 bits, but increases the ALM count.
 
@@ -498,9 +498,9 @@ In the file \lstinline|processor_common.vhd|, a number of constant parameters ar
 \item \lstinline|HAVE_MULDIV| -- Set to TRUE, the MD unit is included. Set to FALSE to exclude MD unit. If set to false, you must not specify the hardware multiply/divide options while compiling software, i.e.\@ multiply and division occur in software.
 \item \lstinline|FAST_DIVIDE| -- Set to TRUE to use the radix-4 divider. Set to FALSE to use the radix-2 divider.
 \item \lstinline|VECTORED_MTVEC| -- Set to TRUE to provide vectored interrupts. You still have to set bit 0 to 1 in \lstinline|mtvec| CSR. You can still use direct mode. Set to FALSE to only use direct interrupts.
-\item \lstinline|MSTATUS_MIE_DISABLES_INTERRUPTS| -- Set to TRUE to only disable interrupts when \lstinline|mstatus.MIE| is 0. Set to FALSE to disable all traps (so including exceptions and when \lstinline|mstatus.MIE| is 0).
-\item \lstinline|HAVE_BOOTLOADER_ROM| -- Set to TRUE to provide the bootloader ROM. The PC is set to the start of the bootloader. Set to FALSE to disable the bootloader ROM. The PC is set to the start of the ROM. Disabling the bootloader reduces the RAM block count considerably.
-\item \lstinline|HAVE_REGISTERS_IN_RAM| -- Set to TRUE to place the registers in onboard RAM blocks. This lowers the ALM count drastically, but may have an impact on the system frequency. Set to FALSE to place the registers in ALM flipflops.
+\item \lstinline|MSTATUS_MIE_DISABLES_INTERRUPTS| -- Set to TRUE to only disable interrupts when \lstinline|mstatus.MIE| is 0. Set to FALSE to disable all traps (so including exceptions and when \lstinline|mstatus.MIE| is 0). This option can be used in simulations.
+\item \lstinline|HAVE_BOOTLOADER_ROM| -- Set to TRUE to provide the bootloader ROM and the PC is set to the start of the bootloader. Set to FALSE to disable the bootloader ROM and the PC is set to the start of the ROM. Disabling the bootloader reduces the RAM block count considerably.
+\item \lstinline|HAVE_REGISTERS_IN_RAM| -- Set to TRUE to place the registers in onboard RAM blocks. This lowers the ALM count drastically, but may have an impact on the system frequency. Set to FALSE to place the registers in ALM flip-flops.
 \end{itemize}
 
 \subsection{Pin assignments}
@@ -525,7 +525,7 @@ The pin assignments for the DE0-CV board are as follows (Table~\ref{tab:pins}). 
 \bottomrule
 \endlastfoot
 %\toprule
-clk       & M9       & System clock\\
+clk       & M9       & CLOCK\_50, System clock\\
 areset    & P22      & FPGA\_RESET, active low reset\\
 uart1rxd  & N19      & GPIO\_0\_D15, UART1 receive \\
 uart1txd  & P19      & GPIO\_0\_D17, UART1 transmit  \\
@@ -545,13 +545,13 @@ pina[19]  & $-$      & Fitter assigned \\
 pina[18]  & $-$      & Fitter assigned \\
 pina[17]  & $-$      & Fitter assigned \\
 pina[16]  & $-$      & Fitter assigned \\
-pina[15]  & M6       & KEY3\\
+pina[15]  & M6       & KEY3, active low \\
 pina[14]  & M7       & KEY2\\
 pina[13]  & W9       & KEY1\\
 pina[12]  & U7       & KEY0\\
 pina[11]  & $-$      & Fitter assigned \\
 pina[10]  & $-$      & Fitter assigned \\
-pina[9]   & AB12     & SW9 \\
+pina[9]   & AB12     & SW9, active high \\
 pina[8]   & AB13     & SW8 \\
 pina[7]   & AA13     & SW7 \\
 pina[6]   & AA14     & SW6 \\
@@ -562,7 +562,7 @@ pina[2]   & T13      & SW2 \\
 pina[1]   & V13      & SW1 \\
 pina[0]   & U13      & SW0 \\
 pouta[31] & $-$      & Fitter assigned \\
-pouta[30] & U22      & HEX16 \\
+pouta[30] & U22      & HEX16, active low \\
 pouta[29] & AA17     & HEX15 \\
 pouta[28] & AB18     & HEX14 \\
 pouta[27] & AA18     & HEX13 \\
@@ -583,7 +583,7 @@ pouta[13] & $-$      & Fitter assigned \\
 pouta[12] & $-$      & Fitter assigned \\
 pouta[11] & $-$      & Fitter assigned \\
 pouta[10] & $-$      & Fitter assigned \\
-pouta[9]  & L1       & LEDR9 \\
+pouta[9]  & L1       & LEDR9, active high \\
 pouta[8]  & L2       & LEDR8 \\
 pouta[7]  & U1       & LEDR7 \\
 pouta[6]  & U2       & LEDR6 \\
@@ -609,14 +609,14 @@ i2c1sda   & T15      & GPIO\_0\_D35, I2C1 SDA
 \end{longtable}
 
 \subsection{Simulation}
-The designs can be simulated fully, using QuestaSim Intel Starter or ModelSim Intel Starter. You need a (free) license for QuestaSim. During simulation, all essential signals can be viewed, as is the RAM. The RAM is viewed as 32-bit entries, so we need to do some manual calculations to correctly find byte, half word and word accesses. Simulation can be started from Quartus. Please note that the bootloader must be disabled for normal program start up. 
+The design can be simulated fully, using QuestaSim Intel Starter or ModelSim Intel Starter. You need a (free) license for QuestaSim. During simulation, all essential signals can be viewed, as is the RAM. The RAM is viewed as 32-bit entries, so we need to do some manual calculations to correctly find byte, half word and word accesses. Simulation can be started from Quartus. Please note that the bootloader must be disabled for normal program start up. 
 
 \section{Cloning the RISC-V project}
 \label{sec:cloning}
 Now we have to clone the RISC-V project. It incorporates the full Quartus Prime Lite project with the processor written in VHDL. It also incorporates some simple C program examples and a taylor-made program to convert a RISC-V executable to a VHDL table suitable for the ROM. Create a working directory (and change to that directory) and issue the command:
 
 \begin{lstlisting}[language=]
-git clone https:/github.com/jesseopdenbrouw/riscv-minimal
+git clone https:/github.com/jesseopdenbrouw/riscv-rv32
 \end{lstlisting}
 
 In the created directory, you will see the following directories:
@@ -704,7 +704,7 @@ gcc version 12.1.0 (g1ea978e3066)
 \end{enumerate}
 
 \subsection{Register subset}
-It is possible to compile the toolchain to only use register \texttt{x0} to \texttt{x15}. This is called the RISC-V E extension. As a positive side effect, the register file can be cut down from 32 registers to 16 registers, saving 512 memory element. This will lower the ALM (cell) count and possible speed up the device. A negative side effect is that the pressure on register allocation is higher, possibly increasing instruction count when saving registers on the stack.
+It is possible to compile the toolchain to only use register \texttt{x0} to \texttt{x15}. This is called the RISC-V E extension. As a positive side effect, the register file can be cut down from 32 registers to 16 registers, saving 512 memory element. This will lower the ALM (if placed in ALM flip-flop) count and possible speed up the device. A negative side effect is that the pressure on register allocation is higher, possibly increasing instruction count when saving registers on the stack.
 
 Using the above recipe, the toolchain is set up for both RV32I and RV32E (without hardware integer multiply/divide). You need the specify the architecture and ABI during compile time of the RISC-V programs.
 
@@ -733,7 +733,7 @@ We supply our own linker file (\lstinline|-T ../ldfiles/riscv.ld|) and we supply
 \begin{itemize}
 \item \lstinline|empty.S| -- Empty startup file only providing the entry symbol. Can be used with assembler programs. Written in assember.
 \item \lstinline|minmal.S| -- Provides the entry symbol, loads the global pointer and stack pointer. Can be used with assembler programs. Written in assembler.
-\item \lstinline|startup.S| -- Provides the entry symbol, loads the global pointer and stack pointer and calls \lstinline|main|. On return of \lstinline|main|, it waits in an endless loop. Can be used with minimalistic C programs that do not need global variable initialization and BSS. Written in assembler.
+\item \lstinline|simple.S| -- Provides the entry symbol, loads the global pointer and stack pointer and calls \lstinline|main|. On return of \lstinline|main|, it waits in an endless loop. Can be used with minimalistic C programs that do not need global variable initialization and BSS. Written in assembler.
 \item \lstinline|startup.c| -- Full support for C programs. Can be used with the standard C library and the mathematical library. Written in C and uses a few assembler instructions.
 \end{itemize}
 \item Next issue the command:
@@ -790,15 +790,15 @@ The \lstinline|times| system call is implemented, but only for non-trap system c
 
 The \lstinline|read| and \lstinline|write| system calls are implemented but in turn they call the userland functions \lstinline|__io_getchar| and \lstinline|__io_putchar| functions to read or write a character. Normal use is for the latter two to transmit or receive via UART1. When implemented, \lstinline|printf| and \lstinline|scanf| can be used.
 
-Other system calls return an error because they cannot fulfill the requested operation, such as \lstinline|open|. Note that some system calls are in fact not implemented and return undetermined behavior. 
+Other system calls return an error because they cannot fulfill the requested operation, such as \lstinline|open|. Note that some system calls are in fact not implemented and return an error.
 
-Note: when using traps, the system calls are handled by a trap handler (by using ECALL). This is the default behavior of the tool chain. When not using traps, the system calls are rerouted to functions in a library. You need to set up your software properly, in essence provide functions that override the standard C library functions. See the software examples.
+Note: when using traps, the system calls are handled by a trap handler (by using ECALL). This is the default behavior of the toolchain. When not using traps, the system calls are rerouted to functions in a library. You need to set up your software properly, in essence provide functions that override the standard C library functions \textit{and} supply two specs files. See the software examples.
 
 \section{Using trap handlers in software}
-We provide (see software examples \lstinline|interrupt_direct| and \lstinline|interrupt_vectored|) a basic implementation of trap handlers. In direct mode, the \lstinline|universal_handler| handles all traps (interrupts and exceptions). The entry point (the address loaded in the \lstinline|mtvec| CSR) must be set in the \lstinline|main| function on a 4-byte boundary, as is enabling traps. In vectored mode, interrupts are redirected to their own handlers via a jump table. The start address of the jump table must be set in the \lstinline|main| function on a 4-byte boundary AND bit 0 must be set to 1, and traps must be enabled. The first entry of the jump table points the universal handler that only handles exceptions. The external timer has its own handler called \lstinline|external_timer_handler|. I2C1 has its own handler for transmit and receive complete interrupts, which is only one handler. The handler is called \lstinline|i2c1_handler|. TIMER1 has its own handler called \lstinline|timer1_handler|. TIMER2 has its own handler called \lstinline|timer2_handler|. Note that there is only one handler for all four interrupt requests. SPI1 has it own handler called \lstinline|spi1_handler|. UART1 has its own handler called \lstinline|uart1_handler|. This handler is used for both receive and transmit interrupts. Note that negating the interrupt request must be done by software in the respective handlers. The interrupt requests are \emph{not} negated by hardware. Note: the external timer interrupt has to be enabled by writing a 1 to \lstinline|mie.MTIE|. Both software examples implement all available interrupts: system timer, SPI1, I2C1, TIMER2, UART1 and TIMER1. SPI2 doesn't have interrupts.
+We provide (see software examples \lstinline|interrupt_direct| and \lstinline|interrupt_vectored|) a basic implementation of trap handlers. In direct mode, the \lstinline|universal_handler| handles all traps (interrupts and exceptions). The entry point (the address loaded in the \lstinline|mtvec| CSR) must be set in the \lstinline|main| function on a 4-byte boundary, as is enabling traps. In vectored mode, interrupts are redirected to their own handlers via a jump table. The start address of the jump table must be set in the \lstinline|main| function on a 4-byte boundary \textit{and} bit 0 of \lstinline|mtvec| must be set to 1, and traps must be enabled. The first entry of the jump table points the universal handler that only handles exceptions. The external timer has its own handler called \lstinline|external_timer_handler|. I2C1 has its own handler for transmit and receive complete interrupts, which is only one handler. The handler is called \lstinline|i2c1_handler|. TIMER1 has its own handler called \lstinline|timer1_handler|. TIMER2 has its own handler called \lstinline|timer2_handler|. Note that there is only one handler for all four interrupt sources. SPI1 has it own handler called \lstinline|spi1_handler|. UART1 has its own handler called \lstinline|uart1_handler|. This handler is used for both receive and transmit interrupts. Note that negating an interrupt request must be done by software in the respective handlers. The interrupt requests are \emph{not} negated by hardware. Note: the external timer interrupt has to be enabled by writing a 1 to \lstinline|mie.MTIE|. Both software examples implement all available interrupts: system timer, SPI1, I2C1, TIMER2, UART1 and TIMER1. SPI2 doesn't have interrupts.
 
 \section{Software programs}
-In de \lstinline|sw| directory, there are a number of software programs available. First, the common files:
+In the \lstinline|sw| directory, there are a number of software programs available. First, the common files:
 
 \begin{itemize}
 \item \lstinline|ldfiles| -- contains the linker scripts. There are three scripts:
@@ -813,7 +813,7 @@ In de \lstinline|sw| directory, there are a number of software programs availabl
 \item \lstinline|lib| -- contains the libraries for the design. Link against\lstinline|libthuasrv32.a|.
 \end{itemize}
 
-Some examples are to be used in de simulator only, mainly to test functionality on clock cycle accuracy. Some examples work on the DE0-CV board, but without testing traps. Two examples work on the board and use traps.
+Some examples are to be used in de simulator only, mainly to test functionality and clock cycle accuracy. Some examples work on the DE0-CV board, but without testing traps. Two examples work on the board and use traps.
 
 \begin{itemize}
 \item \lstinline|add64| -- simple 64-bit addition. For use in the simulator.
@@ -829,7 +829,7 @@ Some examples are to be used in de simulator only, mainly to test functionality 
 \item \lstinline|global| -- test for globals and local statics with initialization. For simulation
 \item \lstinline|hex_display| -- program that reads 8 switches from the board and display them as a 2-digit hexadecimal value on the 7-segment display. Works on the board. Note that on the DE0-CV board, the decimal points cannot be used, because they are not connected to FPGA pins.
 \item \lstinline|i2c1findslaves| -- program that uses the I2C1 peripheral to find slaves on the I\textsuperscript{2}C bus. Prints out the found slaves addresses on the terminal. Works on the board.
-\item \lstinline|i2c1tmp102| -- program that uses the I2C1 peripheral to fetch the temperature data of an TMP102 temperature sensor and displays the raw data on the terminal. Works on the board.
+\item \lstinline|i2c1tmp102| -- program that uses the I2C1 peripheral to fetch the temperature data of a TMP102 temperature sensor and displays the raw data on the terminal. Works on the board.
 \item \lstinline|interrupt_direct| -- program to test the interrupt handling using direct mode and prints out the elapsed time. Uses UART1. Works on the board.
 \item \lstinline|interrupt_vectored| -- program to test the interrupt handling using vectored mode.and prints out the elapsed time. Uses UART1. Works on the board.
 \item \lstinline|interval| -- program that uses the \lstinline|clock| C library function to time 5 seconds since last read. Uses UART1. Works on the board.
@@ -838,7 +838,7 @@ Some examples are to be used in de simulator only, mainly to test functionality 
 \item \lstinline|malloc| -- example to test \lstinline|malloc| and friends. Works. Used in simulations.
 \item \lstinline|monitor| -- simple monitor program. Works on the board. Uses strings, UART1, RAM, ROM, I/O and \lstinline|sprintf| (and therefore \lstinline|malloc| et al.).
 \item \lstinline|mult| -- integer multiplication with the C library. Set to the E extension with no hardware multiply/divide support. For simulations.
-\item \lstinline|qsort| -- sorts an integer array using the \lstinline|qsort| C library function. Works in simulation.
+\item \lstinline|qsort| -- sorts an integer array using the \lstinline|qsort| C library function and prints the result to UART1. Works on the DE0-CV board.
 \item \lstinline|riemann_left| -- calculates the Riemann Left Sum of $\sin^2 x$ from $0$ to $2\pi$. For use in the simulator. The  result must be $\pi$.
 \item \lstinline|shift| -- shifts. For use in simulations.
 \item \lstinline|spi1readeeprom| -- using the SPI1 peripheral to read out 16 bytes of the 25AA010A EEPROM slave, one byte at the time, using hardware Slave Select. Uses UART1. Works on the board.
@@ -851,7 +851,7 @@ Some examples are to be used in de simulator only, mainly to test functionality 
 \item \lstinline|trig| -- some float trigonometry functions for float and double. Prints results to UART1. This is a big binary.
 \item \lstinline|upload| -- a Linux/PC program to upload an S-record file using the bootloader.
 \item \lstinline|uart_test| -- simple UART1 program. Works on the board.
-\item \lstinline|uart_cpp|-- simple C++ UART program. Makes use of a singleton design pattern. Uses a lot of ROM. Works on the board.
+\item \lstinline|uart_cpp|-- simple C++ UART program. Makes use of a singleton design pattern. Works on the board.
 \item \lstinline|uart_printf| -- simple program that prints an integer, a pointer, a float and a double to the terminal using \lstinline|printf|, this is a big binary. Works on the board.
 \item \lstinline|uart_sprintf| -- simple program that prints an integer, a pointer, a float and a double to the terminal, this is a big binary. Works on the board.
 \end{itemize} 
@@ -861,6 +861,8 @@ Note: we use a lot of the \lstinline|volatile| keyword to emit the variables to 
 Note that the floating point programs loads (huge) functions from the C library and possibly creates a binary that is too large to fit in the ROM. In that case, the linker will issue an error and does not build the binary. You have to update the data sizes in the VHDL description and update the linker script with suitable data sizes.
 
 When using floats and doubles in \lstinline|sprintf|/\lstinline|printf|, you need to supply the linker with the \lstinline|-u _printf_float| option. When using floats and doubles in \lstinline|sscanf|/\lstinline|scanf|, you need to supply the linker with the \lstinline|-u _scanf_float| option. Also, using \lstinline|printf| and \lstinline|scanf| create big binaries.
+
+Note that \lstinline|sprintf|/\lstinline|printf| do not print 64-bit integers (a.k.a.\@ \lstinline|long long|) because of lack of support in the \lstinline|nano| library.
 
 \subsection{srec2vhdl}
 This is a homebrew utility to convert a Motorola S-record file into a VHDL file suitable for inclusion of the processor. The program is called with:
@@ -983,13 +985,13 @@ Note that we do not use full address decoding for ROM, RAM and I/O. This means t
 The design incorporates a hard-coded bootloader with an upload and a simple monitor program. The bootloader is placed in a separate ROM starting at address 0x10000000 and has a maximum length of 4 KB (may be extended). The bootloader cannot be overwritten by an upload. The bootloader can be disabled.
 
 \subsection{S-record file}
-The S-record standard is invented by Motorola in the 1980's. It consists of formatted lines, called records. Each line can be seen as a record. A record starts with \lstinline|S| followed by a single digit. \lstinline|S0| is used as header record. This record is ignored by the bootloader (skipped). \lstinline|S1|,  \lstinline|S2| and \lstinline|S3| are data record using a 2-byte, 3-byte and 4-byte start address respectively. \lstinline|S4| is reserved and skipped by the bootloader. \lstinline|S5| and \lstinline|S6| are count records and are ignored. \lstinline|S7|, \lstinline|S8| and \lstinline|S9| are termination records with a start address incorporated, with 4-byte, 3-byte and 2-byte address respectively. This start address is used by the bootloader to start the application. Records have a checksum at the end, this checksum is ignored by the bootloader.
+The S-record standard is invented by Motorola in the 1980's. It consists of formatted lines, called records. Each line can be seen as a record. A record starts with \lstinline|S| followed by a single digit. \lstinline|S0| is used as header record. This record is ignored by the bootloader. \lstinline|S1|,  \lstinline|S2| and \lstinline|S3| are data record using a 2-byte, 3-byte and 4-byte start address respectively. \lstinline|S4| is reserved and skipped by the bootloader. \lstinline|S5| and \lstinline|S6| are count records and are ignored. \lstinline|S7|, \lstinline|S8| and \lstinline|S9| are termination records with a start address incorporated, with 4-byte, 3-byte and 2-byte address respectively. This start address is used by the bootloader to start the application. Records have a checksum at the end, this checksum is ignored by the bootloader.
 
 \subsection{Startup sequence}
 After loading the design in the FPGA, or after resetting the FPGA, the bootloader starts. It presents itself with a welcome string printed via UART1 at default 115200 bps. Then the bootloader waits for about 5 seconds before starting the application at address 0x00000000. During these 5 seconds, at half second intervals, a \lstinline|*| is printed via UART1. At the same time, the 10 red leds on the DE0-CV board are lit and dimmed on half second intervals from left (high led) to right (low led). If a character is received within the five seconds, either a S-record file can be uploaded or the bootloader falls to a simple monitor program.
 
 \subsection{Uploading an S-record file}
-A Motorola S-record file can be uploaded with the \lstinline|upload| program found in the \lstinline|CODE| directory. It is tested on Linux, Windows is currently not supported. S-record files for all RISC-V programs are generated as part of the \lstinline|make| process by the RISC-V \lstinline|objcopy| program. The \lstinline|upload| program is invoked with:
+A Motorola S-record file can be uploaded with the \lstinline|upload| program found in the \lstinline|sw| directory. It is tested on Linux, Windows is currently not supported. S-record files for all RISC-V programs are generated as part of the \lstinline|make| process by the RISC-V \lstinline|objcopy| program. The \lstinline|upload| program is invoked with:
 
 \begin{lstlisting}[language=]
 upload -d <device> -b <baud> -t <timeout> -s <sleep> -v -j file
@@ -997,7 +999,7 @@ upload -d <device> -b <baud> -t <timeout> -s <sleep> -v -j file
 
 The default device is \lstinline|/dev/ttyUSB0| which is the first plugged-in USB-to-U(S)ART converter. The baudrate may be 9600 bps or 115200 bps (default). Timeout is the time the \lstinline|uplead| program waits for expected data from the bootloader. The time is set in deciseconds (0.1 seconds) intervals. The default value is 10 (1.0 seconds). Sleep is the time the \lstinline|upload| program waits after transmitting a character tor the bootloader in microseconds intervals. The default value is 0. The option \lstinline|-v| turns on verbose mode. The option \lstinline[]|-j| instructs \lstinline|upload| to send a ``start application'' command to the bootloader after the S-record file is uploaded. File must be a valid S-record file.
 
-To upload an S-record file, reset the FPGA or program the FPGA design in the FPGA. Then, within the 5 seconds interval, start the \lstinline|upload| program with options and file name supplied. If the \lstinline|upload| programs manages the contact the bootloader, the S-record file will be uploaded. Depending on the size, uploading may take as short as a few seconds to minutes for a large file. As a rule of thumb, about 2400 file characters per seconds are send (at 115200 bps). Make sure that \emph{no} terminal program (e.g. Putty) is active. If the \lstinline|upload| program cannot contact the bootloader, it exits with an error message. If during sending the records, a response from the bootloader is not read, the \lstinline|upload| exits with an error message. This is mostly due to an open terminal connection. To start the application after the upload, supply the \lstinline|-j| option to the \lstinline|upload| program, otherwise the monitor is started. Before starting the application, UART1 is turned off and the output port is set to 0x00000000 (i.e. all port bits are set to 0).
+To upload an S-record file, reset the FPGA or program the FPGA design in the FPGA. Then, within the 5 seconds interval, start the \lstinline|upload| program with options and file name supplied. If the \lstinline|upload| programs manages the contact the bootloader, the S-record file will be uploaded. Depending on the size, uploading may take as short as a few seconds to minutes for a large file. As a rule of thumb, about 2400 file characters per seconds are send (at 115200 bps). Make sure that \emph{no} terminal program (e.g. PuTTY) is active. If the \lstinline|upload| program cannot contact the bootloader, it exits with an error message. If during sending the records, a response from the bootloader is not read, the \lstinline|upload| exits with an error message. This is mostly due to an open terminal connection. To start the application after the upload, supply the \lstinline|-j| option to the \lstinline|upload| program, otherwise the monitor is started. Before starting the application, UART1 is turned off and the output port is set to 0x00000000 (i.e. all port bits are set to 0).
 
 Using an USB-to-serial adapter can be troublesome, for example when stopping (Ctrl-C) the upload program. There will be characters in the USB buffer and the upload program and the bootloader will be out of sync. Best is to remove the USB-to-serial adapter from the PC and reinsert it again. Then the USB buffer will be empty. During the transmission, the low led of the DE0-CV board will flash rapidly. If not, there is no upload and the USB-to-serial adapter and the DE0-CV board are out of sync.
 
@@ -1379,7 +1381,7 @@ For working with the UART on board of the processor, you need an USB-to-U(S)ART 
 
 
 \section{I\textsuperscript{2}C code}
-The baud rate prescaler must be loaded with the number of system clock cycles for \textbf{one-half} bit time for Standard mode, and \textbf{one-third} bit time for Fast mode. Note that the prescaler is in the CTRL register and must be preserved:
+The baud rate prescaler must be loaded with the number of system clock cycles for \textbf{one-half} bit time minus 1 for Standard mode, and \textbf{one-third} bit time minus 1 for Fast mode. Note that the prescaler is in the CTRL register and must be preserved:
 
 \begin{lstlisting}[caption=]
 /* Standard mode, exact number */
@@ -1392,13 +1394,13 @@ I2C1->CTRL = (TRAN_SPEED << 16) | (1 << 2);
 
 Note that for a 50\,MHz system clock frequency, an exact count is achieved for Standard Mode (250), but not for Fast mode (41.6667), so the rounding must be up.
 
-To send a startbit, before an address byte is send, use:
+To send a START, before an address byte is send, use:
 
 \begin{lstlisting}[caption=]
 I2C1->CTRL |= (1 << 9);
 \end{lstlisting} 
 
-To send an address byte, with read-write bit, left-shift the address by 1 and add the read/write bit:
+Then, to send an address byte, with read-write bit, left-shift the address by 1 and add the read/write bit:
 
 \begin{lstlisting}[caption=]
 I2C1->DATA = (ADDR << 1) | RWBIT;
@@ -1448,7 +1450,7 @@ I2C1->DATA = (some_address << 1) | 0;
 
 
 \section{TIMER1 code}
-Based on a frequency of 50$\,$MHz, the following code will set TIMER1 interrupt on 0,5 s intervals:
+Based on a frequency of 50$\,$MHz, the following code will set TIMER1 interrupt on 0.5 s intervals:
 
 \begin{lstlisting}[language=C]
 /* Activate TIMER1 with a cycle of 2 Hz */
@@ -1489,7 +1491,7 @@ void external_timer_handler(void)
 }
 \end{lstlisting}
 
-Normally, this code is placed in the interrupt handler. These registers are read-only shadowed to the CSR time registers.
+Normally, this code is placed in the interrupt handler. These registers are read-only shadowed in the CSR time registers.
 
 \section{I/O registers}
 \label{sec:ioregisters}
