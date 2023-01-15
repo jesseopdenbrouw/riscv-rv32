@@ -95,7 +95,6 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Adding input synchronization for SPI1/SPI2 and I2C1 peripherals.
 * Adding Input Capture for TIMER2.
 * Implement an I/O input/output multiplexer for pina and pouta. This will enable I/O functions to be multiplexed with normal port I/O.
-* Implement Supervisor Mode (this will take some time ;-)).
 * Smaller (in cells) divide unit.
 * Test more functions of the standard and mathematical libraries.
 * It is not possible to print `long long` (i.e. 64-bit) using `printf` et al. When using the format specifier `%lld`, `printf` just prints `ld`. This due to lack of support in the `nano` library.
