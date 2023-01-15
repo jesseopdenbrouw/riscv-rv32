@@ -229,7 +229,6 @@ portable_fini(core_portable *p)
 	snprintf(buffer, sizeof buffer, "THUASRV32: CoreMark core clock cycles:  0x%08lx%08lx\r\n", (uint32_t)exe_time.uint32[1], (uint32_t)exe_time.uint32[0]);
 	uart1_puts(buffer);
 
-	uint64_t average_cpi_int = exe_time.uint64 / exe_instructions.uint64;
 	snprintf(buffer, sizeof buffer, "THUASRV32: Avg CPI: %f clock/instr\r\n", (double)exe_time.uint64/(double)exe_instructions.uint64);
 	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "THUASRV32: Avg IPC: %f instr/clock\r\n", (double)exe_instructions.uint64/(double)exe_time.uint64);
