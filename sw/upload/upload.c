@@ -58,8 +58,8 @@ int set_interface_attribs(int fd, int speed, int parity)
 	tty.c_cflag &= ~CRTSCTS;
 
 	if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-	        printf("error %d from tcsetattr\n", errno);
-	        return -2;
+		printf("error %d from tcsetattr\n", errno);
+		return -2;
 	}
 
 	return 0;
@@ -72,15 +72,15 @@ int set_blocking(int fd, int should_block, int timeout)
 	memset(&tty, 0, sizeof tty);
 
 	if (tcgetattr(fd, &tty) != 0) {
-	        printf("error %d from tggetattr\n", errno);
-	        return -3;
+		printf("error %d from tggetattr\n", errno);
+		return -3;
 	}
 
 	tty.c_cc[VMIN]  = should_block ? 1 : 0;
 	tty.c_cc[VTIME] = timeout;
 
 	if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-	        printf("error %d setting term attributes\n", errno);
+		printf("error %d setting term attributes\n", errno);
 		return -4;
 	}
 
@@ -129,6 +129,8 @@ int main(int argc, char *argv[]) {
 			printf("9600\n");
 		} else if (baudrate == B115200) {
 			printf("115200\n");
+		} else if (baudrate == B230400) {
+			printf("230400\n");
 		} else {
 			printf("??\n");
 		}
@@ -226,6 +228,7 @@ int main(int argc, char *argv[]) {
 	/* Did we receive */
 	if (n == 0) {
 		printf("Cannot contact bootloader!\n");
+		printf("Did you closed the terminal program?\n");
 		close(fd);
 		fclose(fin);
 		exit(-9);
@@ -285,6 +288,7 @@ int main(int argc, char *argv[]) {
 		}
 		if (n == 0) {
 			printf("Nothing read while sending data!\n");
+			printf("Did you closed the terminal program?\n");
 			close(fd);
 			fclose(fin);
 			exit(-11);
@@ -330,6 +334,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (n == 0) {
 		printf("Nothing read while sending end of transmission!\n");
+		printf("Did you closed the terminal program?\n");
 		close(fd);
 		fclose(fin);
 		exit(-12);
