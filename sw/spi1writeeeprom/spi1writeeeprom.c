@@ -2,8 +2,12 @@
  *
  * spi1writeeeprom
  *
- * Program to write data to the 25AA010A serial EEPROM
+ * Program to write data to the 25AA010A serial EEPROM.
  *
+ * This program writes the first few bytes of a 25AA101A
+ * bit-serial 128 bytes EEPROM. It writes the buffer `wbuf`
+ * to the device, waits for the EEPROM to finish the write,
+ * reads the bytes back and prints them on the terminal.
  *
  */
 
@@ -107,7 +111,7 @@ int main(void)
 	GPIOA->POUT &= ~(1<<15);
 
 	/* Send EEPROMREAD */
-	SPI1->DATA = 0x03; 
+	SPI1->DATA = EEPROMREAD; 
 
 	/* Wait for transmission complete */
 	while (!(SPI1->STAT & 0x08));
@@ -142,6 +146,8 @@ int main(void)
 		printhex(rbuf[addr], 2);
 		uart1_puts("\r\n");
 	}
+
+	uart1_puts("Done.\r\n");
 
 	while(1);
 }
