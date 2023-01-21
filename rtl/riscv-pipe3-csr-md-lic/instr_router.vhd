@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # instr_router.vhd - Router for instructions between core, ROM and bootloader ROM               #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
