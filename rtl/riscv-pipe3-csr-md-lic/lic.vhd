@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # lic.vhd - The Local Interrupt Controller                                                      #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
@@ -144,10 +144,10 @@ begin
                 interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(0, O_mcause'length));
             elsif I_ecall_request = '1' then
-                interrupt_request_int := irq_soft;
+                interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(11, O_mcause'length));
             elsif I_ebreak_request = '1' then
-                interrupt_request_int := irq_soft;
+                interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(3, O_mcause'length));
             elsif I_load_access_error_request = '1' then
                 interrupt_request_int := irq_hard;
@@ -220,10 +220,10 @@ begin
                     interrupt_request_int := irq_hard;
                     O_mcause <= std_logic_vector(to_unsigned(0, O_mcause'length));
                 elsif I_ecall_request = '1' then
-                    interrupt_request_int := irq_soft;
+                    interrupt_request_int := irq_hard;
                     O_mcause <= std_logic_vector(to_unsigned(11, O_mcause'length));
                 elsif I_ebreak_request = '1' then
-                    interrupt_request_int := irq_soft;
+                    interrupt_request_int := irq_hard;
                     O_mcause <= std_logic_vector(to_unsigned(3, O_mcause'length));
                 elsif I_load_access_error_request = '1' then
                     interrupt_request_int := irq_hard;
