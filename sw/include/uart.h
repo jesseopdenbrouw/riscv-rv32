@@ -25,6 +25,10 @@ int uart1_available(void);
 int uart1_gets(char buffer[], int size);
 /* Print formatted to the uart */
 int uart1_printf(const char *format, ...);
+/* Print a signed long long int */
+void uart1_printlonglong(int64_t v);
+/* Print a unsigned long long integer */
+void uart1_printulonglong(uint64_t uv);
 
 #define UART_PRESCALER(A) ((F_CPU)/(A)-1)
 
