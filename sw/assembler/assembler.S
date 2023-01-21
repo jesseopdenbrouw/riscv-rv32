@@ -22,17 +22,10 @@ _start:
 	nop
 	nop
 	nop
-	nop
-	nop
-	nop
 
 	li x3,-2
 	li x15,-1
 
-	nop
-	nop
-	nop
-	nop
 	nop
 	nop
 
@@ -42,6 +35,8 @@ _start:
 	nop
 	nop
 	nop
+
+	csrrw x3,time,x15
 	nop
 	nop
 	nop
