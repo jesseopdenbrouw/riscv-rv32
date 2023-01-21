@@ -3,8 +3,7 @@
  * upload.c - upload an S-record file to the THUAS RISC-V
  *            processor in the Cyclone V FPGA
  *
- * (c) 2022, Jesse E. J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
- * (c) 2022, The Hague University of Applied Sciences
+ * (c) 2023, Jesse E. J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
  *
  * Usage: upload -v -d <device> -t <timeout> filename
  *        -v           -- verbose\n
@@ -234,28 +233,19 @@ int main(int argc, char *argv[]) {
 		exit(-9);
 	}
 
+	if (line[0] != '?') {
+		printf("Wrong reply from bootloader!\n");
+		close(fd);
+		fclose(fin);
+		exit(-10);
+	}
+
 	if (verbose) {
 		printf("Contacted bootloader!\n");
 	}
 
 	/* Read in data from device, if any */
 	n = read(fd, line, 5);
-
-	/* Close the device */	
-	close(fd);
-
-	/* Wait for device to be available, testing */
-	usleep(100000);
-
-	/* Open the device */	
-	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
-
-	/* Check if device is open */
-	if (fd < 0) {
-	        printf("error %d opening %s: %s\n", errno, portname, strerror(errno));
-		fclose(fin);
-		exit(-10);
-	}
 
 	/* Write the data to the bootloader */
 	while (fgets(line, sizeof line - 2, fin)) {
