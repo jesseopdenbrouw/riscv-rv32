@@ -134,7 +134,7 @@ typedef struct {
 
 
 /*
- * RISC-V system timer (in I/O)i
+ * RISC-V system timer (in I/O)
  */
 #define MTIME (*(volatile uint32_t*)(IO_BASE+0x000000f0UL))
 #define MTIMEH (*(volatile uint32_t*)(IO_BASE+0x000000f4UL))
