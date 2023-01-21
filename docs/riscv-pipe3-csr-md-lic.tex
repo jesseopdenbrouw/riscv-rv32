@@ -377,15 +377,14 @@ For trap handling, the following registers are implemented:
 \item \lstinline|mcause| -- contains the cause of the trap as set forward in ``The RISC-V Instruction Set Manual, Volume II: Privileged Architecture''. For local interrupts, additional codes are used.
 \item \lstinline|mtval| -- contains the address on the address bus when a trap occurs, not always relevant.
 \item \lstinline|mip| -- contains the pending interrupts. For the lower 16 bits, only \lstinline|MTIP| is implemented. The upper 16 bits are used for local interrupts. This register is read-only.
-\item \lstinline|mconfigptr| -- this register is hardwired to all zero bits.
-\item \lstinline|mcountinhibit| -- this register has bit 2 (\lstinline|[m]instret|and 0 (\lstinline|[m]cycle|)implemented.
+%\item \lstinline|mconfigptr| -- this register is hardwired to all zero bits.
+\item \lstinline|mcountinhibit| -- this register has bit 2 (\lstinline|minstret|) and 0 (\lstinline|mcycle|) implemented.
 \end{itemize}
 
-The \lstinline|mcounteren| register are not implemented, because U-mode is not implemented. The \lstinline|menvcfg| and \lstinline|menvcfgh| are not implemented, because only M-mode is implemented.
+%The \lstinline|mcounteren| register are not implemented, because U-mode is not implemented. The \lstinline|menvcfg| and \lstinline|menvcfgh| are not implemented, because only M-mode is implemented.
 
-The trap handler (vector) address must be loaded by software at boot time. Both direct and vectored mode are supported. In direct mode all traps redirect to a single trap handler that has to handle both interrupts and exceptions. The most significant bit of \lstinline|mcause| is 1 when a trap occurred from an interrupt. In vectored mode, the addresses of \emph{interrupt handlers} are loaded from a jump table. Exceptions are redirected to a single handler. Note that the address of the jump table must be on a 4-byte boundary, and bit 0 of \lstinline|mtvec| must be set to 1 for vectored mode.
+Writing read-only registers causes an illegal instruction trap. Accessing a non-existent register causes an illegal interrupt trap. The trap handler (vector) address must be loaded by software at boot time. Both direct and vectored mode are supported. In direct mode all traps redirect to a single trap handler that has to handle both interrupts and exceptions. The most significant bit of \lstinline|mcause| is 1 when a trap occurred from an interrupt. In vectored mode, the addresses of \emph{interrupt handlers} are loaded from a jump table. Exceptions are redirected to a single handler. Note that the address of the jump table must be on a 4-byte boundary, and bit 0 of \lstinline|mtvec| must be set to 1 for vectored mode.
 
-Other CSRs are not implemented. Good synthesizers will remove unused CSRs.
 
 \subsection{Local Interrupt Control unit}
 The Local Interrupt Controller is responsible for selecting which trap request must be serviced by the core. Interrupts have higher priority than exceptions. The state of the serviced trap is visible in the CSR.
@@ -440,7 +439,7 @@ SPI1 is a full-fledged SPI master. It can transfer 8-bit, 16-bit, 24-bit and 32-
 
 SPI2 is a simple SPI master dedicated for the micro SC card reader. It can transfer 8-bit, 16-bit, 24-bit and 32-bit data in one SPI cycle. It does not have an hardware NSS signal and no interrupt capability. A single I/O pin is needed for NSS.
 
-The I/O incorporates memory mapped TIMEH:TIME and TIMECMPH:TIMECMP registers. Whenever TIMEH:TIME (as viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECMP (as viewed as a 64-bit register) an interrupt request is asserted (one vector). The interrupt request is negated if TIMEH:TIME is less than TIMECMPH:TIMECMP. This has to be handled by software. Currently the TIMEH and TIME registers cannot be written.
+The I/O incorporates memory mapped TIMEH:TIME and TIMECMPH:TIMECMP registers. Whenever TIMEH:TIME (as viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECMP (as viewed as a 64-bit register) an interrupt request is asserted. The interrupt request is negated if TIMEH:TIME is less than TIMECMPH:TIMECMP. This has to be handled by software. Currently the TIMEH and TIME registers cannot be written.
 
 \subsection{Implemented instructions}
 For the processor, all RV32IM Unprivileged instructions are implemented but the FENCE instruction act as a no-operation (NOP). From the privileged instruction, ECALL and EBREAK are supported and execute an exception. MRET is used to return from an exception or an interrupt. WFI is not implemented and act as a no-operation (NOP).
@@ -464,8 +463,8 @@ Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed 
 \begin{tabular}{lllll}
 \toprule
      & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
-Freq & 83.33                                                              & 80.50                                                           & 77.31                                                           & 79.05                                                        \\
-ALM  & 3213                                                            & 2664                                                        & 3210                                                         & 2733                                                      \\
+Freq & 83.26                                                              & 79.08                                                           & 81.84                                                           & 79.38                                                        \\
+ALM  & 3487                                                            & 2795                                                        & 3507                                                         & 2848                                                      \\
 RAM  & 786,432                                                         & 788,480                                                      & 1,343,488                                                    & 1,345,536                                                 \\ \bottomrule
 \end{tabular}
 \end{table}
@@ -604,8 +603,8 @@ spi1nss   & T19      & GPIO\_0\_D32, SPI1 hardware NSS \\
 spi2sck   & H11      & SDCLOCK, SPI2 clock \\
 spi2mosi  & B11      & SDCMD, SPI2 MOSI \\
 spi2miso  & K9       & SDDAT0, SPI2 MISO \\
-i2c1scl   & T18      & GPIO\_0\_D33, I2C1 SCL \\
-i2c1sda   & T15      & GPIO\_0\_D35, I2C1 SDA
+i2c1scl   & B16      & GPIO\_0\_D1, I2C1 SCL \\
+i2c1sda   & C16      & GPIO\_0\_D3, I2C1 SDA
 \end{longtable}
 
 \subsection{Simulation}
@@ -632,7 +631,7 @@ Change directory to \lstinline|sw|. Make sure the RISC-V C compiler is available
 If you want, you can compile the processor with the standard program incorporated, which is by default, flashing onboard leds and writing the current time since last reset via UART1 at 115200 bps. Start your Quartus Prime Lite software and open the project in the \lstinline|rtl| directory. Now start a build by clicking on the play-symbol. It should compile a standard setting (this takes a long time). When finished, you can download the FPGA contents to the DE0-CV board.
 
 To test one of the programs, change directory to one of the directories in \lstinline|sw| and copy the file with \lstinline|.vhd| extension to the directory containing the VHDL description under the name \lstinline|processor_common_rom.vhd|.
-Now start Quartus and start the compilation. After a successful compilation, you can program the Cyclone V on a DE0-CV board.
+Now start Quartus and start the compilation. After a successful compilation, you can program the Cyclone V on a DE0-CV board. If the bootloader is installed, you can also upload an S-record file. See Section~\ref{sec:bootloader}.
 
 The design is targeted for a clock speed of 80\,MHz. Depending on how ``good'' the device is fabricated, higher clock speeds may be obtained. With one device, we could speed up the clock to 152\,MHz.
 
@@ -704,7 +703,7 @@ gcc version 12.1.0 (g1ea978e3066)
 \end{enumerate}
 
 \subsection{Register subset}
-It is possible to compile the toolchain to only use register \texttt{x0} to \texttt{x15}. This is called the RISC-V E extension. As a positive side effect, the register file can be cut down from 32 registers to 16 registers, saving 512 memory element. This will lower the ALM (if placed in ALM flip-flop) count and possible speed up the device. A negative side effect is that the pressure on register allocation is higher, possibly increasing instruction count when saving registers on the stack.
+It is possible to compile the toolchain to only use register \texttt{x0} to \texttt{x15}. This is called the RISC-V E extension. As a positive side effect, the register file can be cut down from 32 registers to 16 registers, saving 512 memory element. This will lower the ALM count (if placed in ALM flip-flops) and possible speed up the device. A negative side effect is that the pressure on register allocation is higher, possibly increasing instruction count when saving registers on the stack.
 
 Using the above recipe, the toolchain is set up for both RV32I and RV32E (without hardware integer multiply/divide). You need the specify the architecture and ABI during compile time of the RISC-V programs.
 
@@ -853,6 +852,7 @@ Some examples are to be used in de simulator only, mainly to test functionality 
 \item \lstinline|uart_test| -- simple UART1 program. Works on the board.
 \item \lstinline|uart_cpp|-- simple C++ UART program. Makes use of a singleton design pattern. Works on the board.
 \item \lstinline|uart_printf| -- simple program that prints an integer, a pointer, a float and a double to the terminal using \lstinline|printf|, this is a big binary. Works on the board.
+\item \lstinline|uart1_printlonglong| -- program that prints a long long and unsigned long long to the UART. Works on the board.
 \item \lstinline|uart_sprintf| -- simple program that prints an integer, a pointer, a float and a double to the terminal, this is a big binary. Works on the board.
 \end{itemize} 
 
