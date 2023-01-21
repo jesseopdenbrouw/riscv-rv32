@@ -6,9 +6,9 @@
  *
  * This program reads the first 16 bytes from the EEPROM and
  * displays them on the terminal program (e.g. PuTTY) using
- * UART1. The program writes a 24-bit instruction code and
- * address and a dummy byte. During this 24-bit write the
- * data from the EEPROM is read. In the least significant
+ * UART1. The program writes a 24-bit datum, with instruction
+ * code and address and a dummy byte. During this 24-bit write
+ * the data from the EEPROM is read. In the least significant
  * byte is the data from the EEPROM. The EEPROM can work in
  * mode 0 and mode 3.
  *
