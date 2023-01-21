@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # io.vhd - The I/O                                                                              #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
@@ -1723,11 +1723,11 @@ begin
             if isword and I_csio = '1' and I_wren = '1' then
 --                -- Load time (low 32 bits)
 --                if reg_int = time_addr then
---                    time_reg(31 downto 0) := unsigned(datain);
+--                    time_reg(31 downto 0) := unsigned(I_datain);
 --                end if;
 --                -- Load timeh (high 32 bits)
 --                if reg_int = timeh_addr then
---                    time_reg(63 downto 32) := unsigned(datain);
+--                    time_reg(63 downto 32) := unsigned(I_datain);
 --                end if;
                 -- Load compare register (low 32 bits)
                 if reg_int = timecmp_addr then
