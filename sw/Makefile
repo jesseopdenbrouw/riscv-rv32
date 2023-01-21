@@ -56,6 +56,7 @@ all:
 	$(MAKE) -C trig all
 	$(MAKE) -C uart1_cpp all
 	$(MAKE) -C uart1_printf all
+	$(MAKE) -C uart1_printlonglong all
 	$(MAKE) -C uart1_sprintf all
 
 clean:
@@ -103,5 +104,6 @@ clean:
 	$(MAKE) -C trig clean
 	$(MAKE) -C uart1_cpp clean
 	$(MAKE) -C uart1_printf clean
+	$(MAKE) -C uart1_printlonglong clean
 	$(MAKE) -C uart1_sprintf clean
 
