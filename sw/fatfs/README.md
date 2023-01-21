@@ -13,6 +13,11 @@ The implementation currently supports:
 * Long filename support
 * Codepage 437 (US)
 
+Create a file called `read.txt` on the SD card. This program
+will read the ASCII characters and print them on the terminal.
+After that, the program will create and write a file
+called `write.txt`.
+
 ## status
 
 Works on the DE0-CV board
