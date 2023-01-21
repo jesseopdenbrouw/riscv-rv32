@@ -1,7 +1,7 @@
 #################################################################################################
 # tb_riscv.do - Modelsim command file for simulation                                            #
 # ********************************************************************************************* #
-# This file is part of the THUAS RISCV Minimal Project                                          #
+# This file is part of the THUAS RISCV RV32 Project                                             #
 # ********************************************************************************************* #
 # BSD 3-Clause License                                                                          #
 #                                                                                               #
