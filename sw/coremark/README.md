@@ -25,14 +25,14 @@ To build the executable for a certain CPU configuration and a certain optimizati
 Upload the generated executable `coremark.srec` with the `upload` program: `make upload`
 
 ```
-THUAS RISC-V Bootloader v0.2                                           
+THUAS RISC-V Bootloader v0.2
 **********
-                                                                                      
+
 THUASRV32: starting CoreMark
 THUASRV32: Processor running at 50000000 Hz
 THUASRV32: Executing coremark (2000 iterations). This may take some time...
 
-2K performance run parameters for coremark. 
+2K performance run parameters for coremark.
 CoreMark Size    : 666
 Total ticks      : 903162 k
 Total time (secs): 18
@@ -47,9 +47,8 @@ seedcrc          : 0xe9f5
 [0]crcstate      : 0x8e3a
 [0]crcfinal      : 0x4983
 Correct operation validated. See README.md for run and reporting rules.
-                                                                      
-THUASRV32: All reported numbers only show the integer part.
-THUASRV32: Executed instructions:       0x000000002331266e
-THUASRV32: CoreMark core clock cycles:  0x0000000035d52c54
-THUASRV32: Avg CPI: 1.529686 clock/instr
-THUASRV32: Avg IPC: 0.653729 instr/clock
+THUASRV32: Executed instructions:       0x0000000023315058
+THUASRV32: CoreMark core clock cycles:  0x0000000035d52c41
+THUASRV32: Avg CPI: 1.529658 clock/instr
+THUASRV32: Avg IPC: 0.653741 instr/clock
+
