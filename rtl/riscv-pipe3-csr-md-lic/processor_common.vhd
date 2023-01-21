@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # processor_common.vhd - Common types and constants                                             #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
@@ -107,9 +107,6 @@ package processor_common is
     -- Func7 extra function bits in instruction
     subtype func7_type is std_logic_vector(6 downto 0);
     
-    -- Behavior of the Program Counter
-    type pc_op_type is (pc_hold, pc_incr, pc_loadoffset, pc_loadoffsetregister, pc_branch, pc_load_mepc, pc_load_mtvec);
-    
     -- Size of memory access
     type memsize_type is (memsize_unknown, memsize_byte, memsize_halfword, memsize_word);
     
@@ -136,7 +133,7 @@ package processor_common is
                         
     -- Control and State register operations
     type csr_op_type is (csr_nop, csr_rw, csr_rs, csr_rc, csr_rwi, csr_rsi, csr_rci);
-    
+
     -- Interrupt types
     type interrupt_request_type is (irq_none, irq_hard, irq_soft);
 
@@ -189,7 +186,6 @@ package processor_common is
     -- visible on the 4 GB normal address space.
     constant csr_size_bits : integer := 12;
     constant csr_size : integer := 2**csr_size_bits;
-    type csr_type is array (0 to csr_size-1) of data_type;
     subtype csraddr_type is std_logic_vector(csr_size_bits-1 downto 0);
     subtype csrimmrs1_type is std_logic_vector(4 downto 0);
 
