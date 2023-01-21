@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <time.h>
 
 #include <thuasrv32.h>
 
@@ -13,58 +12,70 @@
 
 void print_cycle(void)
 {
-	char buffer[60];
-	uint64_t instret = csr_get_cycle();
+	uint64_t cycle = csr_get_cycle();
 
-	snprintf(buffer, sizeof buffer, "cycle: %lu\r", (uint32_t)instret);
-	uart1_puts(buffer);
+	uart1_printulonglong(cycle);
 	
 }
 
 void print_instret(void)
 {
-	char buffer[60];
 	uint64_t instret = csr_get_instret();
 
-	snprintf(buffer, sizeof buffer, "instret: %lu | ", (uint32_t)instret);
-	uart1_puts(buffer);
+	uart1_printulonglong(instret);
+	
+}
+
+void print_time(void)
+{
+	uint64_t time = csr_get_time();
+
+	uart1_printulonglong(time);
 	
 }
 
 int main(int argc, char *argv[])
 {
-	char buffer[60];
 	uint32_t start;
 
-	uart1_init(UART_PRESCALER(BAUD_RATE), 0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 	uart1_puts("\r\n");
 	uart1_puts(argv[0]);
 	uart1_puts("\r\n");
-	start = clock();
-	snprintf(buffer, sizeof buffer, "Clock: %lu\r\n", start);
-	uart1_puts(buffer);
 
-	/* Inhibit all counters */
-	csr_write(mcountinhibit, -1);
+	while (1) {
+		uart1_puts("Time: ");
+		print_time();
+		uart1_puts("\r\n");
 
-	/* Show the result */
-	uart1_puts("Counters should be stopped.\r\n");
-	for (int i = 0; i < 1000; i++) {
-		print_instret();
-		print_cycle();
+		/* Inhibit all counters */
+		csr_write(mcountinhibit, -1);
+
+		/* Show the result */
+		uart1_puts("Counters should be stopped.\r\n");
+		for (int i = 0; i < 1000; i++) {
+			uart1_puts("instret: ");
+			print_instret();
+			uart1_puts("| cycle: ");
+			print_cycle();
+			uart1_putc('\r');
+		}
+		uart1_puts("\r\n");
+
+		/* Start all counters */
+		csr_write(mcountinhibit, 0);
+
+		uart1_puts("Counters should be running.\r\n");
+		/* Show the result */
+		for (int i = 0; i < 1000; i++) {
+			uart1_puts("instret: ");
+			print_instret();
+			uart1_puts("| cycle: ");
+			print_cycle();
+			uart1_putc('\r');
+		}
+		uart1_puts("\r\n");
 	}
-	uart1_puts("\r\n");
-
-	/* Start all counters */
-	csr_write(mcountinhibit, 0);
-
-	uart1_puts("Counters should be running.\r\n");
-	/* Show the result */
-	for (int i = 0; i < 1000; i++) {
-		print_instret();
-		print_cycle();
-	}
-	uart1_puts("\r\n");
 
 	return 0;
 }
