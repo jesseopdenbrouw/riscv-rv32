@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # core.vhd - The processor core                                                                 #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
@@ -97,6 +97,9 @@ type if_id_type is record
 signal if_id : if_id_type;
 
 -- ID/EX signals for Execute stage
+    -- Behavior of the Program Counter
+type pc_op_type is (pc_hold, pc_incr, pc_loadoffset, pc_loadoffsetregister,
+                    pc_branch, pc_load_mepc, pc_load_mtvec);
 type id_ex_type is record
     alu_op : alu_op_type;
     rd : reg_type;
@@ -154,7 +157,6 @@ type control_type is record
     pc_to_mepc : data_type;
 end record control_type;
 signal control : control_type;
-
 
 type md_type is record
     -- Operation ready
@@ -222,8 +224,8 @@ begin
                     control.state <= state_exec;
                 -- The executing state
                 when state_exec =>
-                    -- Trap can be hard (IRQ) of soft (ECALL, EBREAK)
-                    if I_interrupt_request = irq_hard or I_interrupt_request = irq_soft then
+                    -- Trap request
+                    if I_interrupt_request = irq_hard then
                         control.state <= state_intr;
                     -- If we have an mret request (MRET)
                     elsif control.mret_request = '1' then
@@ -238,9 +240,9 @@ begin
                     elsif id_ex.md_start = '1' then
                         control.state <= state_md;
                     end if;
-                -- Wait for data (read from ROM or RAM)
+                -- Wait for data (read from ROM, boot ROM, RAM or I/O)
                 when state_wait =>
-                    -- During wait for data, trap can only be hard
+                    -- Trap request
                     if I_interrupt_request = irq_hard then
                         control.state <= state_intr;
                     else
@@ -248,7 +250,7 @@ begin
                     end if;
                 -- Flush
                 when state_flush =>
-                    -- During JAL, JALR, Bxx, trap can only be hard (IRQ)
+                    -- Trap request
                     if I_interrupt_request = irq_hard then
                         control.state <= state_intr;
                     else
@@ -256,7 +258,7 @@ begin
                     end if;
                 -- MD operation in progress
                 when state_md =>
-                    -- During MD operation, trap can only be hard (IRQ)
+                    -- Trap request
                     if I_interrupt_request = irq_hard then
                         control.state <= state_intr;
                     elsif md.ready = '1' then
