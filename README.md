@@ -90,7 +90,6 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 ## Plans (or not)
 
 * We are *not* planning the C standard.
-* The CSR is not within the specification. This will be addressed.
 * Implement clock stretching and arbitration in the I2C1 peripheral.
 * Adding input synchronization for SPI1/SPI2 and I2C1 peripherals.
 * Adding Input Capture for TIMER2.
@@ -98,7 +97,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Smaller (in cells) divide unit.
 * Test more functions of the standard and mathematical libraries.
 * It is not possible to print `long long` (i.e. 64-bit) using `printf` et al. When using the format specifier `%lld`, `printf` just prints `ld`. This due to lack of support in the `nano` library.
-* Further optimize the ALU for size and speed. The ALU is single-cycle and determines the maximum clock speed.
+* Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 
 ## Disclaimer
