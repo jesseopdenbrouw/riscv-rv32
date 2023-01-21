@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # address_decode.vhd - Address Decoder and Data Router between the core and the memory          #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
