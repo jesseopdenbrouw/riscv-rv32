@@ -1,7 +1,7 @@
 -- #################################################################################################
 -- # riscv.vhd - The top level of the processor                                                    #
 -- # ********************************************************************************************* #
--- # This file is part of the THUAS RISCV Minimal Project                                          #
+-- # This file is part of the THUAS RISCV RV32 Project                                             #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
@@ -236,6 +236,7 @@ component csr is
           I_csr_immrs1 : in csrimmrs1_type;
           I_csr_instret : in std_logic;
           O_csr_dataout : out data_type;
+          O_illegal_instruction_error : out std_logic;
           -- Exceptions/interrupts
           I_interrupt_request : in interrupt_request_type;
           I_interrupt_release : in std_logic;
@@ -327,7 +328,8 @@ signal mtvec2mtvec : data_type;
 signal mepc2mepc : data_type;
 signal ecall_request_int : std_logic;
 signal ebreak_request_int : std_logic;
-signal illegal_instruction_error_int : std_logic;
+signal illegal_instruction_error_int : std_logic_vector(1 downto 0);
+signal illegal_instruction_error_merge_int : std_logic;
 signal instruction_misaligned_error_int : std_logic_vector(1 downto 0);
 signal instruction_misaligned_error_merge_int : std_logic;
 signal mcause_int : data_type;
@@ -378,7 +380,7 @@ begin
               I_mtvec => mtvec2mtvec,
               O_pc_to_mepc => pc_to_mepc_int,
               I_mepc => mepc2mepc,
-              O_illegal_instruction_error => illegal_instruction_error_int
+              O_illegal_instruction_error => illegal_instruction_error_int(1)
              );
     
     gen_address_decode_boot_rom: if HAVE_BOOTLOADER_ROM generate
@@ -539,6 +541,7 @@ begin
               I_csr_instret => instret_int,
               I_csr_datain => csr_core_2_csr,
               O_csr_dataout => csr_csr_2_core,
+              O_illegal_instruction_error => illegal_instruction_error_int(0),
               I_interrupt_request => interrupt_request_int,
               I_interrupt_release => interrupt_release_int,
               I_intrio => intrio_int,
@@ -561,7 +564,7 @@ begin
               I_mie_mtie => mie_mtie_int,
               I_ecall_request => ecall_request_int,
               I_ebreak_request => ebreak_request_int,
-              I_illegal_instruction_error_request => illegal_instruction_error_int,
+              I_illegal_instruction_error_request => illegal_instruction_error_merge_int,
               I_instruction_misaligned_error_request => instruction_misaligned_error_merge_int,
               I_load_access_error_request => load_access_error_int,
               I_store_access_error_request => store_access_error_int,
@@ -577,5 +580,6 @@ begin
     load_misaligned_error_merge_int <= load_misaligned_error_int(3) or load_misaligned_error_int(2) or load_misaligned_error_int(1) or load_misaligned_error_int(0);
     store_misaligned_error_merge_int <= store_misaligned_error_int(2) or store_misaligned_error_int(1) or store_misaligned_error_int(0);
     instruction_misaligned_error_merge_int <= instruction_misaligned_error_int(1) or instruction_misaligned_error_int(0);
+    illegal_instruction_error_merge_int <= illegal_instruction_error_int(1) or illegal_instruction_error_int(0);
 
 end architecture rtl;
