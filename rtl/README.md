@@ -1,7 +1,7 @@
 # Hardware
 
 This directory contains the hardware description of the
-RISC-V 32-bit processor.
+THUAS RISC-V RV32IM 32-bit processor.
 
 
 ## riscv-pipe3-csr-md-lic
@@ -13,7 +13,7 @@ is able to load an S-record file into the ROM at address
 0x00000000 using the `upload` program.
 
 When the processor starts, the bootloader waits for about
-5 seconds for a keboard press (using the USART). If not
+5 seconds for a keboard press (using the UART). If not
 within this 5 seconds, the bootloader starts the main
 program at address 0x00000000. If pressed, the bootloader
 enters a simple monitor program. Type 'h' for help.
