@@ -1,6 +1,6 @@
 # I2C -- read temperature from TMP102
 
-This program reads raw temperature data from an TMP102
+This program reads raw temperature data from a TMP102
 digital temperature sensor on the I2C1 bus. Address is
 0x48. If slave is found, the temperature high and low
 bytes are read and printed on the terminal. Conversion
