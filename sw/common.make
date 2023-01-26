@@ -43,4 +43,4 @@ LIBTHUASRV32STRING = -lthuasrv32 -L../lib
 MARCHABISTRING = -march=rv32im -mabi=ilp32
 
 # Linker specs files
-SPECSSTRING = --specs=../lib/libsys.specs --specs=../lib/nano.specs
+SPECSSTRING = --specs=../lib/thuas.specs --specs=../lib/nano.specs
