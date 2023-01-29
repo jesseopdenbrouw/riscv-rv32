@@ -26,6 +26,11 @@ uint8_t i2c1_receive_byte(void);
 /* Receive a buffer of uint8_t from I2C1 */
 uint32_t i2c1_receive(uint8_t address, uint8_t *buf, uint32_t len);
 
+#define I2C_PRESCALER_FM(A) (((A/3UL/400000UL)-1) << 16)
+#define I2C_PRESCALER_SM(A) (((A/2UL/100000UL)-1) << 16)
+#define I2C_FAST_MODE (1 << 2)
+#define I2C_STANDARD_MODE (0 << 2)
+
 #ifdef __cplusplus
 }
 #endif
