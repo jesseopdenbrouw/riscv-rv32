@@ -19,8 +19,6 @@
 #define BAUD_RATE (9600UL)
 #endif
 
-/* Standard mode (Sm), 100 kHz */
-#define TRAN_SPEED ((F_CPU/2UL/100000UL)-1)
 
 int main(void)
 {
@@ -28,11 +26,10 @@ int main(void)
 
 	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
-	uart1_puts("\r\nI2C1 find slaves\r\nSpeed set to: ");
-	snprintf(buffer, sizeof buffer, "%lu\r\n", TRAN_SPEED);
-	uart1_puts(buffer);
+	uart1_puts("\r\nI2C1 find slaves\r\n");
 
-	i2c1_init(TRAN_SPEED << 16);
+	/* Standard mode (Sm), 100 kHz */
+	i2c1_init(I2C_PRESCALER_SM(F_CPU));
 
 	for (uint32_t i = 0x01; i < 0x78; i++) {
 
