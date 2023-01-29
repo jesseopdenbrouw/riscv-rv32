@@ -30,18 +30,18 @@
 #define BAUD_RATE (9600UL)
 #endif
 
-#define FAST_MODE (1)
+#define FAST_MODE (0)
 #define TMP102_ADDR (0x48)
 
 
 #if FAST_MODE == 1
 /* Fast mode (Fm), 400 kHz */
-#define TRAN_SPEED (((F_CPU/3UL/400000UL)-1)+1)
-#define FAST_MODE_BIT (1 << 2)
+#define TRAN_SPEED I2C_PRESCALER_FM(F_CPU)
+#define FAST_MODE_BIT I2C_FAST_MODE
 #else
 /* Standard mode (Sm), 100 kHz */
-#define TRAN_SPEED (((F_CPU/2UL/100000UL)-1)+1)
-#define FAST_MODE_BIT (0 << 2)
+#define TRAN_SPEED I2C_PRESCALER_SM(F_CPU)
+#define FAST_MODE_BIT I2C_STANDARD_MODE
 #endif
 
 
@@ -52,11 +52,9 @@ int main(void)
 
 	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
-	uart1_puts("I2C1 with TMP102\r\nSpeed set to: ");
-	snprintf(buffer, sizeof buffer, "%lu\r\n", TRAN_SPEED);
-	uart1_puts(buffer);
+	uart1_puts("I2C1 with TMP102\r\n");
 
-	i2c1_init((TRAN_SPEED << 16) | FAST_MODE_BIT);
+	i2c1_init(TRAN_SPEED | FAST_MODE_BIT);
 
 	while(1) {
 
