@@ -24,12 +24,12 @@
 
 #if FAST_MODE == 1
 /* Fast mode (Fm), 400 kHz */
-#define TRAN_SPEED (((F_CPU/3UL/400000UL)-1)+1)
-#define FAST_MODE_BIT (1 << 2)
+#define TRAN_SPEED I2C_PRESCALER_FM(F_CPU)
+#define FAST_MODE_BIT I2C_FAST_MODE
 #else
 /* Standard mode (Sm), 100 kHz */
-#define TRAN_SPEED (((F_CPU/2UL/100000UL)-1)+1)
-#define FAST_MODE_BIT (0 << 2)
+#define TRAN_SPEED I2C_PRESCALER_SM(F_CPU)
+#define FAST_MODE_BIT I2C_STANDARD_MODE
 #endif
 
 int main(void) {
@@ -37,7 +37,7 @@ int main(void) {
 	ssd1315_status_t ret;
 	uint8_t buf[10] = {0};
 
-	i2c1_init((TRAN_SPEED << 16) | FAST_MODE_BIT);
+	i2c1_init(TRAN_SPEED | FAST_MODE_BIT);
 
 	ret = ssd1315_init();
 
