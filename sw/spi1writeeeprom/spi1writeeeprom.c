@@ -39,7 +39,7 @@ int main(void)
 	/* Buffer with the WRITE command, the address and the data to write.
 	 * The 25AA010A can write 16 bytes max in one transfer, on 16-byte
 	 * boundaries. */
-	uint8_t wbuf[] = { EEPROMWRITE, ADDRESS, 0xaa, 0x55, 0xde, 0xad, 0xbe, 0xef, 0xaa, 0xbb };
+	uint8_t wbuf[] = { EEPROMWRITE, ADDRESS, 'T', 'e', 's', 't', 0xbe, 0xef, 0xaa, 0xbb };
 	uint8_t rbuf[16] = { 0 };
 
 	/* Deactivate device, soft NSS high */

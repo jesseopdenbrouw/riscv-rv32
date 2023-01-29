@@ -419,8 +419,8 @@ begin
     variable imm_s_v : data_type;
     variable imm_shamt_v : data_type;
     variable rs1_v, rs2_v, rd_v : reg_type;
-    variable selaout_v : integer range 0 to NUMBER_OF_REGISTERS-1;
-    variable selbout_v : integer range 0 to NUMBER_OF_REGISTERS-1;
+    variable selrs1_v : integer range 0 to NUMBER_OF_REGISTERS-1;
+    variable selrs2_v : integer range 0 to NUMBER_OF_REGISTERS-1;
     begin
 
         -- Replace opcode with a nop if we flush
@@ -462,8 +462,8 @@ begin
         imm_shamt_v(31 downto 5) := (others => '0');
         imm_shamt_v(4 downto 0) := rs2_v;
 
-        selaout_v := to_integer(unsigned(rs1_v));
-        selbout_v := to_integer(unsigned(rs2_v));
+        selrs1_v := to_integer(unsigned(rs1_v));
+        selrs2_v := to_integer(unsigned(rs2_v));
         
         if I_areset = '1' then
             id_ex.pc <= (others => '0');
@@ -527,8 +527,8 @@ begin
                 id_ex.imm <= (others => '0');
                 id_ex.alu_op <= alu_nop;
                 id_ex.pc_op <= pc_incr;
-                id_ex.rs1data <= regs(selaout_v);
-                id_ex.rs2data <= regs(selbout_v);
+                id_ex.rs1data <= regs(selrs1_v);
+                id_ex.rs2data <= regs(selrs2_v);
                 id_ex.md_start <= '0';
                 id_ex.md_op <= (others => '0');
                 id_ex.memaccess <= memaccess_nop;

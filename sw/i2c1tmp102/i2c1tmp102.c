@@ -21,8 +21,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "io.h"
-#include "uart.h"
+#include <thuasrv32.h>
 
 #ifndef F_CPU
 #define F_CPU (50000000UL)
@@ -41,74 +40,38 @@
 #define FAST_MODE_BIT (1 << 2)
 #else
 /* Standard mode (Sm), 100 kHz */
-#define TRAN_SPEED (((F_CPU/2UL/400000UL)-1)+1)
+#define TRAN_SPEED (((F_CPU/2UL/100000UL)-1)+1)
 #define FAST_MODE_BIT (0 << 2)
 #endif
 
 
 int main(void)
 {
-	uint32_t temphi = 0;
-	uint32_t templo = 0;
 	char buffer[40];
+	uint8_t buf[4];
 
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	uart1_puts("I2C1 with TMP102\r\nSpeed set to: ");
 	snprintf(buffer, sizeof buffer, "%lu\r\n", TRAN_SPEED);
 	uart1_puts(buffer);
 
-	I2C1->CTRL = (TRAN_SPEED << 16) | FAST_MODE_BIT;
+	i2c1_init((TRAN_SPEED << 16) | FAST_MODE_BIT);
 
 	while(1) {
 
-		/* Set START generation */
-		I2C1->CTRL |= (1 << 9);
+		/* Set register to read */
+		buf[0] = 0x00;
 
-		/* Write address + write bit */
-		I2C1->DATA = (TMP102_ADDR << 1) | 0;
-
-		/* Wait for data transmission completed */
-		while ((I2C1->STAT & 0x08) == 0x00);
-
-		/* Check ACKnowledge */
-		if (I2C1->STAT & (1 << 5)) {
+		/* Write to address, the register number */
+		if (i2c1_transmit((TMP102_ADDR << 1) | 0, buf, 1) != 0) {
 			uart1_puts("ACK failed!\r\n");
 		} else {
-
-			/* Write register number and STOP generation */
-			I2C1->CTRL |= (1 << 8);
-			I2C1->DATA = 0x00;
-			while ((I2C1->STAT & 0x08) == 0x00);
-
-
-			/* Read in response */
-
-			/* Set START generation */
-			I2C1->CTRL |= (1 << 9);
-
-			/* Write address + read bit */
-			I2C1->DATA = (TMP102_ADDR << 1) | 1;
-
-			/* Wait for data transmission completed */
-			while ((I2C1->STAT & 0x08) == 0x00);
-
-			/* I2C1 device now switched to reception */
-
-			/* Wait for data transmission completed */
-			while ((I2C1->STAT & 0x10) == 0x00);
-
-			temphi = I2C1->DATA;
-
-			/* Set STOP generation */
-			I2C1->CTRL |= (1 << 8);
-			/* Wait for data transmission completed */
-			while ((I2C1->STAT & 0x10) == 0x00);
-
-			templo = I2C1->DATA;
+			/* All went well, now read two bytes */
+			i2c1_receive((TMP102_ADDR << 1) | 1, buf, 2);
 
 			/* Print out the data */
-			snprintf(buffer, sizeof buffer, "HI: 0x%02lx, LO: 0x%02lx\r\n", temphi, templo);
+			snprintf(buffer, sizeof buffer, "HI: 0x%02x, LO: 0x%02x\r\n", buf[0], buf[1]);
 			uart1_puts(buffer);
 		}
 

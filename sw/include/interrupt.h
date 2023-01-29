@@ -14,6 +14,15 @@
 #define TRAP_DIRECT_MODE (0)
 #define TRAP_VECTORED_MODE (1)
 
+/* Frame for traps */
+typedef struct {
+	uint32_t regs[32];
+	uint32_t mcause;
+	uint32_t mepc;
+	uint32_t instr;
+	uint32_t mtval;
+} trap_frame_t;
+
 /* Enable the global IRQ */
 #define enable_irq() \
     __asm__ volatile (".option push;" \

@@ -20,12 +20,15 @@ SRC = $(wildcard */*.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
 
 .PHONY: all
-all:
+all: $(LIBTHUASRV32)
+
+$(LIBTHUASRV32):
 	make -C syscalls all
 	make -C uart all
 	make -C util all
 	make -C csr all
 	make -C spi all
+	make -C i2c all
 	$(AR) rsv $(LIBTHUASRV32) $(OBJ)
 
 
@@ -36,4 +39,5 @@ clean:
 	make -C util clean
 	make -C csr clean
 	make -C spi clean
+	make -C i2c clean
 	rm -f $(LIBTHUASRV32)

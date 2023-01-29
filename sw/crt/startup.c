@@ -59,10 +59,10 @@ void _start(void)
 	 * catch pre-init traps. Mostly because of a bug. */
         __asm__ volatile (".option push;"
 						  ".option norelax;"
-						  "la    gp, __global_pointer$;"
-						  "la    sp, __stack_pointer$;"
                           "la    t0, pre_init_universal_handler;"
    			     		  "csrw  mtvec,t0;"
+						  "la    gp, __global_pointer$;"
+						  "la    sp, __stack_pointer$;"
 						  ".option pop"
                    		   : /* output: none */
      		               : /* input: none */

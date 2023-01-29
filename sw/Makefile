@@ -31,6 +31,7 @@ all:
 	$(MAKE) -C global all
 	$(MAKE) -C hex_display all
 	$(MAKE) -C i2c1findslaves all
+	$(MAKE) -C i2c1ssd1315 all
 	$(MAKE) -C i2c1tmp102 all
 	$(MAKE) -C interrupt_direct all
 	$(MAKE) -C interrupt_vectored all
@@ -58,6 +59,7 @@ all:
 	$(MAKE) -C uart1_printf all
 	$(MAKE) -C uart1_printlonglong all
 	$(MAKE) -C uart1_sprintf all
+	$(MAKE) -C uart1_test all
 
 clean:
 	$(MAKE) -C srec2vhdl clean
@@ -79,6 +81,7 @@ clean:
 	$(MAKE) -C global clean
 	$(MAKE) -C hex_display clean
 	$(MAKE) -C i2c1findslaves clean
+	$(MAKE) -C i2c1ssd1315 clean
 	$(MAKE) -C i2c1tmp102 clean
 	$(MAKE) -C interrupt_direct clean
 	$(MAKE) -C interrupt_vectored clean
@@ -106,4 +109,5 @@ clean:
 	$(MAKE) -C uart1_printf clean
 	$(MAKE) -C uart1_printlonglong clean
 	$(MAKE) -C uart1_sprintf clean
+	$(MAKE) -C uart1_test clean
 

@@ -14,6 +14,7 @@
 #include <interrupt.h>
 #include <util.h>
 #include <spi.h>
+#include <i2c.h>
 
 #endif
 

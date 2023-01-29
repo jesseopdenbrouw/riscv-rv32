@@ -13,7 +13,7 @@ int main(void)
 	char buffer[40];
 #endif
 	char line[100];
-	char string[] = "This is a very long sentence with a lot of characters to save in a file\n";
+	const char string[] = "This is a very long sentence with a lot of characters to save in a file\n";
 	int count = 0;
 
 	FATFS fs;

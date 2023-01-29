@@ -15,6 +15,12 @@ extern "C" {
 void spi1_init(uint32_t value);
 /* Read/write data to SPI1 */
 uint32_t spi1_transfer(uint32_t data);
+/* Transmit a buffer of uint8_t to SPI1 */
+void spi1_transmit(uint8_t *buf, uint32_t len);
+/* Receive a buffer of uint8_t from SPI1 */
+void spi1_receive(uint8_t *buf, uint32_t len, uint32_t dummy);
+/* Transmit to and receive from uint8_t buffers using SPI1 */
+void spi1_transmit_receive(uint8_t *buft, uint8_t *bufr, uint32_t len);
 /* SPI1 software-enabled Chip Select
  * This is an empty stub. User must
  * supply a function which uses a

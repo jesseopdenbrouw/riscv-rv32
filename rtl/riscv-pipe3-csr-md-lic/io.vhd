@@ -410,8 +410,7 @@ begin
                     if reg_int = uart1baud_addr then
                         -- A write to the baud rate register
                         -- Use only 16 bits for baud rate
-                        uart1baud_int(31 downto 16) <= (others => '0');
-                        uart1baud_int(15 downto 0) <= I_datain(15 downto 0);
+                        uart1baud_int <= I_datain;
                     elsif reg_int = uart1ctrl_addr then
                         -- A write to the control register
                         uart1ctrl_int <= I_datain;
@@ -643,6 +642,10 @@ begin
                     when others =>
                         uart1rxstate <= rx_idle;
                 end case;
+                uart1baud_int(31 downto 16) <= (others => '0');
+                uart1data_int(31 downto 9) <= (others => '0');
+                --uart1ctrl_int(31 downto 8) <= (others => '0');
+                --uart1stat_int(31 downto 5) <= (others => '0');
             end if;
         end process;
     end generate;
