@@ -2,13 +2,13 @@
 
 uint32_t i2c1_receive(uint8_t address, uint8_t *buf, uint32_t len)
 {
-	/* If lenght is 0, only transmit address + START + STOP */
+	/* If length is 0, only transmit address + START + STOP */
 	if (len == 0) {
 		return i2c1_transmit_address_only(address);
 	}
 
 	/* Transmit address + START */
-	register uint32_t ret = i2c1_transmit_address(address);
+	uint32_t ret = i2c1_transmit_address(address);
 
 	/* If error, return */
 	if (ret) {
