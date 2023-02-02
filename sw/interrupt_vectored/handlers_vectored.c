@@ -5,14 +5,13 @@
  * called via the jump table since we are using vectored
  * interrupts.
  *
- * (c) 2022, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>'
+ * (c) 2023, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>'
  *
  */
 
 #include <stdint.h>
 
-#include "io.h"
-#include "uart.h"
+#include <thuasrv32.h>
 
 #ifndef CLOCK_FREQUENCY
 #define CLOCK_FREQUENCY (1000000ULL)
@@ -24,23 +23,36 @@
 /* Set TIMECMP delta to some reasonable value */
 static uint64_t external_timer_delta = (CLOCK_FREQUENCY/INTERRUPT_FREQUENCY);
 
-/* Debugger stub, currenly prints the contents of mip CSR.
+/* Debugger stub, currenly prints the contents of
+ * mepc CSR and instruction.
  * The debugger function must NOT call any system
  * calls or trigger execptions. */
-void debugger(uint32_t stack_pointer)
+void debugger(trap_frame_t *tf)
 {
+	static const char hex[] = "0123456789abcdef";
+
+	/* Buffer for printing */
+	char buf[12];
+
+	register uint32_t val = tf->mepc;
+
 	/* You cannot use printf here as it uses ECALL */
-	uart1_puts("\r\nEBREAK! mip = ");
+	uart1_puts("\r\nEBREAK! mepc = ");
 
-	register uint32_t mask = 0x80000000;
-	register uint32_t mip;
-
-	__asm__ volatile ("csrr %0, mip" : "=r"(mip) ::);
-
-	while (mask) {
-		uart1_putc(mip & mask ? '1' : '0');
-		mask >>= 1;
+	for (int i = 7; i >= 0; i--) {
+		buf[i] = hex[val & 0xf];
+		val >>= 4;
 	}
+	buf[8] = '\0';
+	uart1_puts(buf);
+
+	uart1_puts(" insn = ");
+	val = tf->instr;
+	for (int i = 7; i >= 0; i--) {
+		buf[i] = hex[val & 0xf];
+		val >>= 4;
+	}
+	uart1_puts(buf);
 	uart1_puts("\r\n");
 }
 
