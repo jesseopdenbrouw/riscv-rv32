@@ -101,8 +101,8 @@ entity io is
           -- Hardware interrupt request
           O_intrio : out data_type;
           -- TIME and TIMEH
-          O_time : out data_type;
-          O_timeh : out data_type
+          O_mtime : out data_type;
+          O_mtimeh : out data_type
          );
 end entity io;
     
@@ -158,11 +158,11 @@ signal uart1rxd_sync : std_logic;
 constant i2c1ctrl_addr : integer := 16;   -- 0x40.b
 constant i2c1stat_addr : integer := 17;   -- 0x44.b
 constant i2c1data_addr : integer := 18;   -- 0x48.b
-constant i2c1addr_addr : integer := 19;   -- 0x4c.b
+--constant i2c1addr_addr : integer := 19;   -- 0x4c.b
 alias i2c1ctrl_int : data_type is io(i2c1ctrl_addr);
 alias i2c1stat_int : data_type is io(i2c1stat_addr);
 alias i2c1data_int : data_type is io(i2c1data_addr);
-alias i2c1addr_int : data_type is io(i2c1addr_addr);
+--alias i2c1addr_int : data_type is io(i2c1addr_addr);
 signal i2c1txbuffer : data_type;
 type i2c1state_type is (idle, send_startbit, send_data_first, send_data_second,
                         chk_ack_first, chk_ack_second, receive_data_first,
@@ -186,6 +186,8 @@ alias i2c1isreceiving : std_logic is i2c1stat_int(2);
 alias i2c1tc : std_logic is i2c1stat_int(3); 
 alias i2c1rc : std_logic is i2c1stat_int(4); 
 alias i2c1ackfail : std_logic is i2c1stat_int(5);
+alias i2c1busy : std_logic is i2c1stat_int(6);
+signal i2c1sda_prev : std_logic;
 
 -- Register 19 - 23 not used, reserved
 
@@ -281,14 +283,14 @@ signal timer2occ_int : std_logic;
 
 
 -- RISC-V system timer TIME and TIMECMP
-constant time_addr : integer := 60;      -- 0xf0.b
-constant timeh_addr : integer := 61;     -- 0xf4.b
-constant timecmp_addr : integer := 62;   -- 0xf8.b
-constant timecmph_addr : integer := 63;  -- 0xfc.b
-alias time_int : data_type is io(time_addr);
-alias timeh_int : data_type is io(timeh_addr);
-alias timecmp_int : data_type is io(timecmp_addr);
-alias timecmph_int : data_type is io(timecmph_addr);
+constant mtime_addr : integer := 60;      -- 0xf0.b
+constant mtimeh_addr : integer := 61;     -- 0xf4.b
+constant mtimecmp_addr : integer := 62;   -- 0xf8.b
+constant mtimecmph_addr : integer := 63;  -- 0xfc.b
+alias mtime_int : data_type is io(mtime_addr);
+alias mtimeh_int : data_type is io(mtimeh_addr);
+alias mtimecmp_int : data_type is io(mtimecmp_addr);
+alias mtimecmph_int : data_type is io(mtimecmph_addr);
 
 begin
 
@@ -322,7 +324,7 @@ begin
                     when i2c1ctrl_addr   => O_dataout <= i2c1ctrl_int;
                     when i2c1stat_addr   => O_dataout <= i2c1stat_int;
                     when i2c1data_addr   => O_dataout <= i2c1data_int;
-                    when i2c1addr_addr   => O_dataout <= i2c1addr_int;
+                    --when i2c1addr_addr   => O_dataout <= i2c1addr_int;
                     when spi1ctrl_addr   => O_dataout <= spi1ctrl_int;
                     when spi1stat_addr   => O_dataout <= spi1stat_int;
                     when spi1data_addr   => O_dataout <= spi1data_int;
@@ -341,10 +343,10 @@ begin
                     when timer2cmpa_addr => O_dataout <= timer2cmpa_int;
                     when timer2cmpb_addr => O_dataout <= timer2cmpb_int;
                     when timer2cmpc_addr => O_dataout <= timer2cmpc_int;
-                    when time_addr       => O_dataout <= time_int;
-                    when timeh_addr      => O_dataout <= timeh_int;
-                    when timecmp_addr    => O_dataout <= timecmp_int;
-                    when timecmph_addr   => O_dataout <= timecmph_int;
+                    when mtime_addr       => O_dataout <= mtime_int;
+                    when mtimeh_addr      => O_dataout <= mtimeh_int;
+                    when mtimecmp_addr    => O_dataout <= mtimecmp_int;
+                    when mtimecmph_addr   => O_dataout <= mtimecmph_int;
                     when others => O_dataout <= (others => '-');
                 end case;
             end if;
@@ -660,7 +662,7 @@ begin
                 i2c1ctrl_int <= (others => '0');
                 i2c1stat_int <= (others => '0');
                 i2c1data_int <= (others => '0');
-                i2c1addr_int <= (others => '0');
+                --i2c1addr_int <= (others => '0');
                 i2c1scl_out <= '1';
                 i2c1sda_out <= '1';
                 i2c1state <= idle;
@@ -669,6 +671,7 @@ begin
                 i2c1txbuffer <= (others => '0');
                 i2c1rxbuffer <= (others => '0');
                 i2c1startsend <= '0';
+                i2c1sda_prev <= '0';
             elsif rising_edge(I_clk) then
                 i2c1startsend <= '0';
                 -- Common register writes
@@ -683,8 +686,8 @@ begin
                         i2c1startsend <= '1';
                         i2c1tc <= '0';
                         i2c1ackfail <= '0';
-                    elsif reg_int = i2c1addr_addr then
-                        i2c1addr_int <= I_datain;
+                    --elsif reg_int = i2c1addr_addr then
+                    --    i2c1addr_int <= I_datain;
                     end if;
                 end if;
                 if isword and I_csio = '1' and I_wren = '0' then
@@ -693,6 +696,21 @@ begin
                         i2c1rc <= '0';
                     end if;
                 end if;
+
+                -- Check if I2C1 bus is free or busy
+                -- If SCL is high...
+                if IO_i2c1scl /= '0' then
+                    -- And a falling edge on SDA...
+                    if i2c1sda_prev /= '0' and IO_i2c1sda = '0' then
+                        -- signals a START, so bus is busy
+                        i2c1busy <= '1';
+                    -- And rising edge on SDA...
+                    elsif i2c1sda_prev = '0' and IO_i2c1sda /= '0' then
+                        -- signals a STOP, so bus is free
+                        i2c1busy <= '0';
+                    end if;
+                end if;
+                i2c1sda_prev <= IO_i2c1sda;
 
                 case i2c1state is
                     when idle =>
@@ -944,7 +962,7 @@ begin
                 end case;
                 -- Clear unusd bits
                 i2c1data_int(31 downto 8) <= (others => '0');
-                i2c1addr_int(31 downto 8) <= (others => '0');
+                --i2c1addr_int(31 downto 8) <= (others => '0');
                 i2c1txbuffer(31 downto 8) <= (others => '0');
                 i2c1rxbuffer(31 downto 8) <= (others => '0');
 
@@ -1714,13 +1732,13 @@ begin
     -- These registers are memory mapped
     --
     process (I_clk, I_areset, io) is
-    variable time_reg : unsigned(63 downto 0);
-    variable timecmp_reg : unsigned(63 downto 0);
+    variable mtime_reg : unsigned(63 downto 0);
+    variable mtimecmp_reg : unsigned(63 downto 0);
     variable prescaler : integer range 0 to freq_sys/freq_count-1;
     begin
         if I_areset = '1' then
-            time_reg := (others => '0');
-            timecmp_reg := (others => '0');
+            mtime_reg := (others => '0');
+            mtimecmp_reg := (others => '0');
             prescaler := 0;
         elsif rising_edge(I_clk) then
             if isword and I_csio = '1' and I_wren = '1' then
@@ -1733,34 +1751,34 @@ begin
 --                    time_reg(63 downto 32) := unsigned(I_datain);
 --                end if;
                 -- Load compare register (low 32 bits)
-                if reg_int = timecmp_addr then
-                    timecmp_reg(31 downto 0) := unsigned(I_datain);
+                if reg_int = mtimecmp_addr then
+                    mtimecmp_reg(31 downto 0) := unsigned(I_datain);
                 end if;
                 -- Load compare register (high 32 bits)
-                if reg_int = timecmph_addr then
-                    timecmp_reg(63 downto 32) := unsigned(I_datain);
+                if reg_int = mtimecmph_addr then
+                    mtimecmp_reg(63 downto 32) := unsigned(I_datain);
                 end if;
             end if;
             -- Update system timer
             if prescaler = freq_sys/freq_count-1 then
                 prescaler := 0;
-                time_reg := time_reg + 1;
+                mtime_reg := mtime_reg + 1;
             else
                 prescaler := prescaler + 1;
             end if;
         end if;
-        time_int <= std_logic_vector(time_reg(31 downto 0));
-        timeh_int <= std_logic_vector(time_reg(63 downto 32));
-        timecmp_int <= std_logic_vector(timecmp_reg(31 downto 0));
-        timecmph_int <= std_logic_vector(timecmp_reg(63 downto 32));
+        mtime_int <= std_logic_vector(mtime_reg(31 downto 0));
+        mtimeh_int <= std_logic_vector(mtime_reg(63 downto 32));
+        mtimecmp_int <= std_logic_vector(mtimecmp_reg(31 downto 0));
+        mtimecmph_int <= std_logic_vector(mtimecmp_reg(63 downto 32));
         -- If compare register >= time register, assert interrupt
-        if time_reg >= timecmp_reg then
+        if mtime_reg >= mtimecmp_reg then
             O_intrio(7) <= '1';
         else
             O_intrio(7) <= '0';
         end if;
-        O_time <= time_int;
-        O_timeh <= timeh_int;
+        O_mtime <= mtime_int;
+        O_mtimeh <= mtimeh_int;
     end process;
     
     --
