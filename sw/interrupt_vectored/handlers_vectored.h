@@ -8,8 +8,10 @@
 #ifndef _HANDLERS_H
 #define _HANDLERS_H
 
+#include <thuasrv32.h>
+
 /* Debugger */
-void debugger(uint32_t stack_pointer);
+void debugger(trap_frame_t *tf);
 /* TIMER1 compare match T interrupt */
 void timer1_handler(void);
 /* External timer handler */
