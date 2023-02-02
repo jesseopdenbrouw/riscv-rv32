@@ -228,20 +228,24 @@ int main(int argc, char *argv[]) {
 	if (n == 0) {
 		printf("Cannot contact bootloader!\n");
 		printf("Did you closed the terminal program?\n");
+		fflush(stdout);
 		close(fd);
 		fclose(fin);
 		exit(-9);
 	}
 
+/*
 	if (line[0] != '?') {
 		printf("Wrong reply from bootloader!\n");
+		fflush(stdout);
 		close(fd);
 		fclose(fin);
 		exit(-10);
 	}
-
+*/
 	if (verbose) {
 		printf("Contacted bootloader!\n");
+		fflush(stdout);
 	}
 
 	/* Read in data from device, if any */
@@ -279,20 +283,24 @@ int main(int argc, char *argv[]) {
 		if (n == 0) {
 			printf("Nothing read while sending data!\n");
 			printf("Did you closed the terminal program?\n");
+			fflush(stdout);
 			close(fd);
 			fclose(fin);
 			exit(-11);
 		} else {
 			if (verbose) {
 				printf("  OK\n");
+				fflush(stdout);
 			} else if (!quiet) {
 				printf("*");
+				fflush(stdout);
 			}
 		}
 	}
 
 	if (!quiet && !verbose) {
 		printf("\n");
+		fflush(stdout);
 	}
 
 	/* Write end of transmission marker */
@@ -325,12 +333,14 @@ int main(int argc, char *argv[]) {
 	if (n == 0) {
 		printf("Nothing read while sending end of transmission!\n");
 		printf("Did you closed the terminal program?\n");
+		fflush(stdout);
 		close(fd);
 		fclose(fin);
 		exit(-12);
 	} else {
 		if (verbose) {
 			printf("  OK\n");
+			fflush(stdout);
 		}
 	}
 
