@@ -124,7 +124,7 @@ void universal_handler(void)
 	 * including a0 (x10) but note that system calls
 	 * return the status code in a0, so in that case
 	 * we must not restore a0 */
-	__asm__ volatile ("addi    sp,sp,-32*4;"
+	__asm__ volatile ("addi    sp,sp,-36*4;"
 		          "sw      x1,1*4(sp);"
 		          "sw      x2,2*4(sp);"
 		          "sw      x3,3*4(sp);"
@@ -156,6 +156,14 @@ void universal_handler(void)
 		          "sw      x29,29*4(sp);"
 		          "sw      x30,30*4(sp);"
 		          "sw      x31,31*4(sp);"
+		          "csrr    t0,mcause;"
+				  "sw      t0,32*4(sp);"
+				  "csrr    t0,mepc;"
+				  "sw      t0,33*4(sp);"
+				  "lw      t0,0(t0);"
+				  "sw      t0,34*4(sp);"
+				  "csrr    t0,mtval;"
+				  "sw      t0,35*4(sp);"
 	      	          :::);
 
 	/* mcause from CSR */
@@ -330,9 +338,8 @@ void universal_handler(void)
 			__asm__ volatile ("mv a0,%0" : : "r"(return_value));
 		}
 	} else if (__mcause == EBREAK_IN_MCAUSE) {
-		/* Calls the debugger. Currently calls a stub.
-		 * Currently only restores a0. */
-		debugger(stack_pointer);
+		/* Calls the debugger. Currently a stub. */
+		debugger((trap_frame_t *)stack_pointer);
 		__asm__ volatile ("lw      x10,10*4(sp);" :::);
 	} else if (__mcause == ILLEGAL_INSTRUCTION_IN_MCAUSE) {
 		/* Do nothing for now. Must handle illegal instruction.
@@ -387,7 +394,7 @@ void universal_handler(void)
 		          "lw      x3,3*4(sp);"
 		          "lw      x2,2*4(sp);"
 		          "lw      x1,1*4(sp);"
-		          "addi    sp,sp,32*4;"
+		          "addi    sp,sp,36*4;"
 		          "mret"
 	      	          :::);
 }
