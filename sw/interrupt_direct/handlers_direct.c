@@ -17,7 +17,8 @@
 
 static uint64_t external_timer_delta = (CLOCK_FREQUENCY/INTERRUPT_FREQUENCY);
 
-/* Debugger stub, currenly prints the contents of mip CSR.
+/* Debugger stub, currenly prints the contents of
+ * mepc CSR and instruction.
  * The debugger function must NOT call any system
  * calls or trigger execptions. */
 void debugger(trap_frame_t *tf)
