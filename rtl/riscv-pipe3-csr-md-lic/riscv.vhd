@@ -222,8 +222,8 @@ component io is
           -- Hardware interrupt request
           O_intrio : out data_type;
           -- TIME and TIMEH
-          O_time : out data_type;
-          O_timeh : out data_type
+          O_mtime : out data_type;
+          O_mtimeh : out data_type
          );
 end component io;
 component csr is
@@ -528,8 +528,8 @@ begin
               O_timer2ocb => O_timer2ocb,
               O_timer2occ => O_timer2occ,
               O_intrio => intrio_int,
-              O_time => time_int,
-              O_timeh => timeh_int
+              O_mtime => time_int,
+              O_mtimeh => timeh_int
              );
 
     csr0: csr
