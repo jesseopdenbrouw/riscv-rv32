@@ -132,7 +132,8 @@ signal ex_wb : ex_wb_type;
 -- The registers
 type regs_array_type is array (0 to NUMBER_OF_REGISTERS-1) of data_type;
 signal regs : regs_array_type;
--- Do not check for read during write
+-- Do not check for read during write. For some reason, Quartus
+-- thinks that there are asynchronous read and write clocks.
 attribute ramstyle : string;
 attribute ramstyle of regs : signal is "no_rw_check";
 
@@ -873,13 +874,13 @@ begin
         -- Do NOT include a reset, otherwise registers will be in ALM flip-flops
         -- Do NOT set x0 to all zero bits
         process (I_clk, I_areset, id_ex.rd, I_instr) is
-        variable selrd_int, selaout_int, selbout_int : integer range 0 to NUMBER_OF_REGISTERS-1;
+        variable selrd_v : integer range 0 to NUMBER_OF_REGISTERS-1;
         begin
-            selrd_int := to_integer(unsigned(id_ex.rd));
+            selrd_v := to_integer(unsigned(id_ex.rd));
             
             if rising_edge(I_clk) then
                 if control.stall = '0' and id_ex.rd_en = '1' and I_interrupt_request = irq_none then
-                    regs(selrd_int) <= id_ex.result;
+                    regs(selrd_v) <= id_ex.result;
                 end if;
             end if;
         end process;
@@ -889,15 +890,15 @@ begin
     gen_regs_ram_not: if not HAVE_REGISTERS_IN_RAM generate
         -- Register: exec & retire
         process (I_clk, I_areset, id_ex.rd, I_instr) is
-        variable selrd_int, selaout_int, selbout_int : integer range 0 to NUMBER_OF_REGISTERS-1;
+        variable selrd_v : integer range 0 to NUMBER_OF_REGISTERS-1;
         begin
-            selrd_int := to_integer(unsigned(id_ex.rd));
+            selrd_v := to_integer(unsigned(id_ex.rd));
 
             if I_areset = '1' then
                 regs <= (others => (others => '0'));
             elsif rising_edge(I_clk) then
                 if control.stall = '0' and id_ex.rd_en = '1' and I_interrupt_request = irq_none then
-                    regs(selrd_int) <= id_ex.result;
+                    regs(selrd_v) <= id_ex.result;
                 end if;
                 regs(0) <= (others => '0');
             end if;
