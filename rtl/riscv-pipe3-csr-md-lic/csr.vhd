@@ -46,7 +46,7 @@
 --  mcountinhibit -- r/w, only bits 0 and 2
 --  mscratch -- r/w
 --  mepc -- r/w
---  mcause -- r/w
+--  mcause -- bits 31, 0-5 r/w, others r/-
 --  mtval -- r/w
 --  mip -- r/o
 --  mvendorid -- r/o (hardwired to 0x00000000)
@@ -345,6 +345,10 @@ begin
                 end case;
                 -- Write back
                 case csr_addr_int is
+                    when mcycle_addr => csr.mcycle <= csr_content;
+                    when mcycleh_addr => csr.mcycleh <= csr_content;
+                    when minstret_addr => csr.minstret <= csr_content;
+                    when minstreth_addr => csr.minstreth <= csr_content;
                     when mstatus_addr => csr.mstatus <= csr_content;
                     -- misa is hardwired
                     --when misa_addr => csr.misa <= csr_content;
@@ -359,10 +363,6 @@ begin
                     when mtval_addr => csr.mtval <= csr_content;
                     -- mip is hardcoded, read only
                     --when mip_addr => csr.mip <= csr_content;
-                    when mcycle_addr => csr.mcycle <= csr_content;
-                    when mcycleh_addr => csr.mcycleh <= csr_content;
-                    when minstret_addr => csr.minstret <= csr_content;
-                    when minstreth_addr => csr.minstreth <= csr_content;
                     when others => null;
                 end case;
             end if;
