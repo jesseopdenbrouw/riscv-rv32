@@ -69,7 +69,7 @@ use work.processor_common.all;
 entity io is
     generic (freq_sys : integer := SYSTEM_FREQUENCY;
              freq_count : integer := CLOCK_FREQUENCY
-         );
+            );
     port (I_clk : in std_logic;
           I_areset : in std_logic;
           I_csio : in std_logic;
@@ -100,7 +100,7 @@ entity io is
           O_timer2occ : out std_logic;
           -- Hardware interrupt request
           O_intrio : out data_type;
-          -- TIME and TIMEH
+          -- MTIME and MTIMEH
           O_mtime : out data_type;
           O_mtimeh : out data_type
          );
@@ -317,10 +317,10 @@ begin
                 case reg_int is
                     when gpioapin_addr   => O_dataout <= gpioapin_int;
                     when gpioapout_addr  => O_dataout <= gpioapout_int;
-                    when uart1data_addr => O_dataout <= uart1data_int;
-                    when uart1baud_addr => O_dataout <= uart1baud_int;
-                    when uart1ctrl_addr => O_dataout <= uart1ctrl_int;
-                    when uart1stat_addr => O_dataout <= uart1stat_int;
+                    when uart1data_addr  => O_dataout <= uart1data_int;
+                    when uart1baud_addr  => O_dataout <= uart1baud_int;
+                    when uart1ctrl_addr  => O_dataout <= uart1ctrl_int;
+                    when uart1stat_addr  => O_dataout <= uart1stat_int;
                     when i2c1ctrl_addr   => O_dataout <= i2c1ctrl_int;
                     when i2c1stat_addr   => O_dataout <= i2c1stat_int;
                     when i2c1data_addr   => O_dataout <= i2c1data_int;
@@ -700,8 +700,8 @@ begin
                 -- Check if I2C1 bus is free or busy
                 -- If SCL is high...
                 if IO_i2c1scl /= '0' then
-                    -- And a falling edge on SDA...
-                    if i2c1sda_prev /= '0' and IO_i2c1sda = '0' then
+                    -- And SDA is low...
+                    if IO_i2c1sda = '0' then
                         -- signals a START, so bus is busy
                         i2c1busy <= '1';
                     -- And rising edge on SDA...
