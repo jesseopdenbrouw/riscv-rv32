@@ -180,35 +180,35 @@ begin
         elsif I_csr_addr(11 downto 10) = "11" and (I_csr_op = csr_rw or I_csr_op = csr_rwi or I_csr_immrs1 /= "00000") then
             O_illegal_instruction_error <= '1';
         elsif csr_addr_int = cycle_addr or
-               csr_addr_int = time_addr or
-               csr_addr_int = instret_addr or
-               csr_addr_int = cycleh_addr or
-               csr_addr_int = timeh_addr or
-               csr_addr_int = instreth_addr or
-               csr_addr_int = mvendorid_addr or
-               csr_addr_int = marchid_addr or
-               csr_addr_int = mimpid_addr or
-               csr_addr_int = mhartid_addr or
-               csr_addr_int = mconfigptr_addr or
-               csr_addr_int = mstatus_addr or
-               csr_addr_int = misa_addr or
-               csr_addr_int = mie_addr or
-               csr_addr_int = mtvec_addr or
-               csr_addr_int = mcounteren_addr or
-               csr_addr_int = mstatush_addr or
-               csr_addr_int = mcountinhibit_addr or
-               csr_addr_int = mscratch_addr or
-               csr_addr_int = mepc_addr or
-               csr_addr_int = mcause_addr or
-               csr_addr_int = mtval_addr or
-               csr_addr_int = mip_addr or
-               csr_addr_int = mcycle_addr or
-               csr_addr_int = minstret_addr or
-               csr_addr_int = mcycleh_addr or
-               csr_addr_int = minstreth_addr then
-                O_illegal_instruction_error <= '0';
+              csr_addr_int = time_addr or
+              csr_addr_int = instret_addr or
+              csr_addr_int = cycleh_addr or
+              csr_addr_int = timeh_addr or
+              csr_addr_int = instreth_addr or
+              csr_addr_int = mvendorid_addr or
+              csr_addr_int = marchid_addr or
+              csr_addr_int = mimpid_addr or
+              csr_addr_int = mhartid_addr or
+              csr_addr_int = mconfigptr_addr or
+              csr_addr_int = mstatus_addr or
+              csr_addr_int = misa_addr or
+              csr_addr_int = mie_addr or
+              csr_addr_int = mtvec_addr or
+              csr_addr_int = mcounteren_addr or
+              csr_addr_int = mstatush_addr or
+              csr_addr_int = mcountinhibit_addr or
+              csr_addr_int = mscratch_addr or
+              csr_addr_int = mepc_addr or
+              csr_addr_int = mcause_addr or
+              csr_addr_int = mtval_addr or
+              csr_addr_int = mip_addr or
+              csr_addr_int = mcycle_addr or
+              csr_addr_int = minstret_addr or
+              csr_addr_int = mcycleh_addr or
+              csr_addr_int = minstreth_addr then
+            O_illegal_instruction_error <= '0';
         else 
-                O_illegal_instruction_error <= '1';
+            O_illegal_instruction_error <= '1';
         end if;
     end process;
     
