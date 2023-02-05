@@ -286,15 +286,19 @@ begin
     -- Determine stall
     -- We need to stall if we are waiting for data from memory OR we stall the PC and md unit is not ready
     control.stall <= '1' when (control.state = state_exec and I_waitfordata = '1') or
-                      (control.state = state_md) or
-                      (control.state = state_exec and id_ex.md_start = '1')
-                 else '0';
+                              (control.state = state_md) or
+                              (control.state = state_exec and id_ex.md_start = '1')
+                         else '0';
     -- Needed for the instruction fetch for the ROM or boot ROM
     O_stall <= control.stall;
 
     -- We need to flush if we are jumping/branching or servicing interrupts
-    control.flush <= '1' when control.penalty = '1' or control.state = state_flush or control.state = state_intr or control.state = state_intr2 or
-                      control.state = state_mret or control.state = state_boot0 else '0'; -- for now
+    control.flush <= '1' when control.penalty = '1' or control.state = state_flush or
+                              control.state = state_intr or 
+                              control.state = state_intr2 or
+                              control.state = state_mret or
+                              control.state = state_boot0
+                         else '0'; -- for now
 
     -- Instructions retired -- not exact, needs more detail
     O_instret <= '1' when (control.state = state_exec and I_interrupt_request = irq_none and I_waitfordata = '0' and id_ex.md_start = '0' and control.penalty = '0') or
