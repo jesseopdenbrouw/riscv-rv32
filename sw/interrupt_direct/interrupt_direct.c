@@ -42,8 +42,8 @@
 #include <thuasrv32.h>
 
 /* Set to 1 to use printf(), uses system calls.
- * Set to 0 to use sprintf()/uart1_puts(), doesn't
- * use system calls */
+ * Set to 0 to use sprintf()/uart1_puts(), uses
+ * at most sbrk system call */
 #define USE_PRINTF (0)
 
 /* Should be loaded by the Makefile */
@@ -68,7 +68,7 @@ int main(int argc, char *argv[], char *envp[])
 	set_mtvec(universal_handler_direct, TRAP_DIRECT_MODE);
 
 	/* Initialize the USART*/
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_RCIE);
 
 	/* Activate TIMER1 with a cycle of 1 Hz */
 	/* for a 50 MHz clock. Use interrupt. */
