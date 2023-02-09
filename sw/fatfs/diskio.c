@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 /* begin THUAS RISC-V specific */
-#include "uart.h"
+#include <thuasrv32.h>
 #include "sdcard.h"
 #define DISKIO_DEBUG (0)
 /* end THUAS RISC-V specific */
