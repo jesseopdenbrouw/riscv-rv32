@@ -36,11 +36,11 @@
 
 -- This is the Local Interrupt Controller. Currently this is
 -- an all combinational circuit. The LIC determines the 
--- current interrupt status based on priority. The system
--- timer has the highest priority, followed by hardware I/O
--- interrupts. Then the synchronous exceptions and ECALL/EBREAK
--- have priority. Interrupts will only occur if mstatus.MIE is
--- active.
+-- current interrupt status based on priority. Local hardware I/O
+-- interrupts have the highest priorities, the system timer has the
+-- lowest hardware interrupt priority. Then the synchronous exceptions
+-- (and ECALL/EBREAK) have priority. Interrupts will only occur if
+-- mstatus.MIE is active.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -99,15 +99,10 @@ begin
             O_mcause <= (others => '0');
             
             -- Priority as of Table 3.7 of "Volume II: RISC-V Privileged Architectures V20211203"
-            -- Hardware interrupts take priority over exceptions, also the RISC-V system timer
-            -- Not all exceptions are implemented
-            -- External timer interrupt
-            if I_intrio(7) = '1' and I_mstatus_mie = '1' and I_mie_mtie = '1' then
-                interrupt_request_int := irq_hard;
-                O_mcause <= std_logic_vector(to_unsigned(7, O_mcause'length));
-                O_mcause(31) <= '1';
+            -- Local hardware interrupts take priority over exceptions, the RISC-V system timer
+            -- has the lowest hardware interrupt priority. Not all exceptions are implemented
             -- SPI1 transmission complete interrupt
-            elsif I_intrio(21) = '1' and I_mstatus_mie = '1' then
+            if I_intrio(21) = '1' and I_mstatus_mie = '1' then
                 interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(21, O_mcause'length));
                 O_mcause(31) <= '1';
@@ -135,6 +130,11 @@ begin
             elsif I_intrio(16) = '1' and I_mstatus_mie = '1' then
                 interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(16, O_mcause'length));
+                O_mcause(31) <= '1';
+            -- External timer interrupt
+            elsif I_intrio(7) = '1' and I_mstatus_mie = '1' and I_mie_mtie = '1' then
+                interrupt_request_int := irq_hard;
+                O_mcause <= std_logic_vector(to_unsigned(7, O_mcause'length));
                 O_mcause(31) <= '1';
             -- Traps from here.
             elsif I_illegal_instruction_error_request = '1' then
@@ -188,14 +188,25 @@ begin
             O_interrupt_release <= '0';
             O_mcause <= (others => '0');
             
+            -- Not conform RISC-V: mstatus.MIE disables all traps
             if I_mstatus_mie = '1' then
                 -- Priority as of Table 3.7 of "Volume II: RISC-V Privileged Architectures V20211203"
-                -- Hardware interrupts take priority over exceptions, also the RISC-V system timer
-                -- Not all exceptions are implemented
-                -- External timer interrupt
-                if I_intrio(7) = '1' and I_mie_mtie = '1' then
+                -- Local hardware interrupts take priority over exceptions, the RISC-V system timer
+                -- has the lowest hardware interrupt priority. Not all exceptions are implemented.
+                -- SPI1 transmission complete interrupt
+                if I_intrio(21) = '1' then
                     interrupt_request_int := irq_hard;
-                    O_mcause <= std_logic_vector(to_unsigned(7, O_mcause'length));
+                    O_mcause <= std_logic_vector(to_unsigned(21, O_mcause'length));
+                    O_mcause(31) <= '1';
+                -- I2C1 transmit/receive complete interrupt
+                elsif I_intrio(20) = '1' then
+                    interrupt_request_int := irq_hard;
+                    O_mcause <= std_logic_vector(to_unsigned(20, O_mcause'length));
+                    O_mcause(31) <= '1';
+                -- TIMER2 compare T/A/B/C interrupt
+                elsif I_intrio(19) = '1' then
+                    interrupt_request_int := irq_hard;
+                    O_mcause <= std_logic_vector(to_unsigned(19, O_mcause'length));
                     O_mcause(31) <= '1';
                 -- USART interrupt
                 elsif I_intrio(18) = '1' then
@@ -211,6 +222,11 @@ begin
                 elsif I_intrio(16) = '1' then
                     interrupt_request_int := irq_hard;
                     O_mcause <= std_logic_vector(to_unsigned(16, O_mcause'length));
+                    O_mcause(31) <= '1';
+                -- External timer interrupt
+                elsif I_intrio(7) = '1' then
+                    interrupt_request_int := irq_hard;
+                    O_mcause <= std_logic_vector(to_unsigned(7, O_mcause'length));
                     O_mcause(31) <= '1';
                 -- Traps from here.
                 elsif I_illegal_instruction_error_request = '1' then
