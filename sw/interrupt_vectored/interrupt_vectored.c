@@ -10,9 +10,8 @@
 #include "interrupt.h"
 
 /* Set to 1 to use printf(), uses system calls
- * for read and write.
- * Set to 0 to use sprintf()/uart1_puts(), doesn't
- * use system calls for read and write. */
+ * Set to 0 to use sprintf()/uart1_puts(),
+ * use system call for sbrk */
 #define USE_PRINTF (0)
 
 /* This should be provided by the Makefile */
@@ -37,7 +36,7 @@ int main(int argc, char *argv[], char *envp[])
 	set_mtvec(handler_jump_table, TRAP_VECTORED_MODE);
 
 	/* Initialize the USART*/
-	uart1_init(F_CPU/BAUD_RATE-1, 0x40);
+	uart1_init(F_CPU/BAUD_RATE-1, UART_RCIE);
 
 	/* Activate TIMER1 with a cycle of 100 Hz */
 	/* for a 50 MHz clock. */
