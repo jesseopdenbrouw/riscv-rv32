@@ -182,10 +182,10 @@ type md_type is record
     count: integer range 0 to 32;
 end record md_type;
 signal md : md_type;
-
-constant all_zeros : std_logic_vector(31 downto 0) := (others => '0');
 alias md_buf1 is md.buf(63 downto 32);
 alias md_buf2 is md.buf(31 downto 0);
+
+constant all_zeros : std_logic_vector(31 downto 0) := (others => '0');
 
 begin
 
@@ -304,6 +304,11 @@ begin
     O_instret <= '1' when (control.state = state_exec and I_interrupt_request = irq_none and I_waitfordata = '0' and id_ex.md_start = '0' and control.penalty = '0') or
                           (control.state = state_wait and I_interrupt_request = irq_none) else '0'; 
     
+    -- Signal trap related
+    O_ecall_request <= control.ecall_request;
+    O_ebreak_request <= control.ebreak_request;
+    O_mret_request <= '1' when control.state = state_mret2 else '0';
+
     -- Data forwarder. Forward RS1/RS2 if they are used in current instruction,
     -- and were written in the previous instruction.
     process (id_ex, ex_wb) is
@@ -915,8 +920,8 @@ begin
     --
     
     -- ALU
-    process (id_ex, control, ex_wb, I_datain,
-             md, I_csr_datain, I_interrupt_request) is
+    process (id_ex, control, ex_wb, md, I_datain,
+             I_csr_datain, I_interrupt_request) is
     variable a, b, r, imm : unsigned(31 downto 0);
     variable as, bs, ims : signed(31 downto 0);
     variable shamt : integer range 0 to 31;
@@ -1471,11 +1476,6 @@ begin
         md.mul <= (others => '0');
         md.div <= (others => '0');
     end generate;
-
-    -- Signal trap related
-    O_ecall_request <= control.ecall_request;
-    O_ebreak_request <= control.ebreak_request;
-    O_mret_request <= '1' when control.state = state_mret2 else '0';
 
     -- Save a copy of the result for data forwarding
     process (I_clk, I_areset) is
