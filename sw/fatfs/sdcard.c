@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "io.h"
-#include "uart.h"
+#include <thuasrv32.h>
 #include "sdcard.h"
 
 /* Should be loaded by the Makefile */
@@ -25,9 +24,9 @@
 #endif
 
 /* SPI speed in system clocks / (2^(x+1)) */
-/* 7 = /256, 2 = /8 */
+/* 7 = /256, 1 = /4 */
 #define SD_SLOW  (7)
-#define SD_FAST  (2)
+#define SD_FAST  (1)
 
 #define SD_DEBUG (0)
 
