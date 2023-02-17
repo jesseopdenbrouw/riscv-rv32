@@ -526,8 +526,6 @@ The pin assignments for the DE0-CV board are as follows (Table~\ref{tab:pins}). 
 %\toprule
 clk       & M9       & CLOCK\_50, System clock\\
 areset    & P22      & FPGA\_RESET, active low reset\\
-uart1rxd  & N19      & GPIO\_0\_D15, UART1 receive \\
-uart1txd  & P19      & GPIO\_0\_D17, UART1 transmit  \\
 pina[31]  & $-$      & Fitter assigned \\
 pina[30]  & $-$      & Fitter assigned \\
 pina[29]  & $-$      & Fitter assigned \\
@@ -592,6 +590,8 @@ pouta[3]  & Y3       & LEDR3 \\
 pouta[2]  & W2       & LEDR2 \\
 pouta[1]  & AA1      & LEDR1 \\
 pouta[0]  & AA2      & LEDR0 \\
+uart1rxd  & N19      & GPIO\_0\_D15, UART1 receive \\
+uart1txd  & P19      & GPIO\_0\_D17, UART1 transmit  \\
 timer2oct & N21      & GPIO\_0\_D10, output compare T \\
 timer2oca & R21      & GPIO\_0\_D12, output compare/PWM A \\
 timer2ocb & N20      & GPIO\_0\_D14, output compare/PWM B \\
@@ -607,6 +607,14 @@ i2c1scl   & B16      & GPIO\_0\_D1, I2C1 SCL \\
 i2c1sda   & C16      & GPIO\_0\_D3, I2C1 SDA
 \end{longtable}
 
+Some pins are connected to the onboard GPIO headers. The DE0-CV board has two headers but currently only GPIO 0 is used. See Figure~\ref{fig:de0-cv-gpio}.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.63]{de0-cv-gpio}
+\caption{Pin assignments of the GPIO headers.}
+\label{fig:de0-cv-gpio}
+\end{figure}
 \subsection{Simulation}
 The design can be simulated fully, using QuestaSim Intel Starter or ModelSim Intel Starter. You need a (free) license for QuestaSim. During simulation, all essential signals can be viewed, as is the RAM. The RAM is viewed as 32-bit entries, so we need to do some manual calculations to correctly find byte, half word and word accesses. Simulation can be started from Quartus. Please note that the bootloader must be disabled for normal program start up. 
 
@@ -1601,7 +1609,7 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 
 
 \subsection{I2C1 -- Inter-Integrated Circuit master-only controller}
-General purpose I\textsuperscript{2}C peripheral, with programmable baud rate prescaler, start- and stopbit generation, no clock stretching, no arbitration, Standard mode (Sm) only.
+General purpose I\textsuperscript{2}C peripheral, with programmable baud rate prescaler, start- and stopbit generation, no clock stretching, no arbitration, Standard mode (Sm) and Fast mode (Fm) only.
 
 \begin{register}{H}{I2C1 control register I2C1\_CTRL}{0x40}
 \label{i2c1ctrl}
@@ -1618,7 +1626,7 @@ General purpose I\textsuperscript{2}C peripheral, with programmable baud rate pr
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000000i]
-\item [BAUD] Baud rate prescaler. Number of system clock pulses minus 1 for \textbf{one-half} bit time.
+\item [BAUD] Baud rate prescaler. Number of system clock pulses minus 1 for \textbf{one-half} bit time (Sm) or \textbf{one-third} bit time (Fm).
 Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C clock frequency is 763\,Hz.
 \item [DPG] Disable STOP generation after Acknowledge Fail. Can be used to send a repeated START.
 \item [START] Send a START on next byte send. Cleared by hardware when transmission ends.
@@ -1630,7 +1638,8 @@ Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C 
 
 \begin{register}{H}{I2C1 status register I2C1\_STAT}{0x44}
 \label{i2c1stat}
-\regfield{Reserved}{26}{6}{{0}}%
+\regfield{Reserved}{25}{7}{{0}}%
+\regfield{BUSY}{1}{6}{{0}}%
 \regfield{AF}{1}{5}{{0}}%
 \regfield{RC}{1}{4}{{0}}%
 \regfield{TC}{1}{3}{{0}}%
@@ -1638,7 +1647,8 @@ Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C 
 \regfield{Reserved}{2}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000000i]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000000]
+\item [BUSY] Set to 1 when SDA or SCL is low, set to 0 when STOP condition is detected.
 \item [AF] Acknowledge Fail, set when no target responded.
 \item [RC] Receive Complete, including sending STOP. Cleared by hardware when I2C1\_DATA is read.
 \item [TC] Transmission Complete, including sending STOP. Cleared by hardware when I2C1\_DATA is written.
