@@ -48,12 +48,12 @@ typedef struct {
 
 /* Set the mtvec CSR, using mode TRAP_DIRECT_MODE or TRAP_VECTORED_MODE */
 #define set_mtvec(VECTOR, MODE) \
-      __asm__ volatile (".option push;" \
-                          ".option norelax;" \
-                          "la    t0, " #VECTOR ";" \
-                          "csrw  mtvec,t0;" \
-                          ".option pop" \
-              ::: "t0"); \
+    __asm__ volatile (".option push;" \
+                      ".option norelax;" \
+                      "la    t0, " #VECTOR ";" \
+                      "csrw  mtvec,t0;" \
+                      ".option pop" \
+	                  ::: "t0"); \
     if (MODE == TRAP_VECTORED_MODE) { \
         __asm__ volatile (".option push;" \
                           ".option norelax;" \
