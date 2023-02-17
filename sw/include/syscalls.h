@@ -55,7 +55,7 @@ int _fork(void);
 
 int _execve(char *name, char **argv, char **env);
 
-void *sbrk(ptrdiff_t incr);
+void *_sbrk(ptrdiff_t incr);
 
 #ifdef __cplusplus
 }
