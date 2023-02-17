@@ -53,6 +53,7 @@ all:
 	$(MAKE) -C string all
 	$(MAKE) -C structio all
 	$(MAKE) -C testio all
+	$(MAKE) -C timer1 all
 	$(MAKE) -C timer2 all
 	$(MAKE) -C trig all
 	$(MAKE) -C uart1_cpp all
@@ -103,6 +104,7 @@ clean:
 	$(MAKE) -C string clean
 	$(MAKE) -C structio clean
 	$(MAKE) -C testio clean
+	$(MAKE) -C timer1 clean
 	$(MAKE) -C timer2 clean
 	$(MAKE) -C trig clean
 	$(MAKE) -C uart1_cpp clean
