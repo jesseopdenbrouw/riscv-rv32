@@ -20,13 +20,13 @@ enters a simple monitor program. Type 'h' for help.
 
 A S-record file can be uploaded by the `upload` program.
 If `upload` contacts the bootloader within the 5 second
-delay, the S-record file is transmitted to the processorr
+delay, the S-record file is transmitted to the processor
 and the instructions are placed in the ROM (or RAM). Make
 sure that NO terminal connection (e.g. Putty) is active.
 
-This version includes a registers-in-RAM option. The clock
-frequency will be lower that 80 MHz, but saves about 1000
-ALM flip-flops.
+The registers may be optionally placed in FPGA flip-flips.
+This will speed up the design a little bit but also uses
+about 1000 extra flip-flops.
 
 ## Status
 
