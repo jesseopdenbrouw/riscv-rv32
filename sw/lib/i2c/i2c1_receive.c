@@ -23,9 +23,6 @@ uint32_t i2c1_receive(uint8_t address, uint8_t *buf, uint32_t len)
 		}
 		/* Transfer byte, return if error */
 		*buf++ = i2c1_receive_byte();
-		if (ret) {
-			return ret;
-		}
 	}
 
 	return 0;	
