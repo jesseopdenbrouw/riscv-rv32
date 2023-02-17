@@ -51,7 +51,7 @@ int main(void)
 	 *  3: OS is 0 (one-shot)
 	 *  2-1: reserved
 	 *  0: EN is 1 (timer enable) */
-	TIMER2->CTRL = 0x04449901UL;
+	TIMER2->CTRL = 0x04449f01UL;
 
 	while (1) {
 		/* Set the PWM DC to i/CMPT*100% */
