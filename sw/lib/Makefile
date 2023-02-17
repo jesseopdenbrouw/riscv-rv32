@@ -29,6 +29,7 @@ $(LIBTHUASRV32):
 	make -C csr all
 	make -C spi all
 	make -C i2c all
+	make -C timer all
 	$(AR) rsv $(LIBTHUASRV32) $(OBJ)
 
 
@@ -40,4 +41,5 @@ clean:
 	make -C csr clean
 	make -C spi clean
 	make -C i2c clean
+	make -C timer clean
 	rm -f $(LIBTHUASRV32)
