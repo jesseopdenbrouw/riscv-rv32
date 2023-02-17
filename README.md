@@ -6,24 +6,26 @@ for an FPGA.
 ## Description
 
 The RISC-V microcontroller uses the RV32IM instruction set.
-Exceptions and interrupts are
-supported. `ECALL`, `EBREAK` and `MRET` are supported. `WFI` acts as a
-no-operation (`NOP`). Currently only machine
-mode is supported. We successfully tested a complex program with interrupts
-and exceptions and implemented a basic syscall library usable with
-the `ECALL` instruction as provided by the GNU C compiler for RISC-V.
-`sbrk`, `read`, `write`, `times` and `gettimeofday` are
-supported. The External (system) Timer is implemented and
-generates an interrupt if `time` >= `timecmp`.
-The processor can handle up to 16 fast local
-interrupts. Read from ROM, RAM and I/O require
-2 clock cycles. Writes require 1 clock cycles. Multiplications require
-3 clock cycles, divisions require 16+2 clock cycles. Jumps/calls/branches
-taken require 3 clock cycles, the processor does not implement branch
-prediction. Interrupts are direct or vectored.
+Exceptions and interrupts are supported. `ECALL`, `EBREAK`
+and `MRET` are supported. `WFI` acts as a no-operation
+(`NOP`). Currently only machine mode is supported. We
+successfully tested a complex program with interrupts
+and exceptions and implemented a basic syscall library usable
+with the `ECALL` instruction as provided by the GNU C
+compiler for RISC-V. `sbrk`, `read`, `write`, `times` and
+`gettimeofday` are supported. The External (system) Timer
+is implemented and generates an interrupt if `time` >=
+`timecmp`.  The processor can handle up to 16 fast local
+interrupts. Read from ROM, RAM and I/O require 2 clock
+cycles. Writes require 1 clock cycles. Multiplications
+require 3 clock cycles, divisions require 16+2 clock cycles.
+Jumps/calls/branches taken require 3 clock cycles, the
+processor does not implement branch prediction. Interrupts
+are direct or vectored.
 
-Software is written in C, (C++ is supported but there are some limitations)
-and compiled using the RISC-V GNU C/C++ compiler.
+Software is written in C, (C++ is supported but there are
+some limitations) and compiled using the RISC-V GNU C/C++
+compiler.
 
 ## Current flavor
 
@@ -33,8 +35,9 @@ logic cells. The design runs at a speed of approximately 80 MHz.
  
 ## Memory
 
-The microcontroller uses FPGA onboard RAM blocks to emulate RAM and program ROM.
-Programs are compiled with the GNU C compiler for RISC-V and the resulting
+The microcontroller uses FPGA onboard RAM blocks to emulate RAM
+and program ROM. There is no suport for external RAM. Programs
+are compiled with the GNU C compiler for RISC-V and the resulting
 executable is transformed to a VHDL synthesizable ROM table.
 
 * ROM: a ROM of 64 kB is available (placed in onboard RAM, may be extended).
@@ -99,6 +102,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * It is not possible to print `long long` (i.e. 64-bit) using `printf` et al. When using the format specifier `%lld`, `printf` just prints `ld`. This due to lack of support in the `nano` library.
 * Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
+* Move CSR and LIC into the core.
 
 ## Disclaimer
 
