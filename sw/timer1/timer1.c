@@ -64,9 +64,11 @@ int main(void)
 	enable_irq();
 
 	//timer1_disable();
+
+	while(1);
 }
 
-/* Trap handler, just invert POUT0
+/* Trap handler, just invert POUT2
  * and clear interrupt flag */
 __attribute__((interrupt))
 void trap_handler(void)

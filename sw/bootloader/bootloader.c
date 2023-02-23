@@ -36,7 +36,7 @@ int main(void) {
 	int count;
 	/* Used to test on key hit */
 	int keyhit = 0;
-	/* */
+	/* Character from UART1 */
 	uint8_t c;
 	/* Address */
 	uint32_t addr = 0;

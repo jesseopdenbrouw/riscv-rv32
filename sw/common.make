@@ -2,6 +2,7 @@
 
 # Compiler defaults
 CC = riscv32-unknown-elf-gcc
+CXX = riscv32-unknown-elf-g++
 OBJCOPY = riscv32-unknown-elf-objcopy
 AR = riscv32-unknown-elf-ar
 SIZE = riscv32-unknown-elf-size

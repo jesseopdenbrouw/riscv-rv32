@@ -1,6 +1,3 @@
-# Compiler defaults
-CXX = riscv32-unknown-elf-g++
-
 #
 # NOTE: the C++ compiler is needed
 #
