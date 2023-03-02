@@ -123,7 +123,7 @@ package processor_common is
                          alu_lui, alu_auipc,
                          alu_lw, alu_lh, alu_lhu, alu_lb, alu_lbu,
                          alu_sw, alu_sh, alu_sb,
-                         alu_jal, alu_jalr,
+                         alu_jal_jalr,
                          alu_beq, alu_bne, alu_blt, alu_bge, alu_bltu, alu_bgeu,
                          alu_csr,
                          alu_multiply,
