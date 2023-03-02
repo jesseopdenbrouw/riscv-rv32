@@ -34,19 +34,19 @@ typedef struct {
 
 /* UART1 */
 typedef struct {
-	volatile uint32_t DATA;
-	volatile uint32_t BAUD;
 	volatile uint32_t CTRL;
 	volatile uint32_t STAT;
+	volatile uint32_t DATA;
+	volatile uint32_t BAUD;
 } UART_struct_t;
 
 #define UART_BASE (IO_BASE+0x00000020UL)
 #define UART1 ((UART_struct_t *) UART_BASE)
 
-#define UART1_DATA (*(volatile uint32_t*)(UART_BASE+0x00000000UL))
-#define UART1_BAUD (*(volatile uint32_t*)(UART_BASE+0x00000004UL))
-#define UART1_CTRL (*(volatile uint32_t*)(UART_BASE+0x00000008UL))
-#define UART1_STAT (*(volatile uint32_t*)(UART_BASE+0x0000000cUL))
+#define UART1_CTRL (*(volatile uint32_t*)(UART_BASE+0x00000000UL))
+#define UART1_STAT (*(volatile uint32_t*)(UART_BASE+0x00000004UL))
+#define UART1_DATA (*(volatile uint32_t*)(UART_BASE+0x00000008UL))
+#define UART1_BAUD (*(volatile uint32_t*)(UART_BASE+0x0000000cUL))
 
 
 /*
