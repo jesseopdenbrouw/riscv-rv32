@@ -112,10 +112,12 @@ architecture rtl of io is
 signal io : io_type;
 -- The I/O register number from address
 signal reg_int : integer range 0 to io_size-1;
---attribute keep: boolean;
---attribute keep of reg_int: signal is true;
 -- Boolean TRUE if the address is on word boundary
 signal isword : boolean;
+-- Read access granted
+signal read_access_granted : std_logic;
+-- Write access granted
+signal write_access_granted : std_logic;
 
 
 -- Port input and output
@@ -128,14 +130,14 @@ alias gpioapout_int : data_type is io(gpioapout_addr);
 
 
 -- UART1
-constant uart1data_addr : integer := 8;   -- 0x20.b
-constant uart1baud_addr : integer := 9;   -- 0x24.b
-constant uart1ctrl_addr : integer := 10;  -- 0x28.b
-constant uart1stat_addr : integer := 11;  -- 0x2c.b
-alias uart1data_int : data_type is io(uart1data_addr);
-alias uart1baud_int : data_type is io(uart1baud_addr);
+constant uart1ctrl_addr : integer := 8;   -- 0x20.b
+constant uart1stat_addr : integer := 9;   -- 0x24.b
+constant uart1data_addr : integer := 10;  -- 0x28.b
+constant uart1baud_addr : integer := 11;  -- 0x2c.b
 alias uart1ctrl_int : data_type is io(uart1ctrl_addr);
 alias uart1stat_int : data_type is io(uart1stat_addr);
+alias uart1data_int : data_type is io(uart1data_addr);
+alias uart1baud_int : data_type is io(uart1baud_addr);
 -- Transmit signals
 signal uart1txbuffer : data_type;
 signal uart1txstart : std_logic;
@@ -158,36 +160,31 @@ signal uart1rxd_sync : std_logic;
 constant i2c1ctrl_addr : integer := 16;   -- 0x40.b
 constant i2c1stat_addr : integer := 17;   -- 0x44.b
 constant i2c1data_addr : integer := 18;   -- 0x48.b
---constant i2c1addr_addr : integer := 19;   -- 0x4c.b
 alias i2c1ctrl_int : data_type is io(i2c1ctrl_addr);
 alias i2c1stat_int : data_type is io(i2c1stat_addr);
 alias i2c1data_int : data_type is io(i2c1data_addr);
---alias i2c1addr_int : data_type is io(i2c1addr_addr);
-signal i2c1txbuffer : data_type;
-type i2c1state_type is (idle, send_startbit, send_data_first, send_data_second,
-                        chk_ack_first, chk_ack_second, receive_data_first,
-                        receive_data_second, send_ack_first, send_ack_second,
+signal i2c1txbuffer : std_logic_vector(8 downto 0);
+signal i2c1rxbuffer : std_logic_vector(8 downto 0);
+type i2c1state_type is (idle, send_startbit, send_data_first, send_data_second, leadout,
                         send_stopbit_first, send_stopbit_second, send_stopbit_third);
 signal i2c1state : i2c1state_type;
 signal i2c1bittimer : integer range 0 to 65535;
-signal i2c1shiftcounter : integer range 0 to 8;
-signal i2c1rxbuffer : data_type;
+signal i2c1shiftcounter : integer range 0 to 9;
+signal i2c1startstransmission : std_logic;
 signal i2c1sda_out : std_logic;
-constant i2c1sdadefault : std_logic := 'Z';
 signal i2c1scl_out : std_logic;
-constant i2c1scldefault : std_logic := 'Z';
-alias i2c1disablestopgen : std_logic is i2c1ctrl_int(10);
+signal i2c1sdasync : std_logic_vector(1 downto 0);
+signal i2c1sclsync : std_logic_vector(1 downto 0);
+alias i2c1mack : std_logic is i2c1ctrl_int(11);
+--alias i2c1disablestopgen : std_logic is i2c1ctrl_int(10);
 alias i2c1startbit : std_logic is i2c1ctrl_int(9);
 alias i2c1stopbit : std_logic is i2c1ctrl_int(8);
 alias i2c1fastmode : std_logic is i2c1ctrl_int(2);
 alias i2c1softreset : std_logic is i2c1ctrl_int(1);
-signal i2c1startsend : std_logic;
-alias i2c1isreceiving : std_logic is i2c1stat_int(2);
+alias i2c1istransmitting : std_logic is i2c1stat_int(2);
 alias i2c1tc : std_logic is i2c1stat_int(3); 
-alias i2c1rc : std_logic is i2c1stat_int(4); 
 alias i2c1ackfail : std_logic is i2c1stat_int(5);
 alias i2c1busy : std_logic is i2c1stat_int(6);
-signal i2c1sda_prev : std_logic;
 
 -- Register 19 - 23 not used, reserved
 
@@ -292,6 +289,7 @@ alias mtimeh_int : data_type is io(mtimeh_addr);
 alias mtimecmp_int : data_type is io(mtimecmp_addr);
 alias mtimecmph_int : data_type is io(mtimecmph_addr);
 
+
 begin
 
     -- Fetch internal register of io_size_bits bits minus 2
@@ -300,9 +298,14 @@ begin
     
     -- Check if an access is on a 4-byte boundary AND is word size
     isword <= TRUE when I_size = memsize_word and I_address(1 downto 0) = "00" else FALSE;
+
     -- Misaligned error, when (not on a 4-byte boundary OR not word size) AND chip select
-    O_store_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '1' else '0';
     O_load_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '0' else '0';
+    O_store_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '1' else '0';
+    
+    -- Read or write access
+    read_access_granted <= '1' when isword and I_csio = '1' and I_wren = '0' else '0';
+    write_access_granted <= '1' when isword and I_csio = '1' and I_wren = '1' else '0';
     
     --
     -- Data out to ALU
@@ -313,18 +316,17 @@ begin
         if I_areset = '1' then
             O_dataout <= (others => '0');
         elsif rising_edge(I_clk) then
-            if isword and I_csio = '1' and I_wren = '0' then
+            if read_access_granted = '1' then
                 case reg_int is
                     when gpioapin_addr   => O_dataout <= gpioapin_int;
                     when gpioapout_addr  => O_dataout <= gpioapout_int;
-                    when uart1data_addr  => O_dataout <= uart1data_int;
-                    when uart1baud_addr  => O_dataout <= uart1baud_int;
                     when uart1ctrl_addr  => O_dataout <= uart1ctrl_int;
                     when uart1stat_addr  => O_dataout <= uart1stat_int;
+                    when uart1data_addr  => O_dataout <= uart1data_int;
+                    when uart1baud_addr  => O_dataout <= uart1baud_int;
                     when i2c1ctrl_addr   => O_dataout <= i2c1ctrl_int;
                     when i2c1stat_addr   => O_dataout <= i2c1stat_int;
                     when i2c1data_addr   => O_dataout <= i2c1data_int;
-                    --when i2c1addr_addr   => O_dataout <= i2c1addr_int;
                     when spi1ctrl_addr   => O_dataout <= spi1ctrl_int;
                     when spi1stat_addr   => O_dataout <= spi1stat_int;
                     when spi1data_addr   => O_dataout <= spi1data_int;
@@ -369,7 +371,7 @@ begin
             -- Only write to the outputs, not the inputs
             -- Only write if on 4-byte boundary
             -- Only write when Chip Select (cs)
-            if isword and I_csio = '1' and I_wren = '1' then
+            if write_access_granted = '1' then
                 if reg_int = gpioapout_addr then
                     gpioapout_int <= I_datain;
                 end if;
@@ -408,17 +410,17 @@ begin
                 -- Default for start transmission
                 uart1txstart <= '0';
                 -- Common register writes
-                if isword and I_csio = '1' and I_wren = '1' then
-                    if reg_int = uart1baud_addr then
-                        -- A write to the baud rate register
-                        -- Use only 16 bits for baud rate
-                        uart1baud_int <= I_datain;
-                    elsif reg_int = uart1ctrl_addr then
+                if write_access_granted = '1' then
+                    if reg_int = uart1ctrl_addr then
                         -- A write to the control register
                         uart1ctrl_int <= I_datain;
                     elsif reg_int = uart1stat_addr then
                         -- A write to the status register
                         uart1stat_int <= I_datain;
+                    elsif reg_int = uart1baud_addr then
+                        -- A write to the baud rate register
+                        -- Use only 16 bits for baud rate
+                        uart1baud_int <= I_datain;
                     elsif reg_int = uart1data_addr then
                         -- A write to the data register triggers a transmission
                         -- Signal start
@@ -459,7 +461,7 @@ begin
                 end if;
                 
                 -- If data register is read...
-                if isword and I_csio = '1' and I_wren = '0' then
+                if read_access_granted = '1' then
                     if reg_int = uart1data_addr then
                         -- Clear the received status bits
                         -- PE, RC, RF, FE
@@ -646,12 +648,19 @@ begin
                 end case;
                 uart1baud_int(31 downto 16) <= (others => '0');
                 uart1data_int(31 downto 9) <= (others => '0');
-                --uart1ctrl_int(31 downto 8) <= (others => '0');
-                --uart1stat_int(31 downto 5) <= (others => '0');
+                uart1ctrl_int(31 downto 8) <= (others => '0');
+                uart1stat_int(31 downto 5) <= (others => '0');
             end if;
         end process;
     end generate;
-    
+    uart1gen_not: if not HAVE_UART1 generate
+        uart1baud_int <= (others => '0');
+        uart1data_int <= (others => '0');
+        uart1ctrl_int <= (others => '0');
+        uart1stat_int <= (others => '0');
+        O_uart1txd <= 'Z';
+    end generate;
+
     --
     -- I2C1
     --
@@ -662,7 +671,6 @@ begin
                 i2c1ctrl_int <= (others => '0');
                 i2c1stat_int <= (others => '0');
                 i2c1data_int <= (others => '0');
-                --i2c1addr_int <= (others => '0');
                 i2c1scl_out <= '1';
                 i2c1sda_out <= '1';
                 i2c1state <= idle;
@@ -670,64 +678,76 @@ begin
                 i2c1shiftcounter <= 0;
                 i2c1txbuffer <= (others => '0');
                 i2c1rxbuffer <= (others => '0');
-                i2c1startsend <= '0';
-                i2c1sda_prev <= '0';
+                i2c1startstransmission <= '0';
+                i2c1sclsync <= (others => '1');
+                i2c1sdasync <= (others => '1');
             elsif rising_edge(I_clk) then
-                i2c1startsend <= '0';
+                i2c1startstransmission <= '0';
                 -- Common register writes
-                if isword and I_csio = '1' and I_wren = '1' then
+                if write_access_granted = '1' then
                     if reg_int = i2c1ctrl_addr then
                         i2c1ctrl_int <= I_datain;
                     elsif reg_int = i2c1stat_addr then
                         i2c1stat_int <= I_datain;
                     elsif reg_int = i2c1data_addr then
-                        i2c1txbuffer <= I_datain;
+                        -- Latch data, if startbit set, end with master Nack
+                        i2c1txbuffer <= I_datain(7 downto 0) & (i2c1startbit or i2c1stopbit or not i2c1mack);
                         -- Signal that we are sending data
-                        i2c1startsend <= '1';
+                        i2c1startstransmission <= '1';
+                        -- Reset both Transmission Complete and Ack Failed
                         i2c1tc <= '0';
                         i2c1ackfail <= '0';
-                    --elsif reg_int = i2c1addr_addr then
-                    --    i2c1addr_int <= I_datain;
                     end if;
                 end if;
-                if isword and I_csio = '1' and I_wren = '0' then
+                -- If read data register, clear the TC and AF flag
+                if read_access_granted = '1' then
                     if reg_int = i2c1data_addr then
-                        -- If read data register, clear the RC flag
-                        i2c1rc <= '0';
+                        i2c1tc <= '0';
+                        i2c1ackfail <= '0';
                     end if;
                 end if;
 
-                -- Check if I2C1 bus is free or busy
-                -- If SCL is high...
-                if IO_i2c1scl /= '0' then
-                    -- And SDA is low...
-                    if IO_i2c1sda = '0' then
-                        -- signals a START, so bus is busy
-                        i2c1busy <= '1';
-                    -- And rising edge on SDA...
-                    elsif i2c1sda_prev = '0' and IO_i2c1sda /= '0' then
-                        -- signals a STOP, so bus is free
-                        i2c1busy <= '0';
-                    end if;
+                -- Check for I2C bus is busy.
+                -- If SCL or SDA is/are low...
+                if i2c1sclsync(1) = '0' or i2c1sdasync(1) = '0' then
+                    -- I2C bus is busy
+                    i2c1busy <= '1';
                 end if;
-                i2c1sda_prev <= IO_i2c1sda;
+                -- SCL is high and rising edge on SDA...
+                if i2c1sclsync(0) /= '0' and i2c1sdasync(1) = '0' and i2c1sdasync(0) /= '0' then
+                    -- signals a STOP, so bus is free
+                    i2c1busy <= '0';
+                end if;
+                
+                -- Input synchronizer
+                i2c1sdasync <= i2c1sdasync(0) & IO_i2c1sda;
+                i2c1sclsync <= i2c1sclsync(0) & IO_i2c1scl;
 
+                -- The I2C1 state machine
                 case i2c1state is
                     when idle =>
+                        -- Clock == !state_of_transmitting, SDA = High-Z (==1)
+                        -- If transmitting, the clock is held low. If not
+                        -- transmitting, the clock is held high (high-Z). After
+                        -- STOP, the state of transmitting is reset. This keeps
+                        -- the bus occupied between START and STOP.
+                        i2c1scl_out <= not i2c1istransmitting;
+                        i2c1sda_out <= '1';
                         -- Idle situation, load the counters and set SCL/SDA to High-Z
                         if i2c1fastmode = '1' then
                             i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)))*2;
                         else
                             i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
                         end if;
-                        i2c1shiftcounter <= 7;
-                        i2c1scl_out <= '1';
-                        i2c1sda_out <= '1';
+                        i2c1shiftcounter <= 8;
                         -- Is data register written?
-                        if i2c1startsend = '1' then
-                            i2c1startsend <= '0';
+                        if i2c1startstransmission = '1' then
+                            -- Register that we are transmitting
+                            i2c1istransmitting <= '1';
                             -- Data written to data register, check for start condition
                             if i2c1startbit = '1' then
+                                -- Start bit is seen, so clear it.
+                                i2c1startbit <= '0';
                                 -- Send a START bit, so address comes next
                                 i2c1state <= send_startbit;
                             else
@@ -747,13 +767,12 @@ begin
                             else
                                 i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
                             end if;
-                            --i2c1startbit <= '0';
                             i2c1state <= send_data_first;
                         end if;
                     when send_data_first =>
                         -- SCL low == 0, SDA 0 or High-Z (== 1)
                         i2c1scl_out <= '0';
-                        i2c1sda_out <= i2c1txbuffer(7);
+                        i2c1sda_out <= i2c1txbuffer(8);
                         
                         -- Count bit time
                         if i2c1bittimer > 0 then
@@ -765,7 +784,7 @@ begin
                     when send_data_second =>
                         -- SCL High-Z == 1, SDA 0 or High-Z (== 1)
                         i2c1scl_out <= '1';
-                        i2c1sda_out <= i2c1txbuffer(7);
+                        i2c1sda_out <= i2c1txbuffer(8);
 
                         -- Count bit time
                         if i2c1bittimer > 0 then
@@ -782,132 +801,33 @@ begin
                                 i2c1shiftcounter <= i2c1shiftcounter - 1;
                                 i2c1state <= send_data_first;
                                 -- Shift next bit, hold time is 0 ns as per spec
-                                i2c1txbuffer <= i2c1txbuffer(30 downto 0) & '1';
+                                i2c1txbuffer <= i2c1txbuffer(7 downto 0) & '1';
                             else
-                                -- No more bits, then goto ACK phase
-                                i2c1state <= chk_ack_first;
-                            end if;
-                        end if;
-                    when chk_ack_first =>
-                        -- SCL low == 0, SDA High-Z (== 1)
-                        i2c1scl_out <= '0';
-                        i2c1sda_out <= '1';
-                        -- Count bit time
-                        if i2c1bittimer > 0 then
-                            i2c1bittimer <= i2c1bittimer - 1;
-                        else
-                            i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
-                            i2c1state <= chk_ack_second;
-                            -- Clock in ACK bit
-                            i2c1ackfail <= IO_i2c1sda;
-                        end if;
-                    when chk_ack_second =>
-                        -- SCL High-z == 1, SDA High-Z == 1
-                        i2c1scl_out <= '1';
-                        i2c1sda_out <= '1';
-                        -- Reset bit counter
-                        i2c1shiftcounter <= 7;
-                        -- Count bit time
-                        if i2c1bittimer > 0 then
-                            i2c1bittimer <= i2c1bittimer - 1;
-                        else
-                            if i2c1fastmode = '1' then
-                                i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)))*2;
-                            else
-                                i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
-                            end if;
-                            -- Check if stop bit must be send
-                            if i2c1stopbit = '1' or (i2c1ackfail = '1' and i2c1disablestopgen = '0') then
-                                -- Yes, stop bit must be send
-                                i2c1state <= send_stopbit_first;
-                            else
-                                -- Signal transmit complete, default goto idle
-                                i2c1tc <= '1';
-                                i2c1state <= idle;
-                                -- Check if we've send a START and are reading
-                                if i2c1startbit = '1' and i2c1txbuffer(7) = '1' then
-                                    -- Switch to continuous receiving
-                                    i2c1isreceiving  <= '1';
-                                    i2c1state <= receive_data_first;
+                                -- No more bits, then goto STOP or leadout
+                                if i2c1stopbit = '1' then
+                                    i2c1state <= send_stopbit_first;
+                                else
+                                    i2c1state <= leadout;
                                 end if;
-                                i2c1startbit <= '0';
                             end if;
                         end if;
-                    when receive_data_first =>
-                        -- SCL low == 0, SDA High-Z (== 1), reads data from slave
+                        -- If detected rising edge on external SCL, clock in SDA.
+                        if i2c1sclsync(1) = '0' and i2c1sclsync(0) /= '0' then
+                            i2c1rxbuffer <= i2c1rxbuffer(7 downto 0) & i2c1sdasync(1);
+                        end if;
+                    when leadout =>
+                        -- SCL low, SDA low
                         i2c1scl_out <= '0';
                         i2c1sda_out <= '1';
-                        
                         -- Count bit time
                         if i2c1bittimer > 0 then
                             i2c1bittimer <= i2c1bittimer - 1;
                         else
-                            i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
-                            -- Shift in next bit,
-                            i2c1rxbuffer <= i2c1rxbuffer(30 downto 0) & IO_i2c1sda;
-                            i2c1state <= receive_data_second;
-                        end if;
-                    when receive_data_second =>
-                        -- SCL High-Z == 1, SDA High-Z (== 1), reads data from slave
-                        i2c1scl_out <= '1';
-                        i2c1sda_out <= '1';
-
-                        -- Count bit time
-                        if i2c1bittimer > 0 then
-                            i2c1bittimer <= i2c1bittimer - 1;
-                        else
-                            if i2c1fastmode = '1' then
-                                i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)))*2;
-                            else
-                                i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
-                            end if;
-                            -- Check if more bits
-                            if i2c1shiftcounter > 0 then
-                                -- More bits to send...
-                                i2c1shiftcounter <= i2c1shiftcounter - 1;
-                                i2c1state <= receive_data_first;
-                            else
-                                -- No more bits, then goto Send ACK phase
-                                i2c1state <= send_ack_first;
-                            end if;
-                        end if;
-                    when send_ack_first =>
-                        -- SCL low == 0, SDA low ==0 (ACK)
-                        i2c1scl_out <= '0';
-                        i2c1sda_out <= '0';
-                        -- Count bit time
-                        if i2c1bittimer > 0 then
-                            i2c1bittimer <= i2c1bittimer - 1;
-                        else
-                            i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
-                            i2c1state <= send_ack_second;
-                        end if;
-                    when send_ack_second =>
-                        -- SCL High-z == 1, SDA low == 0 (ACK)
-                        i2c1scl_out <= '1';
-                        i2c1sda_out <= '0';
-                        -- Reset bit counter
-                        i2c1shiftcounter <= 7;
-                        -- Count bit time
-                        if i2c1bittimer > 0 then
-                            i2c1bittimer <= i2c1bittimer - 1;
-                        else
-                            i2c1data_int <= i2c1rxbuffer;
-                            if i2c1fastmode = '1' then
-                                i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)))*2;
-                            else
-                                i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
-                            end if;
-                            -- Check if stop bit must be send
-                            if i2c1stopbit = '1' then
-                                -- Yes, stop bit must be send
-                                i2c1state <= send_stopbit_first;
-                            else
-                                -- Signal transmit complete
-                                i2c1rc <= '1';
-                                -- Goto receiving again
-                                i2c1state <= receive_data_first;
-                            end if;
+                            --i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)));
+                            i2c1state <= idle;
+                            i2c1tc <= '1';
+                            i2c1data_int(7 downto 0) <= i2c1rxbuffer(8 downto 1);
+                            i2c1ackfail <= i2c1rxbuffer(0);
                         end if;
                     when send_stopbit_first =>
                         -- SCL low, SDA low
@@ -928,7 +848,6 @@ begin
                         if i2c1bittimer > 0 then
                             i2c1bittimer <= i2c1bittimer - 1;
                         else
-                            -- Lead out...
                             if i2c1fastmode = '1' then
                                 i2c1bittimer <= to_integer(unsigned(i2c1ctrl_int(31 downto 16)))*2;
                             else
@@ -945,35 +864,40 @@ begin
                         if i2c1bittimer > 0 then
                             i2c1bittimer <= i2c1bittimer - 1;
                         else
-                            -- Check if we are receiving...
-                            if i2c1isreceiving = '1' then
-                                -- then Receive Complete
-                                i2c1rc <= '1';
-                            else
-                                -- we were sending, so Transmission Complete
-                                i2c1tc <= '1';
-                            end if;
+                            -- Transmission conplete
+                            i2c1tc <= '1';
+                            -- Remove STOP bit
                             i2c1stopbit <= '0';
+                            -- and goto IDLE
                             i2c1state <= idle;
-                            i2c1isreceiving <= '0';
+                            -- Copy data to data register and flag ACK
+                            i2c1data_int(7 downto 0) <= i2c1rxbuffer(8 downto 1);
+                            i2c1ackfail <= i2c1rxbuffer(0);
+                            -- Unregister that we are transmitting
+                            i2c1istransmitting <= '0';
                         end if;
                     when others =>
-                        null;
+                        i2c1state <= idle;
                 end case;
                 -- Clear unusd bits
                 i2c1data_int(31 downto 8) <= (others => '0');
-                --i2c1addr_int(31 downto 8) <= (others => '0');
-                i2c1txbuffer(31 downto 8) <= (others => '0');
-                i2c1rxbuffer(31 downto 8) <= (others => '0');
-
+                i2c1ctrl_int(15 downto 12) <= (others => '0');
+                i2c1ctrl_int(7 downto 4) <= (others => '0');
+                i2c1stat_int(31 downto 12) <= (others => '0');
             end if;
         end process;
+        -- Drive the clock and data lines
+        IO_i2c1scl <= '0' when i2c1scl_out = '0' else 'Z';
+        IO_i2c1sda <= '0' when i2c1sda_out = '0' else 'Z';
     end generate;
-    -- Drive the clock and data lines
-    IO_i2c1scl <= '0' when i2c1scl_out = '0' else 'Z';
-    IO_i2c1sda <= '0' when i2c1sda_out = '0' else 'Z';
+    i2c1gen_not : if not HAVE_I2C1 generate
+        i2c1data_int <= (others => '0');
+        i2c1ctrl_int <= (others => '0');
+        i2c1stat_int <= (others => '0');
+        IO_i2c1scl <= 'Z';
+        IO_i2c1sda <= 'Z';
+    end generate;
 
-    
     --
     -- SPI1
     --
@@ -1001,7 +925,7 @@ begin
                 -- Default for start transmission
                 spi1start <= '0';
                 -- Common register writes
-                if isword and I_csio = '1' and I_wren = '1' then
+                if write_access_granted = '1' then
                     if reg_int = spi1ctrl_addr then
                         -- A write to the control register
                         spi1ctrl_int <= I_datain;
@@ -1056,7 +980,7 @@ begin
                 end case;
 
                 -- If data register is read...
-                if isword and I_csio = '1' and I_wren = '0' then
+                if read_access_granted = '1' then
                     if reg_int = spi1data_addr then
                         -- Clear the received status bit
                         spi1stat_int(3) <= '0';
@@ -1170,9 +1094,17 @@ begin
                 end case;
             end if; -- rising_edge
         end process;
+        O_spi1sck <= spi1sck;
+        O_spi1mosi <= spi1mosi;
     end generate;
-    O_spi1sck <= spi1sck;
-    O_spi1mosi <= spi1mosi;
+    spi1gen_not : if not HAVE_SPI1 generate
+        spi1ctrl_int <= (others => '0');
+        spi1stat_int <= (others => '0');
+        spi1data_int <= (others =>'0');
+        O_spi1sck <= 'Z';
+        O_spi1mosi <= 'Z';
+        O_spi1nss <= 'Z';
+    end generate;
 
 
     --
@@ -1201,7 +1133,7 @@ begin
                 -- Default for start transmission
                 spi2start <= '0';
                 -- Common register writes
-                if isword and I_csio = '1' and I_wren = '1' then
+                if write_access_granted = '1' then
                     if reg_int = spi2ctrl_addr then
                         -- A write to the control register
                         spi2ctrl_int <= I_datain;
@@ -1256,7 +1188,7 @@ begin
                 end case;
 
                 -- If data register is read...
-                if isword and I_csio = '1' and I_wren = '0' then
+                if read_access_granted = '1' then
                     if reg_int = spi2data_addr then
                         -- Clear the received status bit
                         spi2stat_int(3) <= '0';
@@ -1353,9 +1285,16 @@ begin
                 end case;
             end if; -- rising_edge
         end process;
+        O_spi2sck <= spi2sck;
+        O_spi2mosi <= spi2mosi;
     end generate;
-    O_spi2sck <= spi2sck;
-    O_spi2mosi <= spi2mosi;
+    spi2gen_not : if not HAVE_SPI2 generate
+        spi2ctrl_int <= (others => '0');
+        spi2stat_int <= (others => '0');
+        spi2data_int <= (others =>'0');
+        O_spi2sck <= 'Z';
+        O_spi2mosi <= 'Z';
+    end generate;
 
     
     --
@@ -1370,7 +1309,7 @@ begin
                 timer1cntr_int <= (others => '0');
                 timer1cmpt_int <= (others => '0');
             elsif rising_edge(I_clk) then
-                if isword and I_csio = '1' and I_wren = '1' then
+                if write_access_granted = '1' then
                     -- Write Timer Control Register
                     if reg_int = timer1ctrl_addr then
                         timer1ctrl_int <= I_datain;
@@ -1408,10 +1347,17 @@ begin
             end if;
         end process;
     end generate;
+    timer1gen_not : if not HAVE_TIMER1 generate
+        timer1ctrl_int <= (others => '0');
+        timer1stat_int <= (others => '0');
+        timer1cntr_int <= (others => '0');
+        timer1cmpt_int <= (others => '0');
+    end generate;
+
     --
     -- TIMER2 - a more elaborate timer
     --
-    timer2_gen : if HAVE_TIMER2 generate
+    timer2gen : if HAVE_TIMER2 generate
         process (I_clk, I_areset) is
         begin
             if I_areset = '1' then
@@ -1438,7 +1384,7 @@ begin
                 timer2ocb_int <= '0';
                 timer2occ_int <= '0';
             elsif rising_edge(I_clk) then
-                if isword and I_csio = '1' and I_wren = '1' then
+                if write_access_granted = '1' then
                     -- Write Timer Control Register
                     if reg_int = timer2ctrl_addr then
                         -- Check if one or more FOC bits are set
@@ -1610,7 +1556,7 @@ begin
                         timer2prescaler_int <= std_logic_vector(unsigned(timer2prescaler_int) + 1);
                     end if;
                     -- If we are at the end of prescale counting
-                    if timer2prescaler_int = timer2prscshadow_int then
+                    if timer2prescaler_int >= timer2prscshadow_int then
                         -- Check CMPA for mode
                         case timer2ctrl_int(18 downto 16) is
                             -- 000 = do nothing
@@ -1720,12 +1666,26 @@ begin
                 timer2cmpcshadow_int(31 downto 16) <= (others => '0');
             end if;
         end process;
+        -- Output the Output Compare match
+        O_timer2oct <= timer2oct_int;
+        O_timer2oca <= timer2oca_int;
+        O_timer2ocb <= timer2ocb_int;
+        O_timer2occ <= timer2occ_int;
     end generate;
-    -- Output the Output Compare match
-    O_timer2oct <= timer2oct_int;
-    O_timer2oca <= timer2oca_int;
-    O_timer2ocb <= timer2ocb_int;
-    O_timer2occ <= timer2occ_int;
+    timer2gen_not : if not HAVE_TIMER2 generate
+        timer2ctrl_int <= (others => '0');
+        timer2stat_int <= (others => '0');
+        timer2cntr_int <= (others => '0');
+        timer2cmpt_int <= (others => '0');
+        timer2prsc_int <= (others => '0');
+        timer2cmpa_int <= (others => '0');
+        timer2cmpb_int <= (others => '0');
+        timer2cmpc_int <= (others => '0');
+        O_timer2oct <= 'Z';
+        O_timer2oca <= 'Z';
+        O_timer2ocb <= 'Z';
+        O_timer2occ <= 'Z';
+   end generate;
 
     --
     -- RISC-V system timer TIME and TIMECMP
@@ -1741,7 +1701,7 @@ begin
             mtimecmp_reg := (others => '0');
             prescaler := 0;
         elsif rising_edge(I_clk) then
-            if isword and I_csio = '1' and I_wren = '1' then
+            if write_access_granted = '1' then
 --                -- Load time (low 32 bits)
 --                if reg_int = time_addr then
 --                    time_reg(31 downto 0) := unsigned(I_datain);
@@ -1795,9 +1755,8 @@ begin
 
     -- SPI1 transmit complete interrupt
     O_intrio(21) <= '1' when spi1ctrl_int(3) = '1' and spi1stat_int(3) = '1' else '0';
-    -- I2C1 transmit or receive interrupt. Software must determine the source
-    O_intrio(20) <= '1' when (i2c1ctrl_int(3) = '1' and i2c1stat_int(3) = '1') or
-                             (i2c1ctrl_int(4) = '1' and i2c1stat_int(4) = '1') else '0';
+    -- I2C1 transmit interrupt.
+    O_intrio(20) <= '1' when (i2c1ctrl_int(3) = '1' and i2c1stat_int(3) = '1') else '0';
     -- TIMER2 compare match T/A/B/C interrupt
     O_intrio(19) <= '1' when (timer2ctrl_int(4) = '1' and timer2stat_int(4) = '1') or
                              (timer2ctrl_int(5) = '1' and timer2stat_int(5) = '1') or
@@ -1810,7 +1769,7 @@ begin
     -- TIMER1 compare match interrupt
     O_intrio(17) <= '1' when timer1ctrl_int(4) = '1' and timer1stat_int(4) = '1' else '0';
     -- This next interrupt is for testing only, will be removed
-    O_intrio(16) <= '1' when gpioapin_int(0) = '1' else '0';
+    O_intrio(16) <= '1' when gpioapin_int(0) = '1' else '0';    
     
     
 end architecture rtl;
