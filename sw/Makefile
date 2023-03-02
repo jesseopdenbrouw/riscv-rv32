@@ -31,6 +31,7 @@ all:
 	$(MAKE) -C global all
 	$(MAKE) -C hex_display all
 	$(MAKE) -C i2c1findslaves all
+	$(MAKE) -C i2c1lis3dh all
 	$(MAKE) -C i2c1ssd1315 all
 	$(MAKE) -C i2c1tmp102 all
 	$(MAKE) -C interrupt_direct all
@@ -82,6 +83,7 @@ clean:
 	$(MAKE) -C global clean
 	$(MAKE) -C hex_display clean
 	$(MAKE) -C i2c1findslaves clean
+	$(MAKE) -C i2c1lis3dh clean
 	$(MAKE) -C i2c1ssd1315 clean
 	$(MAKE) -C i2c1tmp102 clean
 	$(MAKE) -C interrupt_direct clean
