@@ -5,8 +5,9 @@ for an FPGA.
 
 ## Description
 
-The RISC-V microcontroller uses the RV32IM instruction set.
-Exceptions and interrupts are supported. `ECALL`, `EBREAK`
+The RISC-V microcontroller uses the RV32IM instruction set
+and the Zicsr and Zicntr extensions. The microcontroller
+supports exceptions and interrupts. `ECALL`, `EBREAK`
 and `MRET` are supported. `WFI` acts as a no-operation
 (`NOP`). Currently only machine mode is supported. We
 successfully tested a complex program with interrupts
@@ -15,8 +16,8 @@ with the `ECALL` instruction as provided by the GNU C
 compiler for RISC-V. `sbrk`, `read`, `write`, `times` and
 `gettimeofday` are supported. The External (system) Timer
 is implemented and generates an interrupt if `time` >=
-`timecmp`.  The processor can handle up to 16 fast local
-interrupts. Read from ROM, RAM and I/O require 2 clock
+`timecmp`. The processor can handle up to 16 fast local
+interrupts. Reads from ROM, RAM and I/O require 2 clock
 cycles. Writes require 1 clock cycles. Multiplications
 require 3 clock cycles, divisions require 16+2 clock cycles.
 Jumps/calls/branches taken require 3 clock cycles, the
@@ -60,10 +61,10 @@ on 256 MB (top 4 bits) sections.
 
 A number CSR registers are implemented: `time`, `timeh`, `cycle`, `cycleh`,
 `instret`, `instreth`, `mvendorid`, `marchid`, `mimpid`, `mhartid`, `mstatus`,
-`mstatush`, `misa`, `mie`, `mtvec`, `mscratch`, `mepc`, `mcause`, `mip`, `mcountinhibit`. Some of
-these CSRs are hardwired. Others will be implemented when needed.
-The `time` and `timeh` CSRs produces the time since reset in microseconds,
-shadowed from the External Timer memory mapped registers. Currently, the CSR is not within the specification. This will be addressed.
+`mstatush`, `misa`, `mie`, `mtvec`, `mscratch`, `mepc`, `mcause`, `mip`,
+`mcountinhibit`. Some of these CSRs are hardwired. Others will be implemented
+when needed. The `time` and `timeh` CSRs produces the time since reset in
+microseconds, shadowed from the External Timer memory mapped registers.
 
 ## Software
 
@@ -94,7 +95,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 
 * We are *not* planning the C standard.
 * Implement clock stretching and arbitration in the I2C1 peripheral.
-* Adding input synchronization for SPI1/SPI2 and I2C1 peripherals.
+* Adding input synchronization for SPI1/SPI2 peripherals.
 * Adding Input Capture for TIMER2.
 * Implement an I/O input/output multiplexer for pina and pouta. This will enable I/O functions to be multiplexed with normal port I/O.
 * Smaller (in cells) divide unit.
