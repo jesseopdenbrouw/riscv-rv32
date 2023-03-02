@@ -93,7 +93,7 @@ type if_id_type is record
     -- synthesis translate_off
     instr_decode : data_type;
     -- synthesis translate_on
-    end record if_id_type;
+end record if_id_type;
 signal if_id : if_id_type;
 
 -- ID/EX signals for Execute stage
@@ -106,17 +106,19 @@ type id_ex_type is record
     rd_en : std_logic;
     rs1 : reg_type;
     rs2 : reg_type;
-    imm : data_type;
     rs1data : data_type;
     rs2data : data_type;
+    imm : data_type;
+    isimm : std_logic;
+    isunsigned : std_logic;
     md_op : func3_type;
+    md_start : std_logic;
     memaccess : memaccess_type;
     memsize : memsize_type;
-    md_start : std_logic;
     pc_op : pc_op_type;
-    csr_op : csr_op_type;
     pc : data_type;
-    -- The result is not clocked
+    csr_op : csr_op_type;
+    -- The result is not clocked and really should be in ex_wb...
     result : data_type;
 end record id_ex_type;
 signal id_ex : id_ex_type;
@@ -485,6 +487,8 @@ begin
             id_ex.rs2 <= (others => '0');
             id_ex.rd_en <= '1';
             id_ex.imm <= (others => '0');
+            id_ex.isimm <= '0';
+            id_ex.isunsigned <= '0';
             id_ex.alu_op <= alu_unknown;
             id_ex.pc_op <= pc_incr;
             id_ex.rs1data <= (others => '0');
@@ -535,6 +539,8 @@ begin
                 id_ex.rs2 <= rs2_v;
                 id_ex.rd_en <= '0';
                 id_ex.imm <= (others => '0');
+                id_ex.isimm <= '0';
+                id_ex.isunsigned <= '0';
                 id_ex.alu_op <= alu_nop;
                 id_ex.pc_op <= pc_incr;
                 id_ex.rs1data <= regs(selrs1_v);
@@ -562,21 +568,23 @@ begin
                             id_ex.alu_op <= alu_lui;
                             id_ex.rd_en <= '1';
                             id_ex.imm <= imm_u_v;
+                            id_ex.isimm <= '1';
                         -- AUIPC
                         when "0010111" =>
                             id_ex.alu_op <= alu_auipc;
                             id_ex.rd_en <= '1';
                             id_ex.imm <= imm_u_v;
+                            id_ex.isimm <= '1';
                         -- JAL
                         when "1101111" =>
-                            id_ex.alu_op <= alu_jal;
+                            id_ex.alu_op <= alu_jal_jalr;
                             id_ex.pc_op <= pc_loadoffset;
                             id_ex.rd_en <= '1';
                             id_ex.imm <= imm_j_v;
                         -- JALR
                         when "1100111" =>
                             if func3_v = "000" then
-                                id_ex.alu_op <= alu_jalr;
+                                id_ex.alu_op <= alu_jal_jalr;
                                 id_ex.pc_op <= pc_loadoffsetregister;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
@@ -593,8 +601,8 @@ begin
                                 when "001" => id_ex.alu_op <= alu_bne;
                                 when "100" => id_ex.alu_op <= alu_blt;
                                 when "101" => id_ex.alu_op <= alu_bge;
-                                when "110" => id_ex.alu_op <= alu_bltu;
-                                when "111" => id_ex.alu_op <= alu_bgeu;
+                                when "110" => id_ex.alu_op <= alu_bltu; id_ex.isunsigned <= '1';
+                                when "111" => id_ex.alu_op <= alu_bgeu; id_ex.isunsigned <= '1';
                                 when others =>
                                     -- Reset defaults
                                     id_ex.pc_op <= pc_incr;
@@ -608,46 +616,56 @@ begin
                                 id_ex.alu_op <= alu_addi;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
+                                id_ex.isimm <= '1';
                             -- SLTI
                             elsif func3_v = "010" then
                                 id_ex.alu_op <= alu_slti;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
+                                id_ex.isimm <= '1';
                             -- SLTIU
                             elsif func3_v = "011" then
                                 id_ex.alu_op <= alu_sltiu;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
+                                id_ex.isimm <= '1';
+                                id_ex.isunsigned <= '1';
                             -- XORI
                             elsif func3_v = "100" then
                                 id_ex.alu_op <= alu_xori;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
+                                id_ex.isimm <= '1';
                             -- ORI
                             elsif func3_v = "110" then
                                 id_ex.alu_op <= alu_ori;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
+                                id_ex.isimm <= '1';
                             -- ANDI
                             elsif func3_v = "111" then
                                 id_ex.alu_op <= alu_andi;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_i_v;
+                                id_ex.isimm <= '1';
                             -- SLLI
                             elsif func3_v = "001" and func7_v = "0000000" then
                                 id_ex.alu_op <= alu_slli;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_shamt_v;
+                                id_ex.isimm <= '1';
                             -- SRLI
                             elsif func3_v = "101" and func7_v = "0000000" then
                                 id_ex.alu_op <= alu_srli;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_shamt_v;
+                                id_ex.isimm <= '1';
                             -- SRAI
                             elsif func3_v = "101" and func7_v = "0100000" then
                                 id_ex.alu_op <= alu_srai;
                                 id_ex.rd_en <= '1';
                                 id_ex.imm <= imm_shamt_v;
+                                id_ex.isimm <= '1';
                             else
                                 O_illegal_instruction_error <= '1';
                             end if;
@@ -674,6 +692,7 @@ begin
                             elsif func3_v = "011" and func7_v = "0000000" then
                                 id_ex.alu_op <= alu_sltu; 
                                 id_ex.rd_en <= '1';
+                                id_ex.isunsigned <= '1';
                             -- XOR
                             elsif func3_v = "100" and func7_v = "0000000" then
                                 id_ex.alu_op <= alu_xor; 
@@ -809,45 +828,45 @@ begin
                                 when "001" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rw;
-                                    id_ex.rd <= rd_v;
+                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- RS1
                                 when "010" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rs;
-                                    id_ex.rd <= rd_v;
+                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- RS1
                                 when "011" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rc;
-                                    id_ex.rd <= rd_v;
+                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- RS1
                                 when "101" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rwi;
-                                    id_ex.rd <= rd_v;
+                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- imm
                                 when "110" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rsi;
-                                    id_ex.rd <= rd_v;
+                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
-                                    id_ex.rs1 <= rs1_v;
+                                    --id_ex.rs1 <= rs1_v;
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- imm
                                 when "111" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rci;
-                                    id_ex.rd <= rd_v;
+                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
-                                    id_ex.rs1 <= rs1_v;
+                                    --id_ex.rs1 <= rs1_v;
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- imm
                                 when others =>
@@ -864,8 +883,8 @@ begin
                     -- x0 (zero) with 0x00000000. This needs to be done only
                     -- once when the processor starts up. After that, register
                     -- x0 is not written anymore. When the processor starts,
-                    -- it executes a NOP, which is ADDI x0,x0,0 so register x0
-                    -- is written with 0x00000000.
+                    -- it executes an `alu_nop`, which sets the result to 0 so
+                    -- register x0 is written with 0x00000000.
                     if control.reg0_write_once = '0' and HAVE_REGISTERS_IN_RAM then
                         id_ex.rd_en <= '1';
                     elsif rd_v = "00000" then
@@ -920,34 +939,53 @@ begin
     --
     
     -- ALU
-    process (id_ex, control, ex_wb, md, I_datain,
-             I_csr_datain, I_interrupt_request) is
-    variable a, b, r, imm : unsigned(31 downto 0);
-    variable as, bs, ims : signed(31 downto 0);
-    variable shamt : integer range 0 to 31;
-    variable signs : unsigned(31 downto 0);
-    constant zeros : unsigned(31 downto 0) := (others => '0');
+    process (id_ex, control, ex_wb, md, I_datain, I_csr_datain) is
+    variable a_v, b_v, r_v, imm_v : data_type;
+    variable al_v, bl_v : std_logic_vector(32 downto 0);
+    variable signs_v : data_type;
+    constant zeros_v : data_type := (others => '0');
+    variable cmpeq_v, cmplt_v : std_logic;
     begin
     
         -- Check if forwarding result is needed
         if control.forwarda = '1' then
-            a := unsigned(ex_wb.rddata);
+            a_v := ex_wb.rddata;
         else
-            a := unsigned(id_ex.rs1data);
+            a_v := id_ex.rs1data;
         end if;
             
-        if control.forwardb = '1' then
-            b := unsigned(ex_wb.rddata);
+        -- Check if forwarding result is needed
+        if id_ex.isimm = '1' then
+            b_v := id_ex.imm;
+        elsif control.forwardb = '1' then
+            b_v := ex_wb.rddata;
         else
-            b := unsigned(id_ex.rs2data);
+            b_v := id_ex.rs2data;
         end if;
         
-        imm := unsigned(id_ex.imm);
+        -- Create a zero or signed extended version of the operands.
+        -- For signed operations, the operands are sign extended and
+        -- will compare as normal signed operands. For unsigned
+        -- operation (SLTU, SLTIU, BLTU and BGEU), the operands are
+        -- zero extended and will compare as unsigned operands even
+        -- though the compare is signed.
+        al_v := (a_v(31) and (not id_ex.isunsigned)) & a_v;
+        bl_v := (b_v(31) and (not id_ex.isunsigned)) & b_v;
         
-        r := (others => '0');
-        as := signed(a);
-        bs := signed(b);
-        ims := signed(id_ex.imm);
+        -- Compare equal
+        if a_v = b_v then
+            cmpeq_v := '1';
+        else
+            cmpeq_v := '0';
+        end if;
+        -- Compare less-than
+        if signed(al_v) < signed(bl_v) then
+            cmplt_v := '1';
+        else
+            cmplt_v := '0';
+        end if;
+        
+        r_v := (others => '0');
         
         control.penalty <= '0';
         control.select_pc <= '0';
@@ -962,210 +1000,166 @@ begin
                 control.penalty <= '1';
                 
             when alu_add | alu_addi =>
-                if id_ex.alu_op = alu_addi then
-                    b := imm;
-                end if;
-                r := a + b;
+                r_v := std_logic_vector(unsigned(a_v) + unsigned(b_v));
                 control.select_pc <= '1';
             when alu_sub =>
-                r := a - b;
+                r_v := std_logic_vector(unsigned(a_v) - unsigned(b_v));
                 control.select_pc <= '1';
             when alu_and | alu_andi =>
-                if id_ex.alu_op = alu_andi then
-                    b := imm;
-                end if;
-                r := a and b;
+                r_v := a_v and b_v;
                 control.select_pc <= '1';
             when alu_or | alu_ori =>
-                if id_ex.alu_op = alu_ori then
-                    b := imm;
-                end if;
-                r := a or b;
+                r_v := a_v or b_v;
                 control.select_pc <= '1';
             when alu_xor | alu_xori =>
-                if id_ex.alu_op = alu_xori then
-                    b := imm;
-                end if;
-                r := a xor b;
+                r_v := a_v xor b_v;
                 control.select_pc <= '1';
                 
             -- Test register & immediate signed/unsigned
-            when alu_slti =>
-                r := (others => '0');
-                if as < ims then
-                    r(0) := '1';
-                end if;
+            when alu_slt | alu_slti =>
+                r_v := (others => '0');
+                r_v(0) := cmplt_v;
                 control.select_pc <= '1';
-            when alu_sltiu =>
-                r := (others => '0');
-                if a < imm then
-                    r(0) := '1';
-                end if;
+            when alu_sltu | alu_sltiu =>
+                r_v := (others => '0');
+                r_v(0) := cmplt_v;
                 control.select_pc <= '1';
                 
             -- Shifts et al
             when alu_sll | alu_slli =>
-                if id_ex.alu_op = alu_slli then
-                    b(4 downto 0) := imm(4 downto 0);
+                if b_v(4) = '1' then
+                    a_v := a_v(15 downto 0) & zeros_v(15 downto 0);
                 end if;
-                if b(4) = '1' then
-                    a := a(15 downto 0) & zeros(15 downto 0);
+                if b_v(3) = '1' then
+                    a_v := a_v(23 downto 0) & zeros_v(7 downto 0);
                 end if;
-                if b(3) = '1' then
-                    a := a(23 downto 0) & zeros(7 downto 0);
+                if b_v(2) = '1' then
+                    a_v := a_v(27 downto 0) & zeros_v(3 downto 0);
                 end if;
-                if b(2) = '1' then
-                    a := a(27 downto 0) & zeros(3 downto 0);
+                if b_v(1) = '1' then
+                    a_v := a_v(29 downto 0) & zeros_v(1 downto 0);
                 end if;
-                if b(1) = '1' then
-                    a := a(29 downto 0) & zeros(1 downto 0);
+                if b_v(0) = '1' then
+                    a_v := a_v(30 downto 0) & zeros_v(0 downto 0);
                 end if;
-                if b(0) = '1' then
-                    a := a(30 downto 0) & zeros(0 downto 0);
-                end if;
-                r := a;
+                r_v := a_v;
                 control.select_pc <= '1';
             when alu_srl | alu_srli =>
-                if id_ex.alu_op = alu_srli then
-                    b(4 downto 0) := imm(4 downto 0);
+                if b_v(4) = '1' then
+                    a_v := zeros_v(15 downto 0) & a_v(31 downto 16);
                 end if;
-                if b(4) = '1' then
-                    a := zeros(15 downto 0) & a(31 downto 16);
+                if b_v(3) = '1' then
+                    a_v := zeros_v(7 downto 0) & a_v(31 downto 8);
                 end if;
-                if b(3) = '1' then
-                    a := zeros(7 downto 0) & a(31 downto 8);
+                if b_v(2) = '1' then
+                    a_v := zeros_v(3 downto 0) & a_v(31 downto 4);
                 end if;
-                if b(2) = '1' then
-                    a := zeros(3 downto 0) & a(31 downto 4);
+                if b_v(1) = '1' then
+                    a_v := zeros_v(1 downto 0) & a_v(31 downto 2);
                 end if;
-                if b(1) = '1' then
-                    a := zeros(1 downto 0) & a(31 downto 2);
+                if b_v(0) = '1' then
+                    a_v := zeros_v(0 downto 0) & a_v(31 downto 1);
                 end if;
-                if b(0) = '1' then
-                    a := zeros(0 downto 0) & a(31 downto 1);
-                end if;
-                r := a;
+                r_v := a_v;
                 control.select_pc <= '1';
             when alu_sra | alu_srai =>
-                if id_ex.alu_op = alu_srai then
-                    b(4 downto 0) := imm(4 downto 0);
+                signs_v := (others => a_v(31));
+                if b_v(4) = '1' then
+                    a_v := signs_v(15 downto 0) & a_v(31 downto 16);
                 end if;
-                signs := (others => a(31));
-                if b(4) = '1' then
-                    a := signs(15 downto 0) & a(31 downto 16);
+                if b_v(3) = '1' then
+                    a_v := signs_v(7 downto 0) & a_v(31 downto 8);
                 end if;
-                if b(3) = '1' then
-                    a := signs(7 downto 0) & a(31 downto 8);
+                if b_v(2) = '1' then
+                    a_v := signs_v(3 downto 0) & a_v(31 downto 4);
                 end if;
-                if b(2) = '1' then
-                    a := signs(3 downto 0) & a(31 downto 4);
+                if b_v(1) = '1' then
+                    a_v := signs_v(1 downto 0) & a_v(31 downto 2);
                 end if;
-                if b(1) = '1' then
-                    a := signs(1 downto 0) & a(31 downto 2);
+                if b_v(0) = '1' then
+                    a_v := signs_v(0 downto 0) & a_v(31 downto 1);
                 end if;
-                if b(0) = '1' then
-                    a := signs(0 downto 0) & a(31 downto 1);
-                end if;
-                r := a;
+                r_v := a_v;
                 control.select_pc <= '1';
                 
             -- Loads etc
             when alu_lui =>
-                r := imm;
-                r(11 downto 0) := (others => '0');
+                r_v := b_v;
                 control.select_pc <= '1';
             when alu_auipc =>
-                r := imm;
-                r(11 downto 0) := (others => '0');
-                r := r + unsigned(id_ex.pc) ;
+                r_v := std_logic_vector(unsigned(id_ex.pc) + unsigned(b_v)) ;
                 control.select_pc <= '1';
             when alu_lw =>
-                r := unsigned(I_datain);
+                r_v := I_datain;
                 control.select_pc <= '1';
             when alu_lh =>
-                r := (others => I_datain(15));
-                r(15 downto 0) := unsigned(I_datain(15 downto 0));
+                r_v := (others => I_datain(15));
+                r_v(15 downto 0) := I_datain(15 downto 0);
                 control.select_pc <= '1';
             when alu_lhu =>
-                r := (others => '0');
-                r(15 downto 0) := unsigned(I_datain(15 downto 0));
+                r_v := (others => '0');
+                r_v(15 downto 0) := I_datain(15 downto 0);
                 control.select_pc <= '1';
             when alu_lb =>
-                r := (others => I_datain(7));
-                r(7 downto 0) := unsigned(I_datain(7 downto 0));
+                r_v := (others => I_datain(7));
+                r_v(7 downto 0) := I_datain(7 downto 0);
                 control.select_pc <= '1';
             when alu_lbu =>
-                r := (others => '0');
-                r(7 downto 0) := unsigned(I_datain(7 downto 0));
+                r_v := (others => '0');
+                r_v(7 downto 0) := I_datain(7 downto 0);
                 control.select_pc <= '1';
                 
             -- Jumps and calls
-            when alu_jal | alu_jalr =>
-                r := unsigned(id_ex.pc)+4;
+            when alu_jal_jalr =>
+                r_v := std_logic_vector(unsigned(id_ex.pc) + 4);
                 control.penalty <= '1';
                 control.select_pc <= '1';
                 
             -- Branches
             when alu_beq =>
-                r := (others => '0');
-                if a = b then
-                    r(0) := '1';
-                    control.penalty <= '1';
-                end if;
+                r_v := (others => '0');
+                r_v(0) := cmpeq_v;
+                control.penalty <= cmpeq_v;
                 control.select_pc <= '1';
             when alu_bne =>
-                r := (others => '0');
-                if a /= b then
-                    r(0) := '1';
-                    control.penalty <= '1';
-                end if;
+                r_v := (others => '0');
+                r_v(0) := not cmpeq_v;
+                control.penalty <= not cmpeq_v;
                 control.select_pc <= '1';
-            when alu_blt | alu_slt =>
-                r := (others => '0');
-                if as < bs then
-                    r(0) := '1';
-                    if id_ex.alu_op = alu_blt then
-                        control.penalty <= '1';
-                    end if;
-                end if;
+            when alu_blt =>
+                r_v := (others => '0');
+                r_v(0) := cmplt_v;
+                control.penalty <= cmplt_v;
                 control.select_pc <= '1';
             when alu_bge =>
-                r := (others => '0');
-                if as >= bs then
-                    r(0) := '1';
-                    control.penalty <= '1';
-                end if;
+                r_v := (others => '0');
+                r_v(0) := not cmplt_v;
+                control.penalty <= not cmplt_v;
                 control.select_pc <= '1';
-            when alu_bltu | alu_sltu =>
-                r := (others => '0');
-                if a < b then
-                    r(0) := '1';
-                    if id_ex.alu_op = alu_bltu then
-                        control.penalty <= '1';
-                    end if;
-                end if;
+            when alu_bltu =>
+                r_v := (others => '0');
+                r_v(0) := cmplt_v;
+                control.penalty <= cmplt_v;
                 control.select_pc <= '1';
             when alu_bgeu =>
-                r := (others => '0');
-                if a >= b then
-                    r(0) := '1';
-                    control.penalty <= '1';
-                end if;
+                r_v := (others => '0');
+                r_v(0) := not cmplt_v;
+                control.penalty <= not cmplt_v;
                 control.select_pc <= '1';
                 
             -- Pass data from CSR
             when alu_csr =>
-                r := unsigned(I_csr_datain);
+                r_v := I_csr_datain;
                 control.select_pc <= '1';
                 
             -- Pass data from multiplier
             when alu_multiply =>
-                r := unsigned(md.mul);
+                r_v := md.mul;
                 control.select_pc <= '1';
                 
             -- Pass data from divider
             when alu_divrem =>
-                r := unsigned(md.div);
+                r_v := md.div;
                 control.select_pc <= '1';
                 
             --when others =>
@@ -1173,7 +1167,7 @@ begin
         end case;
         
         -- The result is not clocked.
-        id_ex.result <= std_logic_vector(r);
+        id_ex.result <= r_v;
     end process;
 
     -- The MD unit, can be omitted by setting HAVE_MULDIV to false
@@ -1181,19 +1175,19 @@ begin
         -- Multiplication Unit
         -- Check start of multiplication and load registers
         process (I_clk, I_areset, control, ex_wb, id_ex) is
-        variable a, b : data_type;
+        variable a_v, b_v : data_type;
         begin
             -- Check if forwarding result is needed
             if control.forwarda = '1' then
-                a := (ex_wb.rddata);
+                a_v := (ex_wb.rddata);
             else
-                a := (id_ex.rs1data);
+                a_v := (id_ex.rs1data);
             end if;
                 
             if control.forwardb = '1' then
-                b := (ex_wb.rddata);
+                b_v := (ex_wb.rddata);
             else
-                b := (id_ex.rs2data);
+                b_v := (id_ex.rs2data);
             end if;
         
             if I_areset = '1' then
@@ -1207,14 +1201,14 @@ begin
                 if id_ex.md_start = '1' then
                     if id_ex.md_op(1) = '1' then
                         if id_ex.md_op(0) = '1' then
-                            md.rdata_a <= '0' & unsigned(a);
+                            md.rdata_a <= '0' & unsigned(a_v);
                         else
-                            md.rdata_a <= a(31) & unsigned(a);
+                            md.rdata_a <= a_v(31) & unsigned(a_v);
                         end if;
-                        md.rdata_b <= '0' & unsigned(b);
+                        md.rdata_b <= '0' & unsigned(b_v);
                     else
-                        md.rdata_a <= a(31) & unsigned(a);
-                        md.rdata_b <= b(31) & unsigned(b);
+                        md.rdata_a <= a_v(31) & unsigned(a_v);
+                        md.rdata_b <= b_v(31) & unsigned(b_v);
                     end if;
                 end if;
                 -- Only start when start seen and multiply
@@ -1252,21 +1246,21 @@ begin
         -- fastest hardware but the easiest to follow. Consider
         -- a SRT radix-4 divider.
         process (I_clk, I_areset, control, ex_wb, id_ex) is
-        variable a, b : data_type;
+        variable a_v, b_v : data_type;
         variable div_running_v : std_logic;  
         variable count_v : integer range 0 to 16;
         begin 
             -- Check if forwarding result is needed
             if control.forwarda = '1' then
-                a := (ex_wb.rddata);
+                a_v := (ex_wb.rddata);
             else
-                a := (id_ex.rs1data);
+                a_v := (id_ex.rs1data);
             end if;
-                
+
             if control.forwardb = '1' then
-                b := (ex_wb.rddata);
+                b_v := (ex_wb.rddata);
             else
-                b := (id_ex.rs2data);
+                b_v := (id_ex.rs2data);
             end if;
 
             if I_areset = '1' then
@@ -1295,25 +1289,25 @@ begin
                             md_buf1 <= (others => '0');
                             -- If signed divide, check for negative
                             -- value and make it positive
-                            if id_ex.md_op(0) = '0' and a(31) = '1' then
-                                md_buf2 <= unsigned(not a) + 1;
+                            if id_ex.md_op(0) = '0' and a_v(31) = '1' then
+                                md_buf2 <= unsigned(not a_v) + 1;
                             else
-                                md_buf2 <= unsigned(a);
+                                md_buf2 <= unsigned(a_v);
                             end if;
                             -- Load the divisor x1, divisor x2 and divisor x3
-                            if id_ex.md_op(0) = '0' and b(31) = '1' then
-                                md.divisor1 <= "00" & (unsigned(not b) + 1);
-                                md.divisor2 <= ("0" & (unsigned(not b) + 1) & "0");
-                                md.divisor3 <= ("0" & (unsigned(not b) + 1) & "0") + ("00" & (unsigned(not b) + 1));
+                            if id_ex.md_op(0) = '0' and b_v(31) = '1' then
+                                md.divisor1 <= "00" & (unsigned(not b_v) + 1);
+                                md.divisor2 <= ("0" & (unsigned(not b_v) + 1) & "0");
+                                md.divisor3 <= ("0" & (unsigned(not b_v) + 1) & "0") + ("00" & (unsigned(not b_v) + 1));
                             else
-                                md.divisor1 <= ("00" & unsigned(b));
-                                md.divisor2 <= ("0" & unsigned(b) & "0");
-                                md.divisor3 <= ("0" & unsigned(b) & "0") + ("00" & unsigned(b));
+                                md.divisor1 <= ("00" & unsigned(b_v));
+                                md.divisor2 <= ("0" & unsigned(b_v) & "0");
+                                md.divisor3 <= ("0" & unsigned(b_v) & "0") + ("00" & unsigned(b_v));
                             end if;
                             count_v := count_v + 1;
                             md.div_ready <= '0';
                             -- Determine the sign of the quotient and remainder
-                            if (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '0' and (a(31) /= b(31)) and b /= all_zeros) or (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '1' and a(31) = '1') then
+                            if (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '0' and (a_v(31) /= b_v(31)) and b_v /= all_zeros) or (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '1' and a_v(31) = '1') then
                                 md.outsign <= '1';
                             else
                                 md.outsign <= '0';
@@ -1361,21 +1355,21 @@ begin
         fast_div_not: if not FAST_DIVIDE generate
         -- Division unit, retires one bit at a time
         process (I_clk, I_areset, control, ex_wb, id_ex) is
-        variable a, b : data_type;
+        variable a_v, b_v : data_type;
         variable div_running_v : std_logic;  
         variable count_v : integer range 0 to 32;
         begin
             -- Check if forwarding result is needed
             if control.forwarda = '1' then
-                a := (ex_wb.rddata);
+                a_v := (ex_wb.rddata);
             else
-                a := (id_ex.rs1data);
+                a_v := (id_ex.rs1data);
             end if;
                 
             if control.forwardb = '1' then
-                b := (ex_wb.rddata);
+                b_v := (ex_wb.rddata);
             else
-                b := (id_ex.rs2data);
+                b_v := (id_ex.rs2data);
             end if;
             
             if I_areset = '1' then
@@ -1400,20 +1394,20 @@ begin
                             md_buf1 <= (others => '0');
                             -- If signed divide, check for negative
                             -- value and make it positive
-                            if id_ex.md_op(0) = '0' and a(31) = '1' then
-                                md_buf2 <= unsigned(not a) + 1;
+                            if id_ex.md_op(0) = '0' and a_v(31) = '1' then
+                                md_buf2 <= unsigned(not a_v) + 1;
                             else
-                                md_buf2 <= unsigned(a);
+                                md_buf2 <= unsigned(a_v);
                             end if;
-                            if id_ex.md_op(0) = '0' and b(31) = '1' then
-                                md.divisor <= unsigned(not b) + 1;
+                            if id_ex.md_op(0) = '0' and b_v(31) = '1' then
+                                md.divisor <= unsigned(not b_v) + 1;
                             else
-                                md.divisor <= unsigned(b); 
+                                md.divisor <= unsigned(b_v); 
                             end if;
                             count_v := count_v + 1; 
                             md.div_ready <= '0';
                             -- Determine the result sign
-                            if (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '0' and (a(31) /= b(31)) and b /= all_zeros) or (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '1' and a(31) = '1') then
+                            if (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '0' and (a_v(31) /= b_v(31)) and b_v /= all_zeros) or (id_ex.md_op(0) = '0' and id_ex.md_op(1) = '1' and a_v(31) = '1') then
                                 md.outsign <= '1';
                             else
                                 md.outsign <= '0';
