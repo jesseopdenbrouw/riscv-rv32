@@ -299,7 +299,7 @@ begin
                 end if;
             end if;
             -- If no interrupt is pending, then update the selected CSR.
-            -- Needed because the instruction is restarted on MRET
+            -- Needed because the instruction is restarted after MRET
             if I_interrupt_request = irq_none and I_csr_op /= csr_nop then
                 -- Select the CSR
                 case csr_addr_int is
@@ -404,7 +404,7 @@ begin
             csr.mie(31 downto 8) <= (others => '0');
             csr.mie(6 downto 4) <= (others => '0');
             csr.mie(2 downto 0) <= (others => '0');
-            
+
             -- Set most bits of mstatus, and mstatush to 0
             csr.mstatus(31 downto 13) <= (others => '0');
             csr.mstatus(10 downto 8) <= (others => '0');
