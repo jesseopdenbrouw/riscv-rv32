@@ -1,7 +1,7 @@
 /*
  * Startup file for RISC-V bare metal processor
  *
- * (c) 2022, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
+ * (c) 2023, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
  *
  * */
 
@@ -96,8 +96,8 @@ void _start(void)
 		pdRom++;
 	}
 
-        /* Initialize the C library */
-        __libc_init_array();
+	/* Initialize the C library */
+	__libc_init_array();
 
 	/* At this point, the trap handler is not set up
 	 * properly. Also, the external timer is not set
