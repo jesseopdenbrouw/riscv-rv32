@@ -15,15 +15,18 @@ uint32_t i2c1_receive(uint8_t address, uint8_t *buf, uint32_t len)
 		return ret;
 	}
 
-	/* Receive all bytes */
+	/* Receive all bytes, first set master ACK */
+	I2C1->CTRL |= I2C_MACK;
 	for (int i = 0; i < len; i++) {
 		/* Set STOP generation on last byte */
 		if (i == len-1) {
-			I2C1->CTRL |= (1 << 8);
+			I2C1->CTRL |= I2C_STOP;
 		}
 		/* Transfer byte, return if error */
 		*buf++ = i2c1_receive_byte();
 	}
+	/* Disable master ACK */
+	I2C1->CTRL &= ~I2C_MACK;
 
 	return 0;	
 }
