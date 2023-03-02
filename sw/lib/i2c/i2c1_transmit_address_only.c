@@ -9,7 +9,7 @@ uint32_t i2c1_transmit_address_only(uint8_t address)
 	I2C1->DATA = address;
 
 	/* Wait for transmission to end */
-	while ((I2C1->STAT & 0x08) == 0x00);
+	while ((I2C1->STAT & I2C_TC) == 0x00);
 
-	return I2C1->STAT & (1 << 5);
+	return I2C1->STAT & I2C_AF;
 } 
