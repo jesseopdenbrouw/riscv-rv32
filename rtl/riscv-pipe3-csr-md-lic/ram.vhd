@@ -36,7 +36,8 @@
 
 -- This file contains the description of a RAM block. The
 -- RAM is placed in onboard RAM blocks. A write takes one
--- clock cycle, a read takes two clock cycles.
+-- clock cycle, a read takes two clock cycles. Reads and
+-- writes must be natural aligned.
 
 library ieee;
 use ieee.std_logic_1164.all;
