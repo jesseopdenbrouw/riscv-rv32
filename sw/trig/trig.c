@@ -1,7 +1,10 @@
 /*
- * program to test trigoniometry functions
+ * Program to test trigoniometry functions
  * on the processor. Due to large ROM contents
  * we need to select the functions used.
+ *
+ * Since float/doubles are printed, we need to
+ * include the linker flag -u _printf_float
  *
  */
 
@@ -34,7 +37,7 @@ int main(void)
 	volatile double k, l, m;
 
 
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	uart1_puts("float and double calculations\r\n");
 
