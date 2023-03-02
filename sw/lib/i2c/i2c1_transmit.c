@@ -19,10 +19,13 @@ uint32_t i2c1_transmit(uint8_t address, uint8_t *buf, uint32_t len)
 	for (int i = 0; i < len; i++) {
 		/* Set STOP generation on last byte */
 		if (i == len-1) {
-			I2C1->CTRL |= (1 << 8);
+			I2C1->CTRL |= I2C_STOP;
 		}
 		/* Transfer byte, return if error */
 		ret = i2c1_transmit_byte(*buf++);
+		if (ret) {
+			return ret;
+		}
 	}
 
 	return 0;	
