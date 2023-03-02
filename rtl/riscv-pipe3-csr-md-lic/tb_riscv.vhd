@@ -96,8 +96,8 @@ signal i2c1scl : std_logic;
 signal i2c1sda : std_logic;
 
 -- Set the bit time
-constant bittime : time := (50000000/115200) * 1 ns;
--- Select 7, 8 or 9 bits
+constant bittime : time := (50000000/115200) * 20 ns;
+-- Select character to send
 constant chartosend : std_logic_vector := "01000001";
 
 begin
