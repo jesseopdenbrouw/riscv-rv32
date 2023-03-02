@@ -17,6 +17,8 @@ uint32_t parsehex(char *s, char **ppchar);
 void printhex(uint32_t v, int n);
 /* Get a hex number from UART1 */
 uint32_t gethex(int n);
+/* Delay in milliseconds */
+void delayms(uint32_t delay);
 
 #ifdef __cplusplus
 }
