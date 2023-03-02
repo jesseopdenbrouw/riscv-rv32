@@ -67,7 +67,7 @@ int main(void) {
 		for (uint8_t i = 32; i<128; i++) {
 			ret = ssd1315_setpos(0,2);
 			ret = ssd1315_putchar(i);
-			for (volatile uint32_t i = 0; i < 900000; i++);
+			delayms(1000);
 		}
 	}
 }
