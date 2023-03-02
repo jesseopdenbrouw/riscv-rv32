@@ -62,7 +62,7 @@ begin
         elsif I_pc(31 downto 28) = bootloader_high_nibble then
             O_instr_out <= I_instr_boot;
         else
-            O_instr_out <= (others => '0');
+            O_instr_out <= (others => '-');
         end if;
     end process;
     
