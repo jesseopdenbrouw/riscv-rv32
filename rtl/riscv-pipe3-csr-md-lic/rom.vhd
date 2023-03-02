@@ -38,7 +38,10 @@
 -- is placed in mutable onboard RAM blocks and can be changed
 -- by writing to it. A read takes two clock cycles, for both
 -- instruction and data. The ROM contents is placed in file
--- processor_common_rom.vhd.
+-- processor_common_rom.vhd. ROM can only be written on
+-- word boundaries. Instruction reads can only be on word
+-- boundaries. Data read can be on byte, halfword and word
+-- boundaries
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -107,7 +110,7 @@ begin
             romdata_var := rom(address_data);
             if HAVE_BOOTLOADER_ROM then
                 -- Write the ROM ;-)
-                if I_wren = '1' and I_size = memsize_word then
+                if I_csrom = '1' and I_wren = '1' and I_size = memsize_word then
                     rom(address_data) <= I_datain(7 downto 0) & I_datain(15 downto 8) & I_datain(23 downto 16) & I_datain(31 downto 24);
                 end if;
             end if;
