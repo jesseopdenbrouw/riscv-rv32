@@ -452,7 +452,7 @@ For the processor, all RV32IM Unprivileged instructions are implemented but the 
 
 \section{The FPGA}
 For this project, we use the Cyclone V FPGA from Intel (formerly Altera). See \url{https://www.intel.com/content/www/us/en/products/details/fpga/cyclone/v.html}.
-The used Cyclone V is the 5CEBA4F23C7 which has 18480 ALMs available. It has 3080 kb of onboard RAM bits available which are used for RAM, ROM, (possibly) bootloader ROM and (possibly) the registers. Depending on the program and used resources, the compiled RISC-V processor uses about 2800 ALMs (about 16\,\%) and 1,343,488 bits of internal memory (43\,\%). The clock frequency is approximately 80\,MHz, which is sufficient for all program examples. Note that the DE0-CV board has a onboard clock generator with a frequency of 50\,MHz, so a PLL is needed to get a frequency of 80\,MHz. This FPGA is mounted on a Terasic DE0-CV board. The board has 10 switches, 4 push buttons, 1 reset push button, 10 leds, and 6 seven-segment displays. It also has two 2x20-pin headers to connect off-board devices. See \url{http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=921}. For downloading the bitstream file, the onboard USB-Blaster is used.
+The used Cyclone V is the 5CEBA4F23C7 which has 18480 ALMs available. It has 3080 kb of onboard RAM bits available which are used for RAM, ROM, (possibly) bootloader ROM and (possibly) the registers. Depending on the program and used resources, the compiled RISC-V processor uses about 2800 ALMs (about 16\,\%) and 1,343,488 bits of internal memory (43\,\%). The clock frequency is approximately 80\,MHz, which is sufficient for all program examples. Note that the DE0-CV board has a onboard clock generator with a frequency of 50\,MHz, so a PLL is needed to get a frequency of 80\,MHz. This FPGA is mounted on a Terasic DE0-CV board (see Figure~\ref{fig:de0-cv-gpio}). The board has 10 switches, 4 push buttons, 1 reset push button, 10 leds, and 6 seven-segment displays. It also has two 2x20-pin headers to connect off-board devices. See \url{http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=921}. For downloading the bitstream file, the onboard USB-Blaster is used.
 
 Disabling the bootloader saves one copy of the ROM and the bootloader ROM. Then the used RAM is 786,432 bits (25\,\%). Disabling registers in RAM saves 2048 bits, but increases the ALM count.
 
@@ -460,20 +460,28 @@ It is possible to add the Quartus' Signal Tap (embedded) Logic Analyzer. Follow 
 
 To find the best compilation result for speed and/or area, we have to tweak the compiler setting for the synthesizer and the fitter. Best is to do a design space exploration, and randomize the seed. Tweaking the seed may show a difference of 5\,MHz on the clock speed.
 
-%Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed is set to 1 and the optimization is set to balanced. The total amount of ALMs is 18480. The total amount of RAM bits is 3153920.
-%
-%\begin{table}[!ht]
-%\caption{FPGA resource utilization.}
-%\label{tab:util}
-%\centering
-%\begin{tabular}{lllll}
-%\toprule
-%     & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
-%Freq & 83.26                                                              & 79.08                                                           & 81.84                                                           & 79.38                                                        \\
-%ALM  & 3487                                                            & 2795                                                        & 3507                                                         & 2848                                                      \\
-%RAM  & 786,432                                                         & 788,480                                                      & 1,343,488                                                    & 1,345,536                                                 \\ \bottomrule
-%\end{tabular}
-%\end{table}
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.45]{images/image-de0-cv}
+\caption{The DE0-CV board.}
+\label{fig:image-de0-cv}
+\end{figure}
+
+Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed is set to 1 and the optimization is set to balanced. The total amount of ALMs is 18480. The total amount of RAM bits is 3153920.
+
+\begin{table}[!ht]
+\caption{FPGA resource utilization.}
+\label{tab:util}
+\centering
+\begin{tabular}{lllll}
+\toprule
+     & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
+Freq & 81.47   & 80.52   & 80.50     & 80.35     \\
+ALM  & 3392    & 2692    & 3417      & 2714      \\
+RAM  & 786,432 & 788,480 & 1,343,488 & 1,345,536 \\ \bottomrule
+\end{tabular}
+\end{table}
+
 
 \section{Processor hardware}
 The processor hardware is composed of the following VHDL files:
@@ -626,7 +634,7 @@ Some pins are connected to the onboard GPIO headers. The DE0-CV board has two he
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[scale=0.63]{de0-cv-gpio}
+\includegraphics[scale=0.63]{images/de0-cv-gpio}
 \caption{Pin assignments of the GPIO headers.}
 \label{fig:de0-cv-gpio}
 \end{figure}
@@ -782,21 +790,21 @@ This will upload the file \lstinline|flash.srec| to the board. See also Section~
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.85\textwidth]{quartus1}
+\includegraphics[width=0.85\textwidth]{images/quartus1}
 \caption{Image of the Quartus project (1).}
 \label{quartus1}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.85\textwidth]{quartus2}
+\includegraphics[width=0.85\textwidth]{images/quartus2}
 \caption{Image of the Quartus project (2).}
 \label{quartus2}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.85\textwidth]{programmer}
+\includegraphics[width=0.85\textwidth]{images/programmer}
 \caption{Image of the programmer.}
 \label{programmer}
 \end{figure}
@@ -1506,7 +1514,7 @@ For working with the UART on board of the processor, you need an USB-to-U(S)ART 
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[scale=0.1]{usb-usart-ttl}
+\includegraphics[scale=0.1]{images/usb-usart-ttl}
 \caption{An USB-to-U(S)ART converter. Make sure that the voltages do not exceed 3.3 V.}
 \label{fig:usb-usart-ttl}
 \end{figure}
