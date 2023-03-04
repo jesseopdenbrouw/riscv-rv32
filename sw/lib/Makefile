@@ -30,6 +30,7 @@ $(LIBTHUASRV32):
 	make -C spi all
 	make -C i2c all
 	make -C timer all
+	make -C gpio all
 	$(AR) rsv $(LIBTHUASRV32) $(OBJ)
 
 
@@ -42,4 +43,5 @@ clean:
 	make -C spi clean
 	make -C i2c clean
 	make -C timer clean
+	make -C gpio clean
 	rm -f $(LIBTHUASRV32)
