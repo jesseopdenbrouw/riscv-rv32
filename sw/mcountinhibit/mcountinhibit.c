@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < 1000; i++) {
 			uart1_puts("instret: ");
 			print_instret();
-			uart1_puts("| cycle: ");
+			uart1_puts(" | cycle: ");
 			print_cycle();
 			uart1_putc('\r');
 		}
