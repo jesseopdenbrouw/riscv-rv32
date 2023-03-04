@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <sys/times.h>
 
-/* _sbrk must be provided to accomodate malloc et. al. */
+/* _sbrk must be provided to accomodate malloc et al. */
 
 static uint8_t *__sbrk_heap_end = NULL;
 
