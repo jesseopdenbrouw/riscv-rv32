@@ -3,11 +3,11 @@
  * csr.h -- some common routines for CSR handling
  */
 
-#include <stdint.h>
 
 #ifndef _CSR_H
 #define _CSR_H
 
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
