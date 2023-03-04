@@ -91,7 +91,7 @@ You need a (free) license for that. The processor uses about
 2800 ALM (cells) of 18480, depending on the settings. In the default
 settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 
-## Plans (or not)
+## Plans (or not) and issues
 
 * We are *not* planning the C standard.
 * Implement clock stretching and arbitration in the I2C1 peripheral.
@@ -104,6 +104,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 * Move CSR and LIC into the core.
+* Identified a problem when an trap is requested and the memory is read or written. The instruction is not executed (is not retired), but the memory is accessed, and can have side effects in I/O (i.e. clearing bits or starting hardware).
 
 ## Disclaimer
 
