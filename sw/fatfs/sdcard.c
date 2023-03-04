@@ -542,7 +542,7 @@ uint32_t SD_initialize(void) {
 		return SD_ERROR;
 	}
 
-	/* Switch to fast access: Clock /8 */
+	/* Switch to fast access: Clock /4 */
 	SPI2_init(SD_FAST);
 
 	/* Get CSD (CMD9) */
