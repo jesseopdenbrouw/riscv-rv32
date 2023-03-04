@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "uart.h"
+#include <thuasrv32.h>
 
 /* Get a unsigned hex number from UART1, n is the number of
  * ASCII characters representing the hex number */

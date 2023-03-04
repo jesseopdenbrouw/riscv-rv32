@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "uart.h"
+#include <thuasrv32.h>
 
 /* Parse hex string from s, ppchar return position after the hex string */
 uint32_t parsehex(char *s, char **ppchar) {

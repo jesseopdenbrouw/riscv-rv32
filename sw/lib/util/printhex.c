@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "uart.h"
+#include <thuasrv32.h>
 
 /* Print hex string with UART1, n is number of hex characters */
 void printhex(uint32_t v, int n) {
