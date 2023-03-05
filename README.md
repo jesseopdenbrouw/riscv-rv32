@@ -104,7 +104,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 * Move CSR and LIC into the core.
-* Identified a problem when an trap is requested and the memory is read or written. The instruction is not executed (is not retired), but the memory is accessed, and can have side effects in I/O (i.e. clearing bits or starting hardware).
+* Identified a problem when a trap is requested and the memory is read or written. The instruction is not executed (is not retired), but the memory is accessed, and can have side effects in I/O (i.e. clearing bits or starting hardware). The memory access cannot be stopped, because of the following: if an access loads/stores on a misaligned memory address, an exception is raised. Disabling the memory access with disable the exception, which caused the memory to be accessed again. This is called a combinational loop.
 
 ## Disclaimer
 
