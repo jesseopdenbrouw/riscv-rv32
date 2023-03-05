@@ -1,3 +1,8 @@
+/*
+ * malloc.c - Test the malloc et al. functions
+ *            For use in the simulator
+ */
+
 #include <malloc.h>
 
 int main(void) {
