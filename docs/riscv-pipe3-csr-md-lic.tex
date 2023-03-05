@@ -8,11 +8,11 @@
 
 \documentclass[12pt]{article}
 
-\author{Jesse E.J. op den Brouw\thanks{\texttt{J.E.J.opdenBrouw@hhs.nl}}\\[2ex]The Hague University of Applied Sciences}
+\author{Jesse E.J. op den Brouw\thanks{\href{mailto:J.E.J.opdenBrouw@hhs.nl}{\texttt{J.E.J.opdenBrouw@hhs.nl}}}\\[2ex]The Hague University of Applied Sciences}
 \title{A RISC-V Microcontroller in VHDL}
 \date{\today\\[2ex]\normalsize\url{https://github.com/jesseopdenbrouw/riscv-rv32}\\[2ex]For design \texttt{riscv-pipe3-csr-md-lic}}
 
-\usepackage[a4paper,inner=1.0in,outer=1.2in,top=1in,bottom=1.5in,footskip=0.4in,showframe]{geometry}
+\usepackage[a4paper,inner=1.0in,outer=1.2in,top=1in,bottom=1.5in,footskip=0.4in]{geometry}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage[charter]{mathdesign}
@@ -43,6 +43,7 @@
 
 \usepackage{textcomp}
 \usepackage{listings}
+\definecolor{mygray}{RGB}{230,230,230}
 \lstset{
     basicstyle = \ttfamily,
     numbers = left,
@@ -53,6 +54,8 @@
     postbreak = \raisebox{-0.5ex}[0ex][0ex]{\color{red}\ensuremath{\hookrightarrow}},
     upquote = true,
     tabsize = 4,
+    frame = lines,
+    backgroundcolor = \color{mygray},
 }
 
 \usepackage{tikz}
@@ -932,7 +935,7 @@ void timer1_handler(void)
 \section{Software programs}
 The \lstinline|sw| directory contains programs that run on this RISC-V processor. Under Linux, change to the \lstinline|sw| directory and issue the \lstinline|make| command. Now all programs are compiled as is a THUAS-specific library. To upload a program to the RISC-V processor, change to one of the program directories and issue the command \lstinline|make upload|. This will upload the corresponding S-record file to the processor using UART1. Make sure no terminal program (e.g.\@ PuTTY) is connected. The bootloader hardware must be installed. See Section~\ref{sec:bootloader}.
 
-After \lstinline|make| is run, a static library called \lstinline|libthuasrv32.a| is available with functions to use the I/O and trap related functions. You need to supply the library to the linker. Also, two \lstinline|specs| files are available. Use \lstinline|--specs=<path-to>/thuas.specs| for including the \lstinline|thuas| library and use \lstinline|--specs=<path-to>/nano.specs| for including the \lstinline|nano| library \textsl{without} the \lstinline|gloss| library (used for \lstinline|ECALL|-driven system calls). If you need \lstinline|ECAll|-driven system calls, use \lstinline|--specs=nano.specs| (without a path name) to use the RISC-V specific \lstinline|nano| library \textsl{with} the \lstinline|gloss| library.
+After \lstinline|make| is run, a static library called \lstinline|libthuasrv32.a| is available with functions to use the I/O and trap related functions. You need to supply the library to the linker. Also, one \lstinline|specs| files are available. Use \lstinline|--specs=<path-to>/nano.specs| for including the \lstinline|nano| library \textsl{without} the \lstinline|gloss| library (used for \lstinline|ECALL|-driven system calls). If you need \lstinline|ECAll|-driven system calls, use \lstinline|--specs=nano.specs| (without a path name) to use the RISC-V specific \lstinline|nano| library \textsl{with} the \lstinline|gloss| library.
 
 In the \lstinline|sw| directory, there are a number of software programs available. First, the common files:
 
@@ -1186,9 +1189,10 @@ Some future plans:
 \item We are \emph{not} planning the C standard.
 \item The CSR is not conform the standard, but should be.
 \item Implement clock stretching and arbitration in the I\textsuperscript{2}C peripheral.
-\item Adding input synchronization for SPI1/SPI2 and I2C1 peripherals.
+\item Adding input synchronization for SPI1 and SPI2 peripherals.
 \item Adding Input Capture for TIMER2.
 \item Implement an I/O input/output multiplexer for \lstinline|pina| and \lstinline|pouta|. This will enable I/O functions to be multiplexed with normal port I/O.
+\item Implement I/O with selectable for input or output. This implies tri-state buffers and some synthesizer don't want these buried in a hierarchy.
 \item Smaller (in cells) divide unit.
 \item Test more functions of the standard and mathematical libraries.
 \item It is not possible to print \lstinline|long long| (i.e. 64-bit) using \lstinline|printf| et al. When using the format specifier \lstinline|%lld|, \lstinline|printf| just prints \lstinline|ld|. This due to lack of support in the \lstinline|nano| library.
@@ -1197,170 +1201,30 @@ Some future plans:
 \end{itemize}
 
 \appendix
+\section{C Runtime startup code}
+Before \lstinline|main| is called, the C Runtime startup code (normally in a file called \lstinline|crt0.s|, maybe we change that in the future) does some initialization:
+
+\begin{itemize}
+\item Set up the trap vector address to catch early traps.
+\item Load the Stack Pointer with the end address +1 of the RAM.
+\item Load the Global Pointer with a suitable address.
+\item Initialize (clear) the BBS section with 0, for globals/statics without initialization.
+\item Initialize globals/statics \emph{with} initialization.
+\item Initialize the C library.
+\item Call \lstinline|main|.
+\item Call \lstinline|exit|.
+\end{itemize} 
+
+Although this is a bare metal processor, without an operating system, it is possible to pass arguments (\lstinline|argc|, \lstinline|argv|) to \lstinline|main|. This is shown in de code below. When the linker links all object files to an executable, it sets the entry point to a symbol called \lstinline|_start|. So our C Runtime startup is a function called \lstinline|_start|. It has no parameters and doesn't return anything. Furthermore, the function must not use the stack and be placed at the begin of the ROM. The linker file (\lstinline|riscv.ld|) supplies the linker with some symbols: \lstinline|_sbbs| and \lstinline|_ebbs| have the addresses of the BBS section (in RAM). The initialization data of the initialized globals/statics are within the ROM code and must be copied to the RAM before \lstinline|main| starts. The data starts at the address found in symbol \lstinline|_sidata| and must be copies to RAM memory available in symbols \lstinline|_sdata| and \lstinline|_edata|.
+When using register variables, the C compiler will detect loops for BSS zeroing and copying ROM data to RAM and will use \lstinline|memset| and \lstinline|memcpy| to perform the actions.
+
+\lstinputlisting[aboveskip=2ex,language=C,breaklines=false]{code/startup.c}
+
 \section{The I/O at a glance}
 
 The I/O registers are directly addressable or by a struct. See the listing below.
 
-\begin{lstlisting}[language=C,breaklines=false]
-/*
- *     io.h - definitions for the I/O of the
- *            THUAS RISC-V processor
- */
-
-#ifndef _IO_H
-#define _IO_H
-
-#include <stdint.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-/* Base address of the I/O */
-#define IO_BASE (0xf0000000UL)
-
-
-/*
- * General purpose I/O
- */
-typedef struct {
-        volatile uint32_t PIN;
-        volatile uint32_t POUT;
-} GPIO_struct_t;
-
-#define GPIOA_BASE (IO_BASE+0x00000000UL)
-#define GPIOA ((GPIO_struct_t *) GPIOA_BASE)
-
-#define GPIOA_PIN  (*(volatile uint32_t*)(GPIOA_BASE+0x00000000UL))
-#define GPIOA_POUT (*(volatile uint32_t*)(GPIOA_BASE+0x00000004UL))
-
-
-/* UART1 */
-typedef struct {
-	volatile uint32_t CTRL;
-	volatile uint32_t STAT;
-	volatile uint32_t DATA;
-	volatile uint32_t BAUD;
-} UART_struct_t;
-
-#define UART_BASE (IO_BASE+0x00000020UL)
-#define UART1 ((UART_struct_t *) UART_BASE)
-
-#define UART1_CTRL (*(volatile uint32_t*)(UART_BASE+0x00000000UL))
-#define UART1_STAT (*(volatile uint32_t*)(UART_BASE+0x00000004UL))
-#define UART1_DATA (*(volatile uint32_t*)(UART_BASE+0x00000008UL))
-#define UART1_BAUD (*(volatile uint32_t*)(UART_BASE+0x0000000cUL))
-
-
-/*
- * I2C1
-*/
-typedef struct {
-	volatile uint32_t CTRL;
-	volatile uint32_t STAT;
-	volatile uint32_t DATA;
-} I2C_struct_t;
-
-#define I2C_BASE (IO_BASE+0x00000040UL)
-#define I2C1 ((I2C_struct_t *) I2C_BASE)
-
-#define I2C1_CTRL (*(volatile uint32_t*)(I2C_BASE+0x00000000UL))
-#define I2C1_STAT (*(volatile uint32_t*)(I2C_BASE+0x00000004UL))
-#define I2C1_DATA (*(volatile uint32_t*)(I2C_BASE+0x00000008UL))
-
-
-/*
- * SPI1, SPI2
- */
-typedef struct {
-	volatile uint32_t CTRL;
-	volatile uint32_t STAT;
-	volatile uint32_t DATA;
-} SPI_struct_t;
-
-#define SPI_BASE (IO_BASE+0x00000060UL)
-#define SPI1 ((SPI_struct_t *) SPI_BASE)
-#define SPI2 ((SPI_struct_t *) (SPI_BASE + 0x10))
-
-#define SPI1_CTRL (*(volatile uint32_t*)(SPI_BASE+0x00000000UL))
-#define SPI1_STAT (*(volatile uint32_t*)(SPI_BASE+0x00000004UL))
-#define SPI1_DATA (*(volatile uint32_t*)(SPI_BASE+0x00000008UL))
-#define SPI2_CTRL (*(volatile uint32_t*)(SPI_BASE+0x00000010UL))
-#define SPI2_STAT (*(volatile uint32_t*)(SPI_BASE+0x00000014UL))
-#define SPI2_DATA (*(volatile uint32_t*)(SPI_BASE+0x00000018UL))
-
-
-/*
- * TIMER1
- */
-typedef struct {
-	volatile uint32_t CTRL;
-	volatile uint32_t STAT;
-	volatile uint32_t CNTR;
-	volatile uint32_t CMPT;
-} TIMER1_struct_t;
-
-#define TIMER1_BASE (IO_BASE+0x00000080UL)
-#define TIMER1 ((TIMER1_struct_t *) TIMER1_BASE)
-
-#define TIMER1_CTRL (*(volatile uint32_t*)(TIMER1_BASE+0x00000000UL))
-#define TIMER1_STAT (*(volatile uint32_t*)(TIMER1_BASE+0x00000004UL))
-#define TIMER1_CNTR (*(volatile uint32_t*)(TIMER1_BASE+0x00000008UL))
-#define TIMER1_CMPT (*(volatile uint32_t*)(TIMER1_BASE+0x0000000cUL))
-
-
-/*
- * TIMER2
- */
-typedef struct {
-	volatile uint32_t CTRL;
-	volatile uint32_t STAT;
-	volatile uint32_t CNTR;
-	volatile uint32_t CMPT;
-	volatile uint32_t PRSC;
-	volatile uint32_t CMPA;
-	volatile uint32_t CMPB;
-	volatile uint32_t CMPC;
-} TIMER2_struct_t;
-
-#define TIMER2_BASE (IO_BASE+0x000000a0UL)
-#define TIMER2 ((TIMER2_struct_t *) TIMER2_BASE)
-
-#define TIMER2_CTRL (*(volatile uint32_t*)(TIMER2_BASE+0x00000000UL))
-#define TIMER2_STAT (*(volatile uint32_t*)(TIMER2_BASE+0x00000004UL))
-#define TIMER2_CNTR (*(volatile uint32_t*)(TIMER2_BASE+0x00000008UL))
-#define TIMER2_CMPT (*(volatile uint32_t*)(TIMER2_BASE+0x0000000cUL))
-#define TIMER2_PRSC (*(volatile uint32_t*)(TIMER2_BASE+0x00000010UL))
-#define TIMER2_CMPA (*(volatile uint32_t*)(TIMER2_BASE+0x00000014UL))
-#define TIMER2_CMPB (*(volatile uint32_t*)(TIMER2_BASE+0x00000018UL))
-#define TIMER2_CMPC (*(volatile uint32_t*)(TIMER2_BASE+0x0000001cUL))
-
-
-/*
- * RISC-V system timer (in I/O)
- */
-#define MTIME (*(volatile uint32_t*)(IO_BASE+0x000000f0UL))
-#define MTIMEH (*(volatile uint32_t*)(IO_BASE+0x000000f4UL))
-#define MTIMECMP (*(volatile uint32_t*)(IO_BASE+0x000000f8UL))
-#define MTIMECMPH (*(volatile uint32_t*)(IO_BASE+0x000000fcUL))
-
-typedef struct {
-	volatile uint32_t time;
-	volatile uint32_t timeh;
-} MTIME_struct_t;
-
-typedef struct {
-	volatile uint32_t timecmp;
-	volatile uint32_t timecmph;
-} MTIMECMP_struct_t;
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-\end{lstlisting}
+\lstinputlisting[language=C,breaklines=false]{code/io.h}
 
 \section{Port I/O}
 The processor is equipped with a single 32-bit input and 32-bit output port. There is no data direction register. This may be changed to using bi-direction port pins. Note that all accesses on the I/O are in Big Endian. This means that bit 31 of the input will be placed in bit 31 of the used variable.
@@ -1800,7 +1664,7 @@ Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C 
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000000]
-\item [BUSY] Set to 1 when SDA or SCL is low, set to 0 when STOP condition is detected.
+\item [BUSY] Set to 1 when SDA or SCL is low, set to 0 when STOP condition is detected, independent of the I2C1 device.
 \item [AF] Acknowledge Fail, set when no target responded. Cleared by hardware when \lstinline|I2C1_DATA| is accessed.
 %\item [RC] Receive Complete, including sending STOP. Cleared by hardware when I2C1\_DATA is read.
 \item [TC] Transmission Complete, including START or STOP, if any. Cleared by hardware when \lstinline|I2C1_DATA| is accessed.
@@ -1813,7 +1677,7 @@ Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C 
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
-\itemsep-1.5ex
+%\itemsep-1.5ex
 \item[Write] The data is written to an internal buffer and transmitted.
 \item[Read] The last received data is read.
 \end{reglist}\end{regdesc}
@@ -1881,7 +1745,7 @@ Note: because of the 50\,MHz system frequency, the lowest SPI clock frequency is
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
-\itemsep-1.5ex
+%\itemsep-1.5ex
 \item[Write] The data is written to an internal buffer and transmitted.
 \item[Read] The last received data is read.
 \end{reglist}\end{regdesc}
@@ -1943,7 +1807,7 @@ Note: because of the 50\,MHz system frequency, the lowest SPI clock frequency is
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
-\itemsep-1.5ex
+%\itemsep-1.5ex
 \item[Write] The data is written to an internal buffer and transmitted.
 \item[Read] The last received data is read.
 \end{reglist}\end{regdesc}
@@ -1962,7 +1826,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
-\itemsep-1.5ex
+%\itemsep-1.5ex
 \item[EN] Enable the timer
 \item[TIE] Timer compare match interrupt enable
 \end{reglist}\end{regdesc}
@@ -1984,7 +1848,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 \regfield{CNTR}{32}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CNTR] This register holds the counted clock pulses on the timer. This register may be written by software.
 \end{reglist}\end{regdesc}
@@ -1994,7 +1858,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 \regfield{CMPT}{32}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CMPT] This register holds the value at which the counter register is compared. On CNTR compares to greater than or equal to CMPT, the counter register will be cleared and the TCI flag will be set (both in the next clock cycle).
 \end{reglist}\end{regdesc}
@@ -2104,7 +1968,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{CNTR}{16}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CNTR] This register holds the counted clock pulses on the timer. This register may be written by software. Rolls over when CNTR compare greater than or equal to CMPT on the next clock cycle.
 \end{reglist}\end{regdesc}
@@ -2115,7 +1979,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{CMPT}{16}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CMPT] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPT, the Count register will be cleared and the TCI flag will be set (both in the next clock cycle).
 \end{reglist}\end{regdesc}
@@ -2126,7 +1990,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{PSRC}{16}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[PRSC] This register holds the prescaler of the timer. This register may be written by software. Whenever the internal prescaler is equal to or greater than this register, the internal prescaler is reset. This register should only be written when the timer is stopped. Writing this register resets the internal prescaler.
 \end{reglist}\end{regdesc}
@@ -2137,7 +2001,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{CMPA}{16}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CMPA] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPA, the ACI flag will be set in the next clock cycle.
 \end{reglist}\end{regdesc}
@@ -2148,7 +2012,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{CMPB}{16}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CMPB] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPB, the BCI flag will be set in the next clock cycle.
 \end{reglist}\end{regdesc}
@@ -2159,7 +2023,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{CMPC}{16}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
 \item[CMPC] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPC, the CCI flag will be set in the next clock cycle.
 \end{reglist}\end{regdesc}
@@ -2171,9 +2035,9 @@ Note: the external timer interrupt has to be enabled by writing a 1 to \lstinlin
 \regfield{TIME}{32}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
-\item This register holds the low 32 bits of the external timer. Currently read-only.
+\item [TIME] This register holds the low 32 bits of the external timer. Currently read-only.
 \end{reglist}\end{regdesc}
 
 \begin{register}{H}{TIMEH external timer register TIME}{0xf4}
@@ -2181,9 +2045,9 @@ Note: the external timer interrupt has to be enabled by writing a 1 to \lstinlin
 \regfield{TIMEH}{32}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
-\item This register holds the upper 32 bits of the external timer. Currently read-only.
+\item [TIMEH] This register holds the upper 32 bits of the external timer. Currently read-only.
 \end{reglist}\end{regdesc}
 
 \begin{register}{H}{TIMECMP external timer compare register TIMECMP}{0xf8}
@@ -2191,9 +2055,9 @@ Note: the external timer interrupt has to be enabled by writing a 1 to \lstinlin
 \regfield{TIMECMP}{32}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[00000000]
 \itemsep-1.5ex
-\item This register holds the low 32 bits of the external timer compare register.
+\item [TIMECMP] This register holds the low 32 bits of the external timer compare register.
 \end{reglist}\end{regdesc}
 
 \begin{register}{H}{TIMECMPH external timer compare register TIMECMP}{0xfc}
@@ -2201,9 +2065,9 @@ Note: the external timer interrupt has to be enabled by writing a 1 to \lstinlin
 \regfield{TIMECMPH}{32}{0}{{0}}%
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
+\begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
 \itemsep-1.5ex
-\item This register holds the upper 32 bits of the external timer compare register.
+\item [TIMECMPH] This register holds the upper 32 bits of the external timer compare register.
 \end{reglist}\end{regdesc}
 
 \end{document}
