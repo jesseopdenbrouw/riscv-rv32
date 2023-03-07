@@ -19,15 +19,15 @@ union {
 int main(void) {
 
 
-	t.x = 1.0;
+	t.x = 0.57;
 	t.x = sin(t.x);
 	printf("%.16f = %016llx\n", t.x, t.y);
 
-	t.x = 1.0;
+	t.x = 0.57;
 	t.x = asin(t.x);
 	printf("%.16f = %016llx\n", t.x, t.y);
 
-	t.x = 1.0;
-	t.x = log(t.x);
+	t.x = 0.57;
+	t.x = tan(t.x);
 	printf("%.16f = %016llx\n", t.x, t.y);
 }
