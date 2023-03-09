@@ -3,8 +3,7 @@
 #include <ctype.h>
 
 /* THUASRV32 */
-#include "io.h"
-#include "uart.h"
+#include <thuasrv32.h>
 
 
 /* __io_putchar prints a character via the UART1 */

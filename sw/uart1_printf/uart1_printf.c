@@ -2,8 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "io.h"
-#include "uart.h"
+#include <thuasrv32.h>
 
 /* Frequency of the DE0-CV board */
 #ifndef F_CPU
@@ -26,7 +25,7 @@ int main(void) {
 
 	char *pc = buffer;
 
-	uart1_init(F_CPU/BAUD_RATE-1,0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	/* long long cannot be printed with the nano library */
 	printf("%d %p %.20f %.20f %lld\r\n", j, pc, k, l, m);

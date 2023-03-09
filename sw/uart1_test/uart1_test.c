@@ -1,4 +1,4 @@
-#include "io.h"
+#include <thuasrv32.h>
 
 /* Frequency of the DE0-CV board */
 #ifndef F_CPU

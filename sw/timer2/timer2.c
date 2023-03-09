@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "io.h"
+#include <thuasrv32.h>
 
 /* Should be loaded by the Makefile */
 #ifndef F_CPU
