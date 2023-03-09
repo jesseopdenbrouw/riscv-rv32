@@ -71,7 +71,7 @@ int set_blocking(int fd, int should_block, int timeout)
 	memset(&tty, 0, sizeof tty);
 
 	if (tcgetattr(fd, &tty) != 0) {
-		printf("error %d from tggetattr\n", errno);
+		printf("error %d from tcgetattr\n", errno);
 		return -3;
 	}
 
