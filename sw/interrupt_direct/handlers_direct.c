@@ -1,5 +1,5 @@
 /*
- * handlers.c -- exception and interrupt handlers
+ * handlers_direct.c -- exception and interrupt handlers for direct exceptions
  *
  * Note: these handlers are called by the universal handler
  *       since we are using direct traps, hence they are callable
