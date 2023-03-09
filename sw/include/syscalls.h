@@ -49,7 +49,7 @@ int _times(struct tms *buf);
 
 int _stat(char *file, struct stat *st);
 
-int _link(char *old, char *new);
+int _link(char *oldname, char *newname);
 
 int _fork(void);
 
