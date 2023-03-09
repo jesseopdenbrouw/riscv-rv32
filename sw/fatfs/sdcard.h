@@ -5,15 +5,14 @@
  *
  */
 
+#ifndef SDCARD_H
+#define SDCARD_H
+
 #include <stdint.h>
 #include <ctype.h>
 #include <stdio.h>
 
-#include "io.h"
-#include "uart.h"
-
-#ifndef SDCARD_H
-#define SDCARD_H
+#include <thuasrv32.h>
 
 /* Should be loaded by the Makefile */
 #ifndef F_CPU

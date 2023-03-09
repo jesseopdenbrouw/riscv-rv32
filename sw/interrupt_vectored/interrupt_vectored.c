@@ -5,9 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "io.h"
-#include "uart.h"
-#include "interrupt.h"
+#include <thuasrv32.h>
 
 /* Set to 1 to use printf(), uses system calls
  * Set to 0 to use sprintf()/uart1_puts(),

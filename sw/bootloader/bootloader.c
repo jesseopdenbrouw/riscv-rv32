@@ -2,7 +2,7 @@
  *
  * bootloader.c -- a simple bootloader for THUAS RISC-V
  *
- * (c)2022, J.E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl
+ * (c)2023, J.E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl
  *
  */
 
@@ -18,11 +18,9 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "io.h"
-#include "uart.h"
-#include "util.h"
+#include <thuasrv32.h>
 
-#define VERSION "v0.2"
+#define VERSION "v0.2.1"
 #define BUFLEN (41)
 #define BOOTWAIT (10)
 

@@ -4,8 +4,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include "io.h"
-#include "uart.h"
+#include <thuasrv32.h>
 
 /* Frequency of the DE0-CV board */
 #ifndef F_CPU
