@@ -57,16 +57,16 @@ void _start(void)
 	 * and the Stack Pointer and set the mtvec to the start
 	 * address of the pre-init interrupt handler. This will
 	 * catch pre-init traps. Mostly because of a bug. */
-        __asm__ volatile (".option push;"
-						  ".option norelax;"
-                          "la    t0, pre_init_universal_handler;"
-   			     		  "csrw  mtvec,t0;"
-						  "la    gp, __global_pointer$;"
-						  "la    sp, __stack_pointer$;"
-						  ".option pop"
-                   		   : /* output: none */
-     		               : /* input: none */
-                    	   : /* clobbers: none */);
+     __asm__ volatile (".option push;"
+	                   ".option norelax;"
+	                   "la    t0, pre_init_universal_handler;"
+	                   "csrw  mtvec,t0;"
+	                   "la    gp, __global_pointer$;"
+	                   "la    sp, __stack_pointer$;"
+	                   ".option pop"
+	                   : /* output: none */
+	                   : /* input: none */
+	                   : /* clobbers: none */);
 
 #ifdef WITH_REGISTER
 	register uint8_t *pStart;
