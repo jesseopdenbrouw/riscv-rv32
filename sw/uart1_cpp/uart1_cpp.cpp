@@ -22,7 +22,7 @@ class Uart
 		void print(const char* s) const;
 };
 
-/* UART11 class */
+/* UART1 class */
 class Uart1: public Uart
 {
 	private:
@@ -48,7 +48,6 @@ Uart1::Uart1()
 {
 	UART1->BAUD = F_CPU/BAUD_RATE - 1;
 }
-
 
 /* Prints a character to the UART1 */
 void Uart1::putchar(char c) const
