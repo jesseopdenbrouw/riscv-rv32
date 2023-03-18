@@ -50,12 +50,12 @@ entity bootloader is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
           I_pc : in data_type;
-          I_address : in data_type;
+          I_memaddress : in data_type;
+          I_memsize : in memsize_type;
           I_csboot : in std_logic;
-          I_size : in memsize_type;
           I_stall : in std_logic;
           O_instr : out data_type;
-          O_data_out : out data_type;
+          O_dataout : out data_type;
           --
           O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic
@@ -1019,7 +1019,7 @@ begin
         O_instruction_misaligned_error <= '0' when I_pc(1 downto 0) = "00" else '1';        
 
         -- ROM, for both instructions and read-only data
-        process (I_clk, I_areset, I_pc, I_address, I_csboot, I_size, I_stall) is
+        process (I_clk, I_areset, I_pc, I_memaddress, I_csboot, I_memsize, I_stall) is
         variable address_instr : integer range 0 to bootloader_size-1;
         variable address_data : integer range 0 to bootloader_size-1;
         variable instr_var : data_type;
@@ -1029,7 +1029,7 @@ begin
         begin
             -- Calculate addresses
             address_instr := to_integer(unsigned(I_pc(bootloader_size_bits-1 downto 2)));
-            address_data := to_integer(unsigned(I_address(bootloader_size_bits-1 downto 2)));
+            address_data := to_integer(unsigned(I_memaddress(bootloader_size_bits-1 downto 2)));
 
             -- Quartus will detect ROM table and uses onboard RAM
             -- Do not use reset, otherwise ROM will be created with ALMs
@@ -1047,28 +1047,28 @@ begin
             
             -- By natural size, for data
             if I_csboot = '1' then
-                if I_size = memsize_word and I_address(1 downto 0) = "00" then
-                    O_data_out <= romdata_var(7 downto 0) & romdata_var(15 downto 8) & romdata_var(23 downto 16) & romdata_var(31 downto 24);
-                elsif I_size = memsize_halfword and I_address(1 downto 0) = "00" then
-                    O_data_out <= x(31 downto 16) & romdata_var(23 downto 16) & romdata_var(31 downto 24);
-                elsif I_size = memsize_halfword and I_address(1 downto 0) = "10" then
-                    O_data_out <= x(31 downto 16) & romdata_var(7 downto 0) & romdata_var(15 downto 8);
-                elsif I_size = memsize_byte then
-                    case I_address(1 downto 0) is
-                        when "00" => O_data_out <= x(31 downto 8) & romdata_var(31 downto 24);
-                        when "01" => O_data_out <= x(31 downto 8) & romdata_var(23 downto 16);
-                        when "10" => O_data_out <= x(31 downto 8) & romdata_var(15 downto 8);
-                        when "11" => O_data_out <= x(31 downto 8) & romdata_var(7 downto 0);
-                        when others => O_data_out <= x; O_load_misaligned_error <= '1';
+                if I_memsize = memsize_word and I_memaddress(1 downto 0) = "00" then
+                    O_dataout <= romdata_var(7 downto 0) & romdata_var(15 downto 8) & romdata_var(23 downto 16) & romdata_var(31 downto 24);
+                elsif I_memsize = memsize_halfword and I_memaddress(1 downto 0) = "00" then
+                    O_dataout <= x(31 downto 16) & romdata_var(23 downto 16) & romdata_var(31 downto 24);
+                elsif I_memsize = memsize_halfword and I_memaddress(1 downto 0) = "10" then
+                    O_dataout <= x(31 downto 16) & romdata_var(7 downto 0) & romdata_var(15 downto 8);
+                elsif I_memsize = memsize_byte then
+                    case I_memaddress(1 downto 0) is
+                        when "00" => O_dataout <= x(31 downto 8) & romdata_var(31 downto 24);
+                        when "01" => O_dataout <= x(31 downto 8) & romdata_var(23 downto 16);
+                        when "10" => O_dataout <= x(31 downto 8) & romdata_var(15 downto 8);
+                        when "11" => O_dataout <= x(31 downto 8) & romdata_var(7 downto 0);
+                        when others => O_dataout <= x; O_load_misaligned_error <= '1';
                     end case;
                 else
                     -- Chip select, but not aligned
-                    O_data_out <= x;
+                    O_dataout <= x;
                     O_load_misaligned_error <= '1';
                 end if;
             else
                 -- No chip select, so no data
-                O_data_out <= x;
+                O_dataout <= x;
             end if;
         end process;
     end generate;
@@ -1076,7 +1076,7 @@ begin
     gen_bootrom_not: if not HAVE_BOOTLOADER_ROM generate
         O_instruction_misaligned_error <= '0';
         O_load_misaligned_error <= '0';
-        O_data_out <= (others => 'X');
+        O_dataout <= (others => 'X');
         O_instr  <= (others => 'X');
     end generate;
 end architecture rtl;
