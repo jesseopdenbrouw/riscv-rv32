@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
 
 	/* Check if device is open */
 	if (fd < 0) {
-	        printf("error %d opening %s: %s\n", errno, portname, strerror (errno));
+		printf("error %d opening %s: %s\n", errno, portname, strerror (errno));
 		fclose(fin);
 		exit(-8);
 	}
