@@ -56,11 +56,11 @@ entity core is
           O_stall : out std_logic;
           -- To memory
           O_memaccess : out memaccess_type;
-          O_size : out memsize_type;
-          O_address : out data_type;
+          O_memsize : out memsize_type;
+          O_memaddress : out data_type;
+          O_memdataout : out data_type; 
+          I_memdatain : in data_type;
           I_waitfordata : in std_logic;
-          O_dataout : out data_type; 
-          I_datain : in data_type;
           -- To CSR
           O_instret : out std_logic;
           O_csr_op : out csr_op_type;
@@ -68,7 +68,7 @@ entity core is
           O_csr_immrs1 : out reg_type;
           O_csr_dataout : out data_type;
           I_csr_datain : in data_type;
-          -- Trap handling
+          -- CSR - Trap handling
           O_ecall_request : out std_logic;
           O_ebreak_request : out std_logic;
           O_mret_request : out std_logic;
@@ -939,7 +939,7 @@ begin
     --
     
     -- ALU
-    process (id_ex, control, ex_wb, md, I_datain, I_csr_datain) is
+    process (id_ex, control, ex_wb, md, I_memdatain, I_csr_datain) is
     variable a_v, b_v, r_v, imm_v : data_type;
     variable al_v, bl_v : std_logic_vector(32 downto 0);
     variable signs_v : data_type;
@@ -1090,23 +1090,23 @@ begin
                 r_v := std_logic_vector(unsigned(id_ex.pc) + unsigned(b_v)) ;
                 control.select_pc <= '1';
             when alu_lw =>
-                r_v := I_datain;
+                r_v := I_memdatain;
                 control.select_pc <= '1';
             when alu_lh =>
-                r_v := (others => I_datain(15));
-                r_v(15 downto 0) := I_datain(15 downto 0);
+                r_v := (others => I_memdatain(15));
+                r_v(15 downto 0) := I_memdatain(15 downto 0);
                 control.select_pc <= '1';
             when alu_lhu =>
                 r_v := (others => '0');
-                r_v(15 downto 0) := I_datain(15 downto 0);
+                r_v(15 downto 0) := I_memdatain(15 downto 0);
                 control.select_pc <= '1';
             when alu_lb =>
-                r_v := (others => I_datain(7));
-                r_v(7 downto 0) := I_datain(7 downto 0);
+                r_v := (others => I_memdatain(7));
+                r_v(7 downto 0) := I_memdatain(7 downto 0);
                 control.select_pc <= '1';
             when alu_lbu =>
                 r_v := (others => '0');
-                r_v(7 downto 0) := I_datain(7 downto 0);
+                r_v(7 downto 0) := I_memdatain(7 downto 0);
                 control.select_pc <= '1';
                 
             -- Jumps and calls
@@ -1126,22 +1126,12 @@ begin
                 r_v(0) := not cmpeq_v;
                 control.penalty <= not cmpeq_v;
                 control.select_pc <= '1';
-            when alu_blt =>
+            when alu_blt | alu_bltu =>
                 r_v := (others => '0');
                 r_v(0) := cmplt_v;
                 control.penalty <= cmplt_v;
                 control.select_pc <= '1';
-            when alu_bge =>
-                r_v := (others => '0');
-                r_v(0) := not cmplt_v;
-                control.penalty <= not cmplt_v;
-                control.select_pc <= '1';
-            when alu_bltu =>
-                r_v := (others => '0');
-                r_v(0) := cmplt_v;
-                control.penalty <= cmplt_v;
-                control.select_pc <= '1';
-            when alu_bgeu =>
+            when alu_bge | alu_bgeu =>
                 r_v := (others => '0');
                 r_v(0) := not cmplt_v;
                 control.penalty <= not cmplt_v;
@@ -1499,29 +1489,29 @@ begin
 
     -- Disable the bus when flushing
     O_memaccess <= memaccess_nop when control.flush = '1' else id_ex.memaccess;
-    O_size <= id_ex.memsize;
+    O_memsize <= id_ex.memsize;
     O_csr_op <= csr_nop when control.flush = '1' else id_ex.csr_op;
     
     -- This is the interface between the core and the memory (ROM, RAM, I/O)
     -- Memory access type and size are computed in the instruction decoding unit
     process (control, id_ex, ex_wb) is
-    variable address_var : unsigned(31 downto 0);
+    variable address_v : unsigned(31 downto 0);
     begin
         -- Check if we need forward or not
         if control.forwarda = '1' then
-            address_var := unsigned(ex_wb.rddata);
+            address_v := unsigned(ex_wb.rddata);
         else
-            address_var := unsigned(id_ex.rs1data);
+            address_v := unsigned(id_ex.rs1data);
         end if;
-        address_var := address_var + unsigned(id_ex.imm);
+        address_v := address_v + unsigned(id_ex.imm);
 
         -- Data out to memory
-        O_address <= std_logic_vector(address_var);
+        O_memaddress <= std_logic_vector(address_v);
         
         if control.forwardb = '1' then
-            O_dataout <= ex_wb.rddata;
+            O_memdataout <= ex_wb.rddata;
         else
-            O_dataout <= id_ex.rs2data;
+            O_memdataout <= id_ex.rs2data;
         end if;
         
     end process;
