@@ -51,7 +51,7 @@ entity address_decode is
           I_areset : in std_logic;
           -- to core
           I_memaccess : in memaccess_type;
-          I_address : in data_type;
+          I_memaddress : in data_type;
           O_waitfordata : out std_logic;
           O_dataout : out data_type; 
           -- to memory
@@ -75,7 +75,7 @@ architecture rtl of address_decode is
 begin
 
     -- Address decoder and data router (may be forward from RS1)
-    process (I_memaccess, I_address, I_romdatain, I_bootdatain, I_ramdatain, I_iodatain) is
+    process (I_memaccess, I_memaddress, I_romdatain, I_bootdatain, I_ramdatain, I_iodatain) is
     variable address_var : unsigned(31 downto 0);
     begin
         
@@ -94,7 +94,7 @@ begin
         O_store_access_error <= '0';
         
         -- ROM @ 0xxxxxxx, 256M space, read-write
-        if I_address(31 downto 28) = rom_high_nibble then
+        if I_memaddress(31 downto 28) = rom_high_nibble then
             if I_memaccess = memaccess_read or I_memaccess = memaccess_write then
                 O_csrom <= '1';
             end if;
@@ -105,7 +105,7 @@ begin
             end if;
             O_dataout <= I_romdatain;
         -- Bootloader ROM @ 1xxxxxxx, 256M space, read only
-        elsif I_address(31 downto 28) = bootloader_high_nibble then
+        elsif I_memaddress(31 downto 28) = bootloader_high_nibble then
             if I_memaccess = memaccess_read then
                 O_csboot <= '1';
             end if;
@@ -114,7 +114,7 @@ begin
             end if;
             O_dataout <= I_bootdatain;
         -- RAM @ 2xxxxxxx, 256M space
-        elsif I_address(31 downto 28) = ram_high_nibble then
+        elsif I_memaddress(31 downto 28) = ram_high_nibble then
             if I_memaccess = memaccess_read or I_memaccess = memaccess_write then
                 O_csram <= '1';
             end if;
@@ -125,7 +125,7 @@ begin
             end if;
             O_dataout <= I_ramdatain;
         -- I/O @ Fxxxxxxx, 256M space
-        elsif I_address(31 downto 28) = io_high_nibble then
+        elsif I_memaddress(31 downto 28) = io_high_nibble then
             if I_memaccess = memaccess_read or I_memaccess = memaccess_write then
                 O_csio <= '1';
             end if;
