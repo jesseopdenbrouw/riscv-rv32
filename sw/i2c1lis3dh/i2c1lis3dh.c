@@ -4,6 +4,7 @@
  * This program reads acceleration information from a LIS3DH
  * accelerometer as found on the Arduino Sensor Kit.
  * See https://store.arduino.cc/products/arduino-sensor-kit-base
+ * See https://www.st.com/resource/en/datasheet/lis3dh.pdf
  */
 
 #include <math.h>
@@ -34,6 +35,7 @@
 
 int main(void)
 {
+	/* Buffer for data, begin with all axis on, 10 Hz update rate */
 	uint8_t buf[10] = { 0x20, 0x27, 0x00 };
 	int16_t x, y, z;
 	uint32_t ret;
@@ -65,7 +67,7 @@ int main(void)
 			/* Get the raw accelerometer data */
 			ret = i2c1_receive((LIS3DH_ADDR << 1) | I2C_READ, buf, 6);
 			if (!ret) {
-				/* Calculate Ax, Ay, Ay in milli g */
+				/* Calculate Ax, Ay, Az in milli g */
 				x = (int16_t) buf[0] | (int16_t) buf[1] << 8;
 				x = x / 16;
 				y = (int16_t) buf[2] | (int16_t) buf[3] << 8;
@@ -80,10 +82,12 @@ int main(void)
 				uart1_printf("x: %5d, y: %5d, z: %5d, pitch: %3d, roll: %3d\r\n", x, y, z, pitch, roll);
 			} else {
 				uart1_puts("Failed to receive info!\r\n");
+				/* Hack */
 				i2c1_clearstat();
 			}
 		} else {
 			uart1_puts("Failed to set register!\r\n");
+			/* Hack */
 			i2c1_clearstat();
 		}
 
