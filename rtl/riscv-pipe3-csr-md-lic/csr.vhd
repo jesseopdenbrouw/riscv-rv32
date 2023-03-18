@@ -36,17 +36,17 @@
 
 -- Implementation of the Control and Status Registers.
 -- The following registers are implemented:
---  cycle, cyclih -- copy of mcycle, mcycleh_addr
+--  cycle, cycleh -- copy of mcycle, mcycleh
 --  time, timeh -- copy of memory-mapped time, timeh I/O registers
---  instret, instreth -- copy of minstret, minstreth_addr
---  mstatus -- r/w
---  misa -- r/- (hardwired)
---  mie -- r/w, set all bits hard to 0 except MTIE (7), MSIE (3)
---  mtvec -- r/w
---  mcountinhibit -- r/w, only bits 0 and 2
+--  instret, instreth -- copy of minstret, minstreth
+--  mstatus -- bits 12-11, 7, 3 r/w, rest r/o
+--  misa -- r/o (I: 0x40001100, E: 0x40001010)
+--  mie -- r/w MTIE (7), MSIE (3), rest r/o
+--  mtvec -- r/w, bit 1 is r/o
+--  mcountinhibit -- r/w bits 0 and 2, rest r/o
 --  mscratch -- r/w
---  mepc -- r/w
---  mcause -- bits 31, 0-5 r/w, others r/-
+--  mepc -- r/w, bits 1-0 are r/o
+--  mcause -- bits 31, 5-0 r/w, others r/o
 --  mtval -- r/w
 --  mip -- r/o
 --  mvendorid -- r/o (hardwired to 0x00000000)
@@ -54,6 +54,7 @@
 --  mimpid -- r/o (hardwired to 0x00000000)
 --  mhartid -- r/o (hardwired to 0x00000000)
 --  mconfigptr_addr -- r/o (hardwired to 0x00000000)
+--  mxhw -- r/o (custom hardware description register)
 
 
 library ieee;
@@ -92,7 +93,7 @@ entity csr is
           -- PC to save in mepc
           I_pc : in data_type;
           -- Address on address bus, for mtval
-          I_address : in data_type;
+          I_memaddress : in data_type;
           -- TIME and TIMEH
           I_time : in data_type;
           I_timeh : in data_type
@@ -124,6 +125,7 @@ type csr_type is record
     mcycleh : data_type;
     minstreth : data_type;
     mconfigptr : data_type;
+    mxhw : data_type;
 end record csr_type;
 signal csr : csr_type;
 
@@ -167,6 +169,8 @@ constant minstret_addr : integer := 16#b02#; --
 constant mcycleh_addr : integer := 16#b80#; --
 constant minstreth_addr : integer := 16#b82#; --
 
+-- M mode custom read-only
+constant mxhw_addr : integer := 16#fc0#;
 
 begin
 
@@ -176,7 +180,7 @@ begin
     process (csr_addr_int, I_csr_op, I_csr_addr, I_csr_immrs1) is
     begin
         if I_csr_op = csr_nop then
-                O_illegal_instruction_error <= '0';
+            O_illegal_instruction_error <= '0';
         elsif I_csr_addr(11 downto 10) = "11" and (I_csr_op = csr_rw or I_csr_op = csr_rwi or I_csr_immrs1 /= "00000") then
             O_illegal_instruction_error <= '1';
         elsif csr_addr_int = cycle_addr or
@@ -205,7 +209,8 @@ begin
               csr_addr_int = mcycle_addr or
               csr_addr_int = minstret_addr or
               csr_addr_int = mcycleh_addr or
-              csr_addr_int = minstreth_addr then
+              csr_addr_int = minstreth_addr or
+              csr_addr_int = mxhw_addr then
             O_illegal_instruction_error <= '0';
         else 
             O_illegal_instruction_error <= '1';
@@ -244,6 +249,7 @@ begin
             when mtval_addr => O_csr_dataout <= csr.mtval;
             when mip_addr => O_csr_dataout <= csr.mip;
             when mconfigptr_addr => O_csr_dataout <= csr.mconfigptr;
+            when mxhw_addr => O_csr_dataout <= csr.mxhw;
             when others => O_csr_dataout <= (others => '-');
         end case;
     end process;
@@ -257,7 +263,7 @@ begin
     -- Data to process in other registers
     -- Ignore the misa, mip, these are hard wired
     process (I_clk, I_areset) is
-    variable csr_content : data_type;
+    variable csr_content_v : data_type;
     begin
         if I_areset = '1' then
             -- Reset the lot
@@ -303,66 +309,66 @@ begin
             if I_interrupt_request = irq_none and I_csr_op /= csr_nop then
                 -- Select the CSR
                 case csr_addr_int is
-                    when mcycle_addr => csr_content := csr.mcycle;
-                    when mcycleh_addr => csr_content := csr.mcycleh;
-                    when minstret_addr => csr_content := csr.minstret;
-                    when minstreth_addr => csr_content := csr.minstreth;
-                    when mstatus_addr => csr_content := csr.mstatus;
+                    when mcycle_addr => csr_content_v := csr.mcycle;
+                    when mcycleh_addr => csr_content_v := csr.mcycleh;
+                    when minstret_addr => csr_content_v := csr.minstret;
+                    when minstreth_addr => csr_content_v := csr.minstreth;
+                    when mstatus_addr => csr_content_v := csr.mstatus;
                     -- misa is hardwired
-                    --when misa_addr => csr_content := csr.misa;
-                    when mie_addr => csr_content := csr.mie;
-                    when mtvec_addr => csr_content := csr.mtvec;
+                    --when misa_addr => csr_content_v := csr.misa;
+                    when mie_addr => csr_content_v := csr.mie;
+                    when mtvec_addr => csr_content_v := csr.mtvec;
                     -- mcounteren not available since we have M mode only
-                    --when mcounteren_addr => csr_content := csr.mcounteren;
-                    when mcountinhibit_addr => csr_content := csr.mcountinhibit;
-                    when mscratch_addr => csr_content := csr.mscratch;
-                    when mepc_addr => csr_content := csr.mepc;
-                    when mcause_addr => csr_content := csr.mcause;
-                    when mtval_addr => csr_content := csr.mtval;
+                    --when mcounteren_addr => csr_content_v := csr.mcounteren;
+                    when mcountinhibit_addr => csr_content_v := csr.mcountinhibit;
+                    when mscratch_addr => csr_content_v := csr.mscratch;
+                    when mepc_addr => csr_content_v := csr.mepc;
+                    when mcause_addr => csr_content_v := csr.mcause;
+                    when mtval_addr => csr_content_v := csr.mtval;
                     -- mip is hardcoded, read only
-                    --when mip_addr => csr_content := csr.mip;
-                    when others => csr_content := (others => '-');
+                    --when mip_addr => csr_content_v := csr.mip;
+                    when others => csr_content_v := (others => '-');
                 end case;
                 -- Do the operation
                 -- Some bits should be ignored or hard wired to 0
                 -- but we just ignore them
                 case I_csr_op is
                     when csr_rw =>
-                        csr_content := I_csr_datain;
+                        csr_content_v := I_csr_datain;
                     when csr_rs =>
-                        csr_content := csr_content or I_csr_datain;
+                        csr_content_v := csr_content_v or I_csr_datain;
                     when csr_rc =>
-                        csr_content := csr_content and not I_csr_datain;
+                        csr_content_v := csr_content_v and not I_csr_datain;
                     when csr_rwi =>
-                        csr_content(31 downto 5) := (others => '0');
-                        csr_content(4 downto 0) := I_csr_immrs1;
+                        csr_content_v(31 downto 5) := (others => '0');
+                        csr_content_v(4 downto 0) := I_csr_immrs1;
                     when csr_rsi =>
-                        csr_content(4 downto 0) := csr_content(4 downto 0) or I_csr_immrs1(4 downto 0);
+                        csr_content_v(4 downto 0) := csr_content_v(4 downto 0) or I_csr_immrs1(4 downto 0);
                     when csr_rci =>
-                        csr_content(4 downto 0) := csr_content(4 downto 0) and not I_csr_immrs1(4 downto 0);
+                        csr_content_v(4 downto 0) := csr_content_v(4 downto 0) and not I_csr_immrs1(4 downto 0);
                     when others =>
                         null;
                 end case;
                 -- Write back
                 case csr_addr_int is
-                    when mcycle_addr => csr.mcycle <= csr_content;
-                    when mcycleh_addr => csr.mcycleh <= csr_content;
-                    when minstret_addr => csr.minstret <= csr_content;
-                    when minstreth_addr => csr.minstreth <= csr_content;
-                    when mstatus_addr => csr.mstatus <= csr_content;
+                    when mcycle_addr => csr.mcycle <= csr_content_v;
+                    when mcycleh_addr => csr.mcycleh <= csr_content_v;
+                    when minstret_addr => csr.minstret <= csr_content_v;
+                    when minstreth_addr => csr.minstreth <= csr_content_v;
+                    when mstatus_addr => csr.mstatus <= csr_content_v;
                     -- misa is hardwired
-                    --when misa_addr => csr.misa <= csr_content;
-                    when mie_addr => csr.mie <= csr_content;
-                    when mtvec_addr => csr.mtvec <= csr_content;
+                    --when misa_addr => csr.misa <= csr_content_v;
+                    when mie_addr => csr.mie <= csr_content_v;
+                    when mtvec_addr => csr.mtvec <= csr_content_v;
                     -- mcounteren does not exists
-                    --when mcounteren_addr => csr.mcounteren <= csr_content;
-                    when mcountinhibit_addr => csr.mcountinhibit <= csr_content;
-                    when mscratch_addr => csr.mscratch <= csr_content;
-                    when mepc_addr => csr.mepc <= csr_content;
-                    when mcause_addr => csr.mcause <= csr_content;
-                    when mtval_addr => csr.mtval <= csr_content;
+                    --when mcounteren_addr => csr.mcounteren <= csr_content_v;
+                    when mcountinhibit_addr => csr.mcountinhibit <= csr_content_v;
+                    when mscratch_addr => csr.mscratch <= csr_content_v;
+                    when mepc_addr => csr.mepc <= csr_content_v;
+                    when mcause_addr => csr.mcause <= csr_content_v;
+                    when mtval_addr => csr.mtval <= csr_content_v;
                     -- mip is hardcoded, read only
-                    --when mip_addr => csr.mip <= csr_content;
+                    --when mip_addr => csr.mip <= csr_content_v;
                     when others => null;
                 end case;
             end if;
@@ -384,7 +390,7 @@ begin
                 -- The real PC to save, needed to (re)start an instruction
                 --pc_to_save_int <= I_pc_to_save;
                 -- Latch address from address bus
-                csr.mtval <= I_address;
+                csr.mtval <= I_memaddress;
             elsif I_interrupt_release = '1' then
                 -- Copy mpie to mie
                 csr.mstatus(3) <= csr.mstatus(7);
@@ -405,7 +411,7 @@ begin
             csr.mie(6 downto 4) <= (others => '0');
             csr.mie(2 downto 0) <= (others => '0');
 
-            -- Set most bits of mstatus, and mstatush to 0
+            -- Set most bits of mstatus to 0
             csr.mstatus(31 downto 13) <= (others => '0');
             csr.mstatus(10 downto 8) <= (others => '0');
             csr.mstatus(4 downto 4) <= (others => '0');
@@ -415,6 +421,11 @@ begin
             csr.mcountinhibit(31 downto 3) <= (others => '0');
             -- TI bit always 0
             csr.mcountinhibit(1) <= '0';
+            
+            -- Bit 1 of mtvec should always be 0
+            -- Bit 1-0 of mepc should always be 0
+            --csr.mtvec(1) <= '0';
+            --csr.mepc(1 downto 0) <= "00";
             
             -- MCAUSE doesn't use that many bits...
             -- Only Interrupt Bit and 5 LSB are needed
@@ -451,9 +462,34 @@ begin
     csr.marchid <= (others => '0');
     csr.mimpid <= (others => '0');
     csr.mhartid <= (others => '0');
-    csr.misa <= x"40001100" when NUMBER_OF_REGISTERS = 32 else x"40001010";
     -- mstatush is hardcoded to all zero
     csr.mstatush <= (others => '0');
     csr.mconfigptr <= (others => '0');
+    csr.misa(31 downto 13) <= x"4000" & "000";
+    csr.misa(12) <= '1' when HAVE_MULDIV else '0';
+    csr.misa(11 downto 0) <= x"100" when NUMBER_OF_REGISTERS = 32 else x"010";
     
+    -- Custom read-only hardware description
+    csr.mxhw(0) <= '1'; --gpioa
+    csr.mxhw(1) <= '0'; --reserved
+    csr.mxhw(2) <= '0'; --reserved
+    csr.mxhw(3) <= '0'; --reserved
+    csr.mxhw(4) <= '1' when HAVE_UART1 else '0';
+    csr.mxhw(5) <= '0'; -- reserved
+    csr.mxhw(6) <= '1' when HAVE_I2C1 else '0';
+    csr.mxhw(7) <= '0'; -- reserved
+    csr.mxhw(8) <= '1' when HAVE_SPI1 else '0';
+    csr.mxhw(9) <= '1' when HAVE_SPI2 else '0';
+    csr.mxhw(10) <= '1' when HAVE_TIMER1 else '0';
+    csr.mxhw(11) <= '1' when HAVE_TIMER2 else '0';
+    csr.mxhw(12) <= '0';
+    csr.mxhw(13) <= '0';
+    csr.mxhw(14) <= '0';
+    csr.mxhw(15) <= '1'; -- TIME/TIMEH
+    csr.mxhw(16) <= '1' when HAVE_MULDIV else '0';
+    csr.mxhw(17) <= '1' when FAST_DIVIDE else '0';
+    csr.mxhw(18) <= '1' when HAVE_BOOTLOADER_ROM else '0';
+    csr.mxhw(19) <= '1' when HAVE_REGISTERS_IN_RAM else '0';
+    csr.mxhw(31 downto 20) <= (others => '0');
+
 end architecture rtl;
