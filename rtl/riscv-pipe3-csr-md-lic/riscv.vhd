@@ -80,17 +80,17 @@ architecture rtl of riscv is
 component core is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
-          -- Instructions from ROM
+          -- Instructions from ROM/boot
           O_pc : out data_type;
           I_instr : in data_type;
           O_stall : out std_logic;
           -- To memory
           O_memaccess : out memaccess_type;
-          O_size : out memsize_type;
-          O_address : out data_type;
+          O_memsize : out memsize_type;
+          O_memaddress : out data_type;
+          O_memdataout : out data_type; 
+          I_memdatain : in data_type;
           I_waitfordata : in std_logic;
-          O_dataout : out data_type; 
-          I_datain : in data_type;
           -- To CSR
           O_instret : out std_logic;
           O_csr_op : out csr_op_type;
@@ -115,7 +115,7 @@ component address_decode is
           I_areset : in std_logic;
           -- to core
           I_memaccess : in memaccess_type;
-          I_address : in data_type;
+          I_memaddress : in data_type;
           O_waitfordata : out std_logic;
           O_dataout : out data_type; 
           -- to memory
@@ -145,14 +145,14 @@ component rom is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
           I_pc : in data_type;
-          I_address : in data_type;
+          I_memaddress : in data_type;
+          I_memsize : in memsize_type;
           I_csrom : in std_logic;
           I_wren : in std_logic;
-          I_size : in memsize_type;
           I_stall : in std_logic;
           O_instr : out data_type;
           I_datain : in data_type;
-          O_data_out : out data_type;
+          O_dataout : out data_type;
           --
           O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic;
@@ -162,10 +162,10 @@ end component rom;
 component ram is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
-          I_address : in data_type;
+          I_memaddress : in data_type;
+          I_memsize : in memsize_type;
           I_csram : in std_logic;
-          I_size : in memsize_type;
-          I_wrram : in std_logic;
+          I_wren : in std_logic;
           I_datain : in data_type;
           O_dataout : out data_type;
           O_load_misaligned_error : out std_logic;
@@ -176,12 +176,12 @@ component bootloader is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
           I_pc : in data_type;
-          I_address : in data_type;
+          I_memaddress : in data_type;
+          I_memsize : in memsize_type;
           I_csboot : in std_logic;
-          I_size : in memsize_type;
           I_stall : in std_logic;
           O_instr : out data_type;
-          O_data_out : out data_type;
+          O_dataout : out data_type;
           --
           O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic
@@ -193,37 +193,43 @@ component io is
          );
     port (I_clk : in std_logic;
           I_areset : in std_logic;
+          I_memaddress : in data_type;
+          I_memsize : memsize_type;
           I_csio : in std_logic;
-          I_address : in data_type;
-          I_size : memsize_type;
           I_wren : in std_logic;
           I_datain : in data_type;
           O_dataout : out data_type;
           O_load_misaligned_error : out std_logic;
           O_store_misaligned_error : out std_logic;
           -- Connection with outside world
+          -- GPIOA
           I_gpioapin : in data_type;
           O_gpioapout : out data_type;
+          -- UART1
           I_uart1rxd : in std_logic;
           O_uart1txd : out std_logic;
+          -- I2C1
           IO_i2c1scl : inout std_logic;
           IO_i2c1sda : inout std_logic;
+          -- SPI1
           O_spi1sck : out std_logic;
           O_spi1mosi : out std_logic;
           I_spi1miso : in std_logic;
           O_spi1nss : out std_logic;
+          -- SPI2
           O_spi2sck : out std_logic;
           O_spi2mosi : out std_logic;
           I_spi2miso : in std_logic;
+          -- TIMER2
           O_timer2oct : out std_logic;
           O_timer2oca : out std_logic;
           O_timer2ocb : out std_logic;
           O_timer2occ : out std_logic;
-          -- Hardware interrupt request
-          O_intrio : out data_type;
           -- TIME and TIMEH
           O_mtime : out data_type;
-          O_mtimeh : out data_type
+          O_mtimeh : out data_type;
+          -- Hardware interrupt request
+          O_intrio : out data_type
          );
 end component io;
 component csr is
@@ -255,7 +261,7 @@ component csr is
           -- PC to save in mepc
           I_pc : in data_type;
           -- Address on address bus, for mtval
-          I_address : in data_type;
+          I_memaddress : in data_type;
           -- TIME and TIMEH
           I_time : in data_type;
           I_timeh : in data_type
@@ -299,8 +305,8 @@ signal rominstr_int : data_type;
 signal instr_int : data_type;
 signal stall_int : std_logic;
 signal memaccess_int : memaccess_type;
-signal size_int : memsize_type;
-signal address_int : data_type;
+signal memsize_int : memsize_type;
+signal memaddress_int : data_type;
 signal waitfordata_int : std_logic;
 signal wrrom_int : std_logic;
 signal wrram_int : std_logic;
@@ -362,11 +368,11 @@ begin
               I_instr => instr_int,
               O_stall => stall_int,
               O_memaccess => memaccess_int,
-              O_address => address_int,
-              O_size => size_int,
+              O_memaddress => memaddress_int,
+              O_memsize => memsize_int,
+              O_memdataout => dataout_int,
+              I_memdatain => datain_int,
               I_waitfordata => waitfordata_int,
-              O_dataout => dataout_int,
-              I_datain => datain_int,
               O_instret => instret_int,
               O_csr_op => csr_op_int,
               O_csr_addr => csr_addr_int,
@@ -388,7 +394,7 @@ begin
         port map (I_clk => clk_int,
                   I_areset => areset_int,
                   I_memaccess => memaccess_int,
-                  I_address => address_int,
+                  I_memaddress => memaddress_int,
                   O_waitfordata => waitfordata_int,
                   O_dataout => datain_int,
                   O_wrrom => wrrom_int,
@@ -412,7 +418,7 @@ begin
         port map (I_clk => clk_int,
                   I_areset => areset_int,
                   I_memaccess => memaccess_int,
-                  I_address => address_int,
+                  I_memaddress => memaddress_int,
                   O_waitfordata => waitfordata_int,
                   O_dataout => datain_int,
                   O_wrrom => wrrom_int,
@@ -447,14 +453,14 @@ begin
     port map (I_clk => clk_int,
               I_areset => areset_int,
               I_pc => pc_int,
-              I_address => address_int,
+              I_memaddress => memaddress_int,
+              I_memsize => memsize_int,
               I_csrom => csrom_int,
               I_wren => wrrom_int,
-              I_size => size_int,
               I_stall => stall_int,
               O_instr => rominstr_int,
               I_datain => dataout_int,
-              O_data_out => romdatain_int,
+              O_dataout => romdatain_int,
               O_instruction_misaligned_error => instruction_misaligned_error_int(1),
               O_load_misaligned_error => load_misaligned_error_int(3),
               O_store_misaligned_error => store_misaligned_error_int(2)
@@ -465,12 +471,12 @@ begin
         port map (I_clk => clk_int,
                   I_areset => areset_int,
                   I_pc => pc_int,
-                  I_address => address_int,
+                  I_memaddress => memaddress_int,
+                  I_memsize => memsize_int,
                   I_csboot => csboot_int,
-                  I_size => size_int,
                   I_stall => stall_int,
                   O_instr => bootinstr_int,
-                  O_data_out => bootdatain_int,
+                  O_dataout => bootdatain_int,
                   O_load_misaligned_error => load_misaligned_error_int(2),
                   O_instruction_misaligned_error => instruction_misaligned_error_int(0)
                  );
@@ -485,10 +491,10 @@ begin
     ram0: ram
     port map (I_clk => clk_int,
               I_areset => areset_int,
-              I_address => address_int,
+              I_memaddress => memaddress_int,
+              I_memsize => memsize_int,
               I_csram => csram_int,
-              I_size => size_int,
-              I_wrram => wrram_int,
+              I_wren => wrram_int,
               I_datain => dataout_int,
               O_dataout => ramdatain_int,
               O_load_misaligned_error => load_misaligned_error_int(1),
@@ -500,36 +506,42 @@ begin
                  freq_count => CLOCK_FREQUENCY)
     port map (I_clk => clk_int,
               I_areset => areset_int,
-              I_address => address_int,
+              I_memaddress => memaddress_int,
+              I_memsize => memsize_int,
               I_csio => csio_int,
               I_wren => wrio_int,
-              I_size => size_int,
               I_datain => dataout_int,
               O_dataout => iodatain_int,
               O_load_misaligned_error => load_misaligned_error_int(0),
               O_store_misaligned_error => store_misaligned_error_int(0),
+              -- GPIOA
               I_gpioapin => I_pina,
               O_gpioapout => O_pouta,
+              -- UART1
               I_uart1rxd => I_uart1rxd,
               O_uart1txd => O_uart1txd,
+              -- I2C1
               IO_i2c1scl => IO_i2c1scl,
               IO_i2c1sda => IO_i2c1sda,
+              -- SPI1
               O_spi1sck => O_spi1sck,
               O_spi1mosi => O_spi1mosi,
               I_spi1miso => I_spi1miso,
               O_spi1nss => O_spi1nss,
-              -- temp!
+              -- SPI2
               O_spi2sck => O_spi2sck,
               O_spi2mosi => O_spi2mosi,
               I_spi2miso => I_spi2miso,
-              --
+              -- TIMER2
               O_timer2oct => O_timer2oct,
               O_timer2oca => O_timer2oca,
               O_timer2ocb => O_timer2ocb,
               O_timer2occ => O_timer2occ,
-              O_intrio => intrio_int,
+              -- MTIME/MTIMEH
               O_mtime => time_int,
-              O_mtimeh => timeh_int
+              O_mtimeh => timeh_int,
+              -- Interrupt requests
+              O_intrio => intrio_int
              );
 
     csr0: csr
@@ -551,7 +563,7 @@ begin
               O_mtvec => mtvec2mtvec,
               O_mepc => mepc2mepc,
               I_pc => pc_to_mepc_int,
-              I_address => address_int,
+              I_memaddress => memaddress_int,
               I_time => time_int,
               I_timeh => timeh_int
              );
