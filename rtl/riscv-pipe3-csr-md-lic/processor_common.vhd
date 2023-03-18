@@ -114,7 +114,8 @@ package processor_common is
     type memaccess_type is (memaccess_nop, memaccess_write, memaccess_read);
     
     -- ALU operations
-    type alu_op_type is (alu_nop, alu_add, alu_sub, alu_and, alu_or, alu_xor,
+    type alu_op_type is (alu_unknown, alu_nop,
+                         alu_add, alu_sub, alu_and, alu_or, alu_xor,
                          alu_slt, alu_sltu,
                          alu_addi, alu_andi, alu_ori, alu_xori,
                          alu_slti, alu_sltiu,
@@ -128,14 +129,17 @@ package processor_common is
                          alu_csr,
                          alu_multiply,
                          alu_divrem,
-                         alu_trap, alu_mret, alu_unknown
+                         alu_trap, alu_mret
                         );
                         
     -- Control and State register operations
     type csr_op_type is (csr_nop, csr_rw, csr_rs, csr_rc, csr_rwi, csr_rsi, csr_rci);
 
-    -- Interrupt types
-    type interrupt_request_type is (irq_none, irq_hard, irq_soft);
+    -- Traps
+    --type interrupt_request_type is (irq_none, irq_hard);
+    subtype interrupt_request_type is std_logic;
+    constant irq_none : interrupt_request_type := '0';
+    constant irq_hard : interrupt_request_type := '1';
 
     -- The ROM
     -- NOTE: the ROM is word (32 bits) size.
