@@ -43,6 +43,7 @@ all:
 	$(MAKE) -C mcountinhibit all
 	$(MAKE) -C monitor all
 	$(MAKE) -C mult all
+	$(MAKE) -C mxhw all
 	$(MAKE) -C qsort all
 	$(MAKE) -C riemann_left all
 	$(MAKE) -C shift all
@@ -95,6 +96,7 @@ clean:
 	$(MAKE) -C mcountinhibit clean
 	$(MAKE) -C monitor clean
 	$(MAKE) -C mult clean
+	$(MAKE) -C mxhw clean
 	$(MAKE) -C qsort clean
 	$(MAKE) -C riemann_left clean
 	$(MAKE) -C shift clean
