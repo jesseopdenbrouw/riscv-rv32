@@ -8,7 +8,7 @@
 int main(void) {
 
 	/* The strinf */
-	char str[] = "Hello this is a string";
+	volatile char str[] = "Hello this is a string";
 
 	/* Make a non-volatile buffer */
 	volatile char to[100];
@@ -20,7 +20,7 @@ int main(void) {
 	strcpy((char *)to, str);
 
 	/* Concatenate a string */
-	strcat((char *)to, "! And it works!");
+	strcat(to, "! And it works!");
 
 	/* Get string compare */
 	x = strcmp("Hello", str);
