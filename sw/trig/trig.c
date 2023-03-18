@@ -56,23 +56,23 @@ int main(void)
 	start = clock() - start;
 
 	/* Print out the results */
-	sprintf(buffer, "sinf(%f) = %.10f\r\n", w, a);
+	sprintf(buffer, "sinf(%.10f) = %.10f\r\n", w, a);
 	uart1_puts(buffer);
 
-	sprintf(buffer, "asinf(%f) = %.10f\r\n", w, b);
+	sprintf(buffer, "asinf(%.10f) = %.10f\r\n", w, b);
 	uart1_puts(buffer);
 
-	sprintf(buffer, "logf(%f) = %.10f\r\n", w, c);
+	sprintf(buffer, "logf(%.10f) = %.10f\r\n", w, c);
 	uart1_puts(buffer);
 
 
-	sprintf(buffer, "sin(%f) = %.20f\r\n", w, k);
+	sprintf(buffer, "sin(%.20f) = %.20f\r\n", w, k);
 	uart1_puts(buffer);
 
-	sprintf(buffer, "asin(%f) = %.20f\r\n", w, l);
+	sprintf(buffer, "asin(%.20f) = %.20f\r\n", w, l);
 	uart1_puts(buffer);
 
-	sprintf(buffer, "tan(%f) = %.20f\r\n", w, m);
+	sprintf(buffer, "tan(%.20f) = %.20f\r\n", w, m);
 	uart1_puts(buffer);
 
 
