@@ -424,8 +424,8 @@ begin
             
             -- Bit 1 of mtvec should always be 0
             -- Bit 1-0 of mepc should always be 0
-            --csr.mtvec(1) <= '0';
-            --csr.mepc(1 downto 0) <= "00";
+            csr.mtvec(1) <= '0';
+            csr.mepc(1 downto 0) <= "00";
             
             -- MCAUSE doesn't use that many bits...
             -- Only Interrupt Bit and 5 LSB are needed
