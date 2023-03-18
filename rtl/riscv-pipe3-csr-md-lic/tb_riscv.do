@@ -117,8 +117,8 @@ add wave -divider "Core Internals - Execute MD"
 add wave            -label md dut/core0/md
 add wave -divider "Internals - Memory access"
 add wave            -label memaccess dut/memaccess_int
-add wave            -label size dut/size_int
-add wave            -label address_out dut/address_int
+add wave            -label memsize dut/memsize_int
+add wave            -label memaddress dut/memaddress_int
 add wave            -label waitfordata dut/waitfordata_int
 add wave -divider "Internals - CSR"
 add wave -radix hex -label CSR dut/csr0/csr
