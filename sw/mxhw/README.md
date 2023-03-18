@@ -5,7 +5,7 @@ custom CS register `mxhw`. The register is located at address
 0xcf0. This register is read-only.
 
 | Bit  | Description             |
-|-----:|-------------------------|
+|-----:|:------------------------|
 | 0    | GPIOA enabled           |
 | 1    | Reserved                |
 | 2    | Reserved                |
@@ -24,7 +24,7 @@ custom CS register `mxhw`. The register is located at address
 | 15   | Multiply/divide enabled |
 | 16   | Fast divide enabled     |
 | 17   | Bootloader enabled      |
-| 17   | Registers in RAM        |
+| 18   | Registers in RAM        |
 | rest | Reserved                |
 
 ## Status
