@@ -136,7 +136,7 @@ begin
                 interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(7, O_mcause'length));
                 O_mcause(31) <= '1';
-            -- Traps from here.
+            -- Exceptions from here.
             elsif I_illegal_instruction_error_request = '1' then
                 interrupt_request_int := irq_hard;
                 O_mcause <= std_logic_vector(to_unsigned(2, O_mcause'length));
@@ -228,7 +228,7 @@ begin
                     interrupt_request_int := irq_hard;
                     O_mcause <= std_logic_vector(to_unsigned(7, O_mcause'length));
                     O_mcause(31) <= '1';
-                -- Traps from here.
+                -- Exceptions from here.
                 elsif I_illegal_instruction_error_request = '1' then
                     interrupt_request_int := irq_hard;
                     O_mcause <= std_logic_vector(to_unsigned(2, O_mcause'length));
