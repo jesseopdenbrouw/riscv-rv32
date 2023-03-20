@@ -9,9 +9,9 @@
 
 void gpioa_writepin(uint32_t pin, uint32_t value)
 {
-	if (value == 0) {
-		GPIOA->POUT &= ~value;
+	if (value == GPIO_PIN_RESET) {
+		GPIOA->POUT &= ~pin;
 	} else {
-		GPIOA->POUT |= value;
+		GPIOA->POUT |= pin;
 	}
 }
