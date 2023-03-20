@@ -19,8 +19,6 @@
 #endif
 
 #define FAST_MODE (1)
-#define TMP102_ADDR (0x48)
-
 
 #if FAST_MODE == 1
 /* Fast mode (Fm), 400 kHz */
