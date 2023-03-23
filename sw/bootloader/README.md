@@ -26,4 +26,4 @@ the bootloader starts at address 0x10000000.
 
 ## Status
 
-Works on the board. Use design riscv-pipe3-csr-md-lic.bootloader
+Works on the board. The bootloader must be installed.
