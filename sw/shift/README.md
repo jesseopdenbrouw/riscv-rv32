@@ -6,4 +6,4 @@ Some tests for shifting.
 
 ## Status
 
-Needs more testing.
+Works. For in the simulator.
