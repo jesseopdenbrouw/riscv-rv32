@@ -46,7 +46,7 @@ int main()
 	uart1_puts("\r\n");
 
 	/* Sort the array */
-    qsort((void *)arr, sizeof arr / sizeof arr[0], sizeof(int), compare);
+	qsort((void *)arr, sizeof arr / sizeof arr[0], sizeof(int), compare);
 
 	/* Print the sorted array */
 	for (int i = 0; i < sizeof arr / sizeof arr[0]; i++) {
