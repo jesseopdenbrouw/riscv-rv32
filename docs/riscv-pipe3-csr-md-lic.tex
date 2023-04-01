@@ -89,7 +89,7 @@ This is work in progress. Things will certainly change in the future.
 
 \clearpage
 \section{Introduction}
-This document describes the buildup of a simple, one core, RISC-V processor, completely written in VHDL. The core contains one HART (Hardware Thread). The processor is able to run a compiled C-program. C++ is supported but some concepts (\texttt{cout} with \texttt{iostream}, STL) create binaries that are too big to fit in the ROM. The processor can handle the RV32IM Base Integer Instruction Set as set forward in ``The RISC-V Instruction Set Manual Volume I: Unprivileged ISA''. Also, the Zicsr and Zicntr extension are implemented. The processor can handle traps (interrupts/exceptions). The aim is to synthesize for a clock frequency of 80\,MHz. The processor utilizes ROM, RAM and some simple I/O (including MTIME and MTIMECMP) effectively making it a microcontroller.
+This document describes the buildup of a simple, one core, RISC-V processor, completely written in VHDL. The core contains one HART (Hardware Thread). The processor is able to run a compiled C-program. C++ is supported but some concepts (\texttt{cout} with \texttt{iostream}, STL) create binaries that are too big to fit in the ROM. The processor can handle the RV32IM Base Integer Instruction Set as set forward in ``The RISC-V Instruction Set Manual Volume I: Unprivileged ISA''. Also, the Zicsr and Zicntr extension are implemented. The processor can handle traps (interrupts/exceptions). The aim is to synthesize for a clock frequency of 75\,MHz. The processor utilizes ROM, RAM and some simple I/O (including MTIME and MTIMECMP) effectively making it a microcontroller.
 
 The processor requires three clock cycles to complete an instruction, but the next instructions are fetched and decoded while the current instruction is executed. Jumps, calls and branches taken require three clock cycles because a new instruction has to be fetched. Also, two clock cycles are needed when reading ROM (data), RAM and I/O. ROM and RAM are implemented using onboard RAM block (which are buffered with an output register). The I/O output has a buffer register for reading to speed up the processor. The processor has a basic Control and Status Registers set, offering [M]CYCLE and [M]CYCLEH (completed clock cycles), MTIME and MTIMEH (time since last reset, in microseconds, shadowed from memory mapped registers), [M]INSTRET and [M]INSTRETH (number of retired instructions), and a basic set of CSRs to handle traps. A hardware multiplication requires three clock cycles to complete. A hardware division requires 32+2 or 16+2 clock cycles to complete, depending on the settings. CSR operations require one clock cycle.
 
@@ -460,7 +460,7 @@ For the processor, all RV32IM Unprivileged instructions are implemented but the 
 
 \section{The FPGA}
 For this project, we use the Cyclone V FPGA from Intel (formerly Altera). See \url{https://www.intel.com/content/www/us/en/products/details/fpga/cyclone/v.html}.
-The used Cyclone V is the 5CEBA4F23C7 which has 18480 ALMs available. It has 3080 kb of onboard RAM bits available which are used for RAM, ROM, (possibly) bootloader ROM and (possibly) the registers. Depending on the program and used resources, the compiled RISC-V processor uses about 2800 ALMs (about 16\,\%) and 1,343,488 bits of internal memory (43\,\%). The clock frequency is approximately 80\,MHz, which is sufficient for all program examples. Note that the DE0-CV board has a onboard clock generator with a frequency of 50\,MHz, so a PLL is needed to get a frequency of 80\,MHz. This FPGA is mounted on a Terasic DE0-CV board (see Figure~\ref{fig:image-de0-cv}). The board has 10 switches, 4 push buttons, 1 reset push button, 10 leds, and 6 seven-segment displays. It also has two 2x20-pin headers to connect off-board devices. See \url{http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=921}. For downloading the bitstream file, the onboard USB-Blaster is used.
+The used Cyclone V is the 5CEBA4F23C7 which has 18480 ALMs available. It has 3080 kb of onboard RAM bits available which are used for RAM, ROM, (possibly) bootloader ROM and (possibly) the registers. Depending on the program and used resources, the compiled RISC-V processor uses about 2800 ALMs (about 16\,\%) and 1,343,488 bits of internal memory (43\,\%). The clock frequency is approximately 75\,MHz, which is sufficient for all program examples. Note that the DE0-CV board has a onboard clock generator with a frequency of 50\,MHz, so a PLL is needed to get a frequency of 75\,MHz. This FPGA is mounted on a Terasic DE0-CV board (see Figure~\ref{fig:image-de0-cv}). The board has 10 switches, 4 push buttons, 1 reset push button, 10 leds, and 6 seven-segment displays. It also has two 2x20-pin headers to connect off-board devices. See \url{http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=921}. For downloading the bitstream file, the onboard USB-Blaster is used.
 
 \begin{figure}[!ht]
 \centering
@@ -475,20 +475,20 @@ It is possible to add the Quartus' Signal Tap (embedded) Logic Analyzer. Follow 
 
 To find the best compilation result for speed and/or area, we have to tweak the compiler setting for the synthesizer and the fitter. Best is to do a design space exploration, and randomize the seed. Tweaking the seed may show a difference of 5\,MHz on the clock speed.
 
-Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed is set to 1 and the optimization is set to balanced. The total amount of ALMs is 18480. The total amount of RAM bits is 3153920.
-
-\begin{table}[!ht]
-\caption{FPGA resource utilization.}
-\label{tab:util}
-\centering
-\begin{tabular}{lllll}
-\toprule
-     & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
-Freq & 81.47   & 80.52   & 80.50     & 80.35     \\
-ALM  & 3392    & 2692    & 3417      & 2714      \\
-RAM  & 786,432 & 788,480 & 1,343,488 & 1,345,536 \\ \bottomrule
-\end{tabular}
-\end{table}
+%Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed is set to 1 and the optimization is set to balanced. The total amount of ALMs is 18480. The total amount of RAM bits is 3153920.
+%
+%\begin{table}[!ht]
+%\caption{FPGA resource utilization.}
+%\label{tab:util}
+%\centering
+%\begin{tabular}{lllll}
+%\toprule
+%     & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
+%Freq & 81.47   & 80.52   & 80.50     & 80.35     \\
+%ALM  & 3392    & 2692    & 3417      & 2714      \\
+%RAM  & 786,432 & 788,480 & 1,343,488 & 1,345,536 \\ \bottomrule
+%\end{tabular}
+%\end{table}
 
 
 \section{Processor hardware}
@@ -523,6 +523,7 @@ In the file \lstinline|processor_common.vhd|, a number of constant parameters ar
 \item \lstinline|HAVE_BOOTLOADER_ROM| -- Set to TRUE to provide the bootloader ROM and the PC is set to the start of the bootloader. Set to FALSE to disable the bootloader ROM and the PC is set to the start of the ROM. Disabling the bootloader reduces the RAM block count considerably.
 \item \lstinline|HAVE_REGISTERS_IN_RAM| -- Set to TRUE to place the registers in onboard RAM blocks. This lowers the ALM count drastically, but may have an impact on the system frequency. Set to FALSE to place the registers in ALM flip-flops.
 \item \lstinline|HAVE_UART1| -- Set to TRUE to include UART1 hardware. Set to FALSE to remove UART1 hardware.
+%\item \lstinline|HAVE_UART2| -- Set to TRUE to include UART2 hardware. Set to FALSE to remove UART2 hardware.
 \item \lstinline|HAVE_I2C1| -- Set to TRUE to include IC21 hardware. Set to FALSE to remove I2C1 hardware.
 \item \lstinline|HAVE_SPI1| -- Set to TRUE to include SPI1 hardware. Set to FALSE to remove SPI1 hardware.
 \item \lstinline|HAVE_SPI2| -- Set to TRUE to include SPI2 hardware. Set to FALSE to remove SPI2 hardware.
@@ -623,6 +624,8 @@ pouta[1]  & AA1      & LEDR1 \\
 pouta[0]  & AA2      & LEDR0 \\
 uart1rxd  & N19      & GPIO\_0\_D15, UART1 receive \\
 uart1txd  & P19      & GPIO\_0\_D17, UART1 transmit  \\
+%uart2rxd  & T20      & GPIO\_0\_D31, UART2 receive \\
+%uart2txd  & T18      & GPIO\_0\_D33, UART2 transmit  \\
 timer2oct & N21      & GPIO\_0\_D10, output compare T \\
 timer2oca & R21      & GPIO\_0\_D12, output compare/PWM A \\
 timer2ocb & N20      & GPIO\_0\_D14, output compare/PWM B \\
@@ -672,7 +675,7 @@ If you want, you can compile the processor with the standard program incorporate
 To test one of the programs, change directory to one of the directories in \lstinline|sw| and copy the file with \lstinline|.vhd| extension to the directory containing the VHDL description under the name \lstinline|processor_common_rom.vhd|.
 Now start Quartus and start the compilation. After a successful compilation, you can program the Cyclone V on a DE0-CV board. If the bootloader is installed, you can also upload an S-record file. See Section~\ref{sec:bootloader}.
 
-The design is targeted for a clock speed of 80\,MHz. Depending on how ``good'' the device is fabricated, higher clock speeds may be obtained. With one device, we could speed up the clock to 133\,MHz.
+The design is targeted for a clock speed of 75\,MHz. Depending on how ``good'' the device is fabricated, higher clock speeds may be obtained. With one device, we could speed up the clock to 133\,MHz.
 
 Compilation of the hardware design is independent of the size of the software program. Several design goals may be selected, such as highest clock speed, minimum power or minimum area. Depending on the compilation settings, compilation time may decrease or increase.
 
