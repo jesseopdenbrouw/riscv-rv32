@@ -90,6 +90,7 @@ component core is
           O_memaddress : out data_type;
           O_memdataout : out data_type; 
           I_memdatain : in data_type;
+          O_memvma : out std_logic; 
           I_waitfordata : in std_logic;
           -- To CSR
           O_instret : out std_logic;
@@ -163,6 +164,7 @@ component ram is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
           I_memaddress : in data_type;
+          I_memvma : in std_logic;
           I_memsize : in memsize_type;
           I_csram : in std_logic;
           I_wren : in std_logic;
@@ -195,6 +197,7 @@ component io is
           I_areset : in std_logic;
           I_memaddress : in data_type;
           I_memsize : memsize_type;
+          I_memvma : std_logic;
           I_csio : in std_logic;
           I_wren : in std_logic;
           I_datain : in data_type;
@@ -307,6 +310,7 @@ signal stall_int : std_logic;
 signal memaccess_int : memaccess_type;
 signal memsize_int : memsize_type;
 signal memaddress_int : data_type;
+signal memvma_int : std_logic;
 signal waitfordata_int : std_logic;
 signal wrrom_int : std_logic;
 signal wrram_int : std_logic;
@@ -372,6 +376,7 @@ begin
               O_memsize => memsize_int,
               O_memdataout => dataout_int,
               I_memdatain => datain_int,
+              O_memvma => memvma_int,
               I_waitfordata => waitfordata_int,
               O_instret => instret_int,
               O_csr_op => csr_op_int,
@@ -492,6 +497,7 @@ begin
     port map (I_clk => clk_int,
               I_areset => areset_int,
               I_memaddress => memaddress_int,
+              I_memvma => memvma_int,
               I_memsize => memsize_int,
               I_csram => csram_int,
               I_wren => wrram_int,
@@ -508,6 +514,7 @@ begin
               I_areset => areset_int,
               I_memaddress => memaddress_int,
               I_memsize => memsize_int,
+              I_memvma => memvma_int,
               I_csio => csio_int,
               I_wren => wrio_int,
               I_datain => dataout_int,
