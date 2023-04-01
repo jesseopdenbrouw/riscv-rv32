@@ -32,7 +32,7 @@ compiler.
 
 The design is equipped with a bootloader program and registers in onboard RAM.
 The bootloader can be removed from synthesis. The registers can be placed in
-logic cells. The design runs at a speed of approximately 80 MHz.
+logic cells. The design runs at a speed of approximately 75 MHz.
  
 ## Memory
 
@@ -104,7 +104,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 * Move CSR and LIC into the core.
-* Identified a problem when a trap is requested and the memory is read or written. The instruction is not executed (is not retired), but the memory is accessed, and can have side effects in I/O (i.e. clearing bits or starting hardware). The memory access cannot be stopped, because of the following: if an access loads/stores on a misaligned memory address, an exception is raised. Disabling the memory access with disable the exception, which caused the memory to be accessed again. This is called a combinational loop.
+* A new signal `I_memvma` and `O_memvma` are introduced to grant read and write access if no interrupt is pending. This lowers the overall clock speed to 75 MHz.
 
 ## Disclaimer
 
