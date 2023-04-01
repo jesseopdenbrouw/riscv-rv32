@@ -1,3 +1,4 @@
+
 -- #################################################################################################
 -- # processor_common.vhd - Common types and constants                                             #
 -- # ********************************************************************************************* #
@@ -136,10 +137,10 @@ package processor_common is
     type csr_op_type is (csr_nop, csr_rw, csr_rs, csr_rc, csr_rwi, csr_rsi, csr_rci);
 
     -- Traps
-    --type interrupt_request_type is (irq_none, irq_hard);
-    subtype interrupt_request_type is std_logic;
-    constant irq_none : interrupt_request_type := '0';
-    constant irq_hard : interrupt_request_type := '1';
+    type interrupt_request_type is (irq_none, irq_hard);
+--    subtype interrupt_request_type is std_logic;
+--    constant irq_none : interrupt_request_type := '0';
+--    constant irq_hard : interrupt_request_type := '1';
 
     -- The ROM
     -- NOTE: the ROM is word (32 bits) size.
