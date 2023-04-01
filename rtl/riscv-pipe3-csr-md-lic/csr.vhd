@@ -487,7 +487,7 @@ begin
     csr.mxhw(14) <= '0';
     csr.mxhw(15) <= '1'; -- TIME/TIMEH
     csr.mxhw(16) <= '1' when HAVE_MULDIV else '0';
-    csr.mxhw(17) <= '1' when FAST_DIVIDE else '0';
+    csr.mxhw(17) <= '1' when FAST_DIVIDE and HAVE_MULDIV else '0';
     csr.mxhw(18) <= '1' when HAVE_BOOTLOADER_ROM else '0';
     csr.mxhw(19) <= '1' when HAVE_REGISTERS_IN_RAM else '0';
     csr.mxhw(31 downto 20) <= (others => '0');
