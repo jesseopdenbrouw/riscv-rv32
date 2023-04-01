@@ -76,6 +76,7 @@ entity io is
           I_csio : in std_logic;
           I_memaddress : in data_type;
           I_memsize : memsize_type;
+          I_memvma : std_logic;
           I_wren : in std_logic;
           I_datain : in data_type;
           O_dataout : out data_type;
@@ -141,14 +142,14 @@ alias uart1stat_int : data_type is io(uart1stat_addr);
 alias uart1data_int : data_type is io(uart1data_addr);
 alias uart1baud_int : data_type is io(uart1baud_addr);
 -- Transmit signals
-signal uart1txbuffer : data_type;
+signal uart1txbuffer : std_logic_vector(11 downto 0);
 signal uart1txstart : std_logic;
 type uarttxstate_type is (tx_idle, tx_iter, tx_ready);
 signal uart1txstate : uarttxstate_type;
 signal uart1txbittimer : integer range 0 to 65535;
 signal uart1txshiftcounter : integer range 0 to 15;
 --Receive signals
-signal uart1rxbuffer : data_type;
+signal uart1rxbuffer : std_logic_vector(11 downto 0);
 type uartrxstate_type is (rx_idle, rx_wait, rx_iter, rx_parity, rx_parity2, rx_ready, rx_fail);
 signal uart1rxstate : uartrxstate_type;
 signal uart1rxbittimer : integer range 0 to 65535;
@@ -304,9 +305,9 @@ begin
     O_load_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '0' else '0';
     O_store_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '1' else '0';
     
-    -- Read or write access
-    read_access_granted <= '1' when isword and I_csio = '1' and I_wren = '0' else '0';
-    write_access_granted <= '1' when isword and I_csio = '1' and I_wren = '1' else '0';
+    -- Read or write access, but only if no interrupt is pending
+    read_access_granted <= '1' when isword and I_csio = '1' and I_wren = '0' and I_memvma = '1' else '0';
+    write_access_granted <= '1' when isword and I_csio = '1' and I_wren = '1' and I_memvma = '1' else '0';
     
     --
     -- Data out to ALU
@@ -598,15 +599,15 @@ begin
                         if uart1ctrl_int(3 downto 2) = "10" then
                             uart1stat_int(3) <= uart1rxbuffer(8) xor uart1rxbuffer(7) xor uart1rxbuffer(6) xor uart1rxbuffer(5)
                                                 xor uart1rxbuffer(4) xor uart1rxbuffer(3) xor uart1rxbuffer(2)
-                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync;
+                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1ctrl_int(4);
                         elsif uart1ctrl_int(3 downto 2) = "11" then
                             uart1stat_int(3) <= uart1rxbuffer(6) xor uart1rxbuffer(5)
                                                 xor uart1rxbuffer(4) xor uart1rxbuffer(3) xor uart1rxbuffer(2)
-                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync;
+                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1ctrl_int(4);
                         else
                             uart1stat_int(3) <= uart1rxbuffer(7) xor uart1rxbuffer(6) xor uart1rxbuffer(5)
                                                 xor uart1rxbuffer(4) xor uart1rxbuffer(3) xor uart1rxbuffer(2)
-                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync;
+                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1ctrl_int(4);
                         end if;
                         uart1rxbittimer <= to_integer(unsigned(uart1baud_int));
                         uart1rxstate <= rx_parity2;
@@ -1707,12 +1708,12 @@ begin
         elsif rising_edge(I_clk) then
             if write_access_granted = '1' then
 --                -- Load time (low 32 bits)
---                if reg_int = time_addr then
---                    time_reg(31 downto 0) := unsigned(I_datain);
+--                if reg_int = mtime_addr then
+--                    mtime_reg(31 downto 0) := unsigned(I_datain);
 --                end if;
 --                -- Load timeh (high 32 bits)
---                if reg_int = timeh_addr then
---                    time_reg(63 downto 32) := unsigned(I_datain);
+--                if reg_int = mtimeh_addr then
+--                    mtime_reg(63 downto 32) := unsigned(I_datain);
 --                end if;
                 -- Load compare register (low 32 bits)
                 if reg_int = mtimecmp_addr then

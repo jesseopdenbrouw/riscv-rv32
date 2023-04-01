@@ -60,6 +60,7 @@ entity core is
           O_memaddress : out data_type;
           O_memdataout : out data_type; 
           I_memdatain : in data_type;
+          O_memvma : out std_logic; 
           I_waitfordata : in std_logic;
           -- To CSR
           O_instret : out std_logic;
@@ -1490,6 +1491,9 @@ begin
     -- Disable the bus when flushing
     O_memaccess <= memaccess_nop when control.flush = '1' else id_ex.memaccess;
     O_memsize <= id_ex.memsize;
+    -- Only memory access when there's no interrupt pending
+    O_memvma <= '1' when I_interrupt_request = irq_none else '0';
+    -- Disable the bus when flushing
     O_csr_op <= csr_nop when control.flush = '1' else id_ex.csr_op;
     
     -- This is the interface between the core and the memory (ROM, RAM, I/O)

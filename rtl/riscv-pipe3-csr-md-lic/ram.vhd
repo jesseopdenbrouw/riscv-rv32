@@ -51,6 +51,7 @@ entity ram is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
           I_memaddress : in data_type;
+          I_memvma : in std_logic;
           I_memsize : in memsize_type;
           I_csram : in std_logic;
           I_wren : in std_logic;
@@ -132,22 +133,25 @@ begin
        
         -- The RAM itself
         if rising_edge(I_clk) then
-            -- Write to RAM
-            -- ramll is byte y, ramlh is byte y+1, ramhl is byte y+2, ramhh is byte y+3
-            if byteena_v(3) = '1' then
-                ramhh(address_v) <= datawrite_v(31 downto 24);
+            -- Only write if current access is not blocked by interrupt.
+            if I_memvma = '1' then
+                -- Write to RAM
+                -- ramll is byte y, ramlh is byte y+1, ramhl is byte y+2, ramhh is byte y+3
+                if byteena_v(3) = '1' then
+                    ramhh(address_v) <= datawrite_v(31 downto 24);
+                end if;
+                if byteena_v(2) = '1' then
+                    ramhl(address_v) <= datawrite_v(23 downto 16);
+                end if;
+                if byteena_v(1) = '1' then
+                    ramlh(address_v) <= datawrite_v(15 downto 8);
+                end if;
+                if byteena_v(0) = '1' then
+                    ramll(address_v) <= datawrite_v(7 downto 0);
+                end if;
+                -- Read from RAM, in Big Endian format (31-24, 23-16, 15-8, 7-0)
+                dataout_v := ramhh(address_v) & ramhl(address_v) & ramlh(address_v) & ramll(address_v);
             end if;
-            if byteena_v(2) = '1' then
-                ramhl(address_v) <= datawrite_v(23 downto 16);
-            end if;
-            if byteena_v(1) = '1' then
-                ramlh(address_v) <= datawrite_v(15 downto 8);
-            end if;
-            if byteena_v(0) = '1' then
-                ramll(address_v) <= datawrite_v(7 downto 0);
-            end if;
-            -- Read from RAM, in Big Endian format (31-24, 23-16, 15-8, 7-0)
-            dataout_v := ramhh(address_v) & ramhl(address_v) & ramlh(address_v) & ramll(address_v);
         end if;
 
         O_load_misaligned_error <= '0';
