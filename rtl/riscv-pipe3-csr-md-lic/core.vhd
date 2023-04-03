@@ -539,7 +539,7 @@ begin
                 id_ex.rs1 <= rs1_v;
                 id_ex.rs2 <= rs2_v;
                 id_ex.rd_en <= '0';
-                id_ex.imm <= (others => '0');
+                id_ex.imm <= imm_i_v; --(others => '0');
                 id_ex.isimm <= '0';
                 id_ex.isunsigned <= '0';
                 id_ex.alu_op <= alu_nop;
@@ -718,17 +718,21 @@ begin
                             elsif func7_v = "0000001" then
                                 -- Set operation to multiply or divide/remainder
                                 -- func3 contains the real operation
-                                case func3_v(2) is
-                                    when '0' => id_ex.alu_op <= alu_multiply;
-                                    when '1' => id_ex.alu_op <= alu_divrem;
-                                    when others => null;
-                                end case;
-                                -- Hold the PC
-                                id_ex.pc_op <= pc_hold;
-                                -- func3 contains the function
-                                id_ex.md_op <= func3_v;
-                                -- Start multiply/divide/remainder
-                                id_ex.md_start <= '1';
+                                if HAVE_MULDIV then
+                                    case func3_v(2) is
+                                        when '0' => id_ex.alu_op <= alu_multiply;
+                                        when '1' => id_ex.alu_op <= alu_divrem;
+                                        when others => null;
+                                    end case;
+                                    -- Hold the PC
+                                    id_ex.pc_op <= pc_hold;
+                                    -- func3 contains the function
+                                    id_ex.md_op <= func3_v;
+                                    -- Start multiply/divide/remainder
+                                    id_ex.md_start <= '1';
+                                else
+                                    O_illegal_instruction_error <= '1';
+                                end if;
                             else
                                 O_illegal_instruction_error <= '1';
                             end if;
@@ -829,45 +833,37 @@ begin
                                 when "001" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rw;
-                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- RS1
                                 when "010" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rs;
-                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- RS1
                                 when "011" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rc;
-                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- RS1
                                 when "101" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rwi;
-                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- imm
                                 when "110" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rsi;
-                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
-                                    --id_ex.rs1 <= rs1_v;
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- imm
                                 when "111" =>
                                     id_ex.alu_op <= alu_csr;
                                     id_ex.csr_op <= csr_rci;
-                                    --id_ex.rd <= rd_v;
                                     id_ex.rd_en <= '1';
-                                    --id_ex.rs1 <= rs1_v;
                                     O_csr_addr <= imm_i_v(11 downto 0);
                                     O_csr_immrs1 <= rs1_v; -- imm
                                 when others =>
@@ -918,6 +914,8 @@ begin
     -- Generate registers in ALM flip-flops
     gen_regs_ram_not: if not HAVE_REGISTERS_IN_RAM generate
         -- Register: exec & retire
+        -- Registers in ALM flip-flops, x0 (zero) hardwired to all 0.
+        -- Registers are cleared on reset
         process (I_clk, I_areset, id_ex.rd, I_instr) is
         variable selrd_v : integer range 0 to NUMBER_OF_REGISTERS-1;
         begin
