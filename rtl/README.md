@@ -18,7 +18,7 @@ within this 5 seconds, the bootloader starts the main
 program at address 0x00000000. If pressed, the bootloader
 enters a simple monitor program. Type 'h' for help.
 
-A S-record file can be uploaded by the `upload` program.
+An S-record file can be uploaded by the `upload` program.
 If `upload` contacts the bootloader within the 5 second
 delay, the S-record file is transmitted to the processor
 and the instructions are placed in the ROM. Make
