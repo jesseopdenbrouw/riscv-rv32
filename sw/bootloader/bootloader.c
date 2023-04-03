@@ -41,7 +41,7 @@ int main(void) {
 
 
 	/* Initialize UART1 at 115200 bps */
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	/* Send greeting */
 	uart1_puts("\r\nTHUAS RISC-V Bootloader " VERSION "\r\n");
@@ -65,7 +65,6 @@ int main(void) {
 	 * start the application */
 	if (!keyhit) {
 		uart1_init(0, 0);
-		GPIOA->POUT = 0;
 		(*app_start)();
 	}
 
