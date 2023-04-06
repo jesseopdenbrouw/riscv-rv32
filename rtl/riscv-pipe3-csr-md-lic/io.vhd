@@ -347,10 +347,10 @@ begin
                     when timer2cmpa_addr => O_dataout <= timer2cmpa_int;
                     when timer2cmpb_addr => O_dataout <= timer2cmpb_int;
                     when timer2cmpc_addr => O_dataout <= timer2cmpc_int;
-                    when mtime_addr       => O_dataout <= mtime_int;
-                    when mtimeh_addr      => O_dataout <= mtimeh_int;
-                    when mtimecmp_addr    => O_dataout <= mtimecmp_int;
-                    when mtimecmph_addr   => O_dataout <= mtimecmph_int;
+                    when mtime_addr      => O_dataout <= mtime_int;
+                    when mtimeh_addr     => O_dataout <= mtimeh_int;
+                    when mtimecmp_addr   => O_dataout <= mtimecmp_int;
+                    when mtimecmph_addr  => O_dataout <= mtimecmph_int;
                     when others => O_dataout <= (others => '-');
                 end case;
             end if;
@@ -501,7 +501,7 @@ begin
                         end if;
                     -- Transmit the bits
                     when tx_iter =>
-                        -- Cycle trough all bits in the transmit buffer
+                        -- Cycle through all bits in the transmit buffer
                         -- First in line is the start bit
                         O_uart1txd <= uart1txbuffer(0);
                         if uart1txbittimer > 0 then
@@ -821,7 +821,7 @@ begin
                             i2c1rxbuffer <= i2c1rxbuffer(7 downto 0) & i2c1sdasync(1);
                         end if;
                     when leadout =>
-                        -- SCL low, SDA low
+                        -- SCL low, SDA high
                         i2c1scl_out <= '0';
                         i2c1sda_out <= '1';
                         -- Count bit time
