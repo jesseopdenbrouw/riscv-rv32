@@ -60,7 +60,7 @@ void timer1_handler(void)
 }
 
 /* The default handler, which holds the processor */
-void default_hander(void)
+void default_handler(void)
 {
 	/* Set output bit 9 and hold */
 	GPIOA->POUT |= (1 << 9);
