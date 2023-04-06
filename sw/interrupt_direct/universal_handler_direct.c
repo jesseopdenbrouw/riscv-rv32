@@ -4,7 +4,7 @@
 // # ********************************************************************************************* #
 // # BSD 3-Clause License                                                                          #
 // #                                                                                               #
-// # Copyright (c) 2022, Jesse op den Brouw. All rights reserved.                                  #
+// # Copyright (c) 2023, Jesse op den Brouw. All rights reserved.                                  #
 // #                                                                                               #
 // # Redistribution and use in source and binary forms, with or without modification, are          #
 // # permitted provided that the following conditions are met:                                     #
@@ -36,7 +36,7 @@
 /*
  * RISC-V RV32IM generic trap handler (direct)
  *
- * (c) 2022, Jesse E.J. op den Brouw
+ * (c) 2023, Jesse E.J. op den Brouw
  *
  */
 
@@ -97,6 +97,7 @@ char **environ = __env;
 #define TIMER2_IN_MCAUSE ((1<<31)+19)
 #define UART1_IN_MCAUSE ((1<<31)+18)
 #define TIMER1_IN_MCAUSE ((1<<31)+17)
+#define DEFAULT_IN_MCAUSE ((1<<31)+16)
 #define SYSTEM_TIMER_IN_MCAUSE ((1<<31)+7)
 
 /* User callable functions for writing and reading
@@ -179,7 +180,7 @@ void universal_handler_direct(void)
 		          : "=r" (__mcause) :
  		          : "memory");
 
-	/* System Timer compare match interrupt */
+	/* External System Timer compare match interrupt */
 	if (__mcause == SYSTEM_TIMER_IN_MCAUSE) {
                 external_timer_handler();
                 __asm__ volatile ("lw      x10,10*4(sp);" :::);
@@ -199,9 +200,13 @@ void universal_handler_direct(void)
 	} else if (__mcause  == UART1_IN_MCAUSE) {
                 uart1_handler();
                 __asm__ volatile ("lw      x10,10*4(sp);" :::);
-	/* External TIMER1 compare match T interrupt */
+	/* TIMER1 compare match T interrupt */
 	} else if (__mcause  == TIMER1_IN_MCAUSE) {
                 timer1_handler();
+                __asm__ volatile ("lw      x10,10*4(sp);" :::);
+	/* Default (test switch) interrupt */
+	} else if (__mcause  == DEFAULT_IN_MCAUSE) {
+                default_handler();
                 __asm__ volatile ("lw      x10,10*4(sp);" :::);
 	/* Check the cause of the exeption/interrupt/trap */
 	} else if (__mcause == ECALL_IN_MCAUSE) {
@@ -278,10 +283,10 @@ void universal_handler_direct(void)
 			 * time CSRs, which are a copy of TIME and TIMEH
 			 * memory mapped registers */
 			__asm__ volatile("1: rdtimeh %0\n"
-		         	     "   rdtime  %1\n"
-			 	     "   rdtimeh %2\n"
-				     "   bne %0, %2, 1b"
-				     : "+r" (th), "+r" (tl), "+r" (tt));
+			                 "   rdtime  %1\n"
+			                 "   rdtimeh %2\n"
+			                 "   bne %0, %2, 1b"
+			                 : "+r" (th), "+r" (tl), "+r" (tt));
 
 			thetime = ((uint64_t)th << 32ULL) | (uint64_t) tl;
 			/* This division and remainder take a long time */
