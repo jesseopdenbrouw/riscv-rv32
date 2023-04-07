@@ -12,6 +12,9 @@ uint32_t i2c1_transmit(uint8_t address, uint8_t *buf, uint32_t len)
 
 	/* If error, return */
 	if (ret) {
+		/* Ack fail, so send STOP */
+		I2C1->CTRL |= I2C_HARDSTOP;
+		while ((I2C1->STAT & I2C_TC) == 0);
 		return ret;
 	}
 
