@@ -82,13 +82,9 @@ int main(void)
 				uart1_printf("x: %5d, y: %5d, z: %5d, pitch: %3d, roll: %3d\r\n", x, y, z, pitch, roll);
 			} else {
 				uart1_puts("Failed to receive info!\r\n");
-				/* Hack */
-				i2c1_clearstat();
 			}
 		} else {
 			uart1_puts("Failed to set register!\r\n");
-			/* Hack */
-			i2c1_clearstat();
 		}
 
 		delayms(100);
