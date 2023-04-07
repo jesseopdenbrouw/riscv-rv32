@@ -230,7 +230,7 @@ Note that the computation of jump target addresses is handled by the Program Cou
 
 \subsection{PC}
 \label{sec:pc}
-The Program Counter contains the address of the currently fetched instruction. The address is always on a 4-byte boundary although function calls and conditional jump (JAL, JALR en B$xx$ instructions) can be on non 4-byte boundaries (the C compiler will always create 4-bytes boundaries). The PC (or rather the VHDL description of the PC) handles the address calculations of jumps and branches taken.
+The Program Counter contains the address of the currently fetched instruction. The address is always on a 4-byte boundary although function calls and conditional jump (JAL, JALR en B$xx$ instructions) can be on non 4-byte boundaries (the C compiler will always create 4-bytes boundaries). The PC (or rather the VHDL description of the PC) handles the address calculations of jumps and branches taken. Currently, the two lower bits of the PC are set to 0.
 
 \subsection{Instruction Decoder}
 \label{sec:instructiondecoder}
@@ -1639,7 +1639,7 @@ General purpose I\textsuperscript{2}C peripheral, with programmable baud rate pr
 \regfield{BAUD}{16}{16}{{0}}%
 \regfield{Reserved}{4}{12}{{0}}%
 \regfield{MACK}{1}{11}{{0}}%
-\regfield{Reserved}{1}{10}{{0}}%
+\regfield{HARDSTOP}{1}{10}{{0}}%
 %\regfield{DPG}{1}{10}{{0}}%
 \regfield{START}{1}{9}{{0}}%
 \regfield{STOP}{1}{8}{{0}}%
@@ -1650,10 +1650,11 @@ General purpose I\textsuperscript{2}C peripheral, with programmable baud rate pr
 \regfield{Reserved}{2}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.8\textwidth]\begin{reglist}[0000000i]
+\begin{regdesc}[0.9\textwidth]\begin{reglist}[000000000]
 \item [BAUD] Baud rate prescaler. Number of system clock pulses minus 1 for \textbf{one-half} bit time (Sm) or \textbf{one-third} bit time (Fm).
 Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C clock frequency is 763\,Hz.
 \item [MACK] Set to 1 to acknowledge a reception by the master. Must only be used when receiving.
+\item [HARDSTOP] Set to 1 to just generate a STOP condition. Useful after addressing a target that didn't respond. Cleared by hardware.
 %\item [DPG] Disable STOP generation after Acknowledge Fail. Can be used to send a repeated START.
 \item [START] Send a START before next byte send. Cleared by hardware when transmission ends.
 \item [STOP] Send a STOP after next byte send or received. Cleared by hardware when transmission ends.
