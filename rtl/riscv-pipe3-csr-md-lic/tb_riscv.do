@@ -102,6 +102,7 @@ add wave            -label timer2occ timer2occ
 add wave -divider "Core - Inputs & Outputs"
 add wave            -label I_interrupts_request dut/core0/I_interrupt_request
 add wave            -label O_csr_addr dut/core0/O_csr_addr
+add wave            -label O_pc_to_mepc dut/core0/O_pc_to_mepc
 add wave -divider "Core Internals - Control"
 add wave            -label control dut/core0/control
 add wave -divider "Core Internals - Instruction Fetch"
