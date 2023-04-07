@@ -31,15 +31,16 @@ void i2c1_clearstat(void);
 /* Due to rounding toward 0, some speeds may be a bit to high */
 #define I2C_PRESCALER_FM(A) (((A/3UL/400000UL)-1) << 16)
 #define I2C_PRESCALER_SM(A) (((A/2UL/100000UL)-1) << 16)
-#define I2C_FAST_MODE (1 << 2)
+#define I2C_FAST_MODE     (1 << 2)
 #define I2C_STANDARD_MODE (0 << 2)
-#define I2C_MACK (1 << 11)
-#define I2C_START (1 << 9)
-#define I2C_STOP (1 << 8)
-#define I2C_AF (1 << 5)
-#define I2C_TC (1 << 3)
-#define I2C_READ (1)
-#define I2C_WRITE (0)
+#define I2C_MACK          (1 << 11)
+#define I2C_HARDSTOP      (1 << 10)
+#define I2C_START         (1 << 9)
+#define I2C_STOP          (1 << 8)
+#define I2C_AF            (1 << 5)
+#define I2C_TC            (1 << 3)
+#define I2C_READ          (1)
+#define I2C_WRITE         (0)
 
 
 #ifdef __cplusplus
