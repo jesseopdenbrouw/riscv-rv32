@@ -179,6 +179,7 @@ signal i2c1scl_out : std_logic;
 signal i2c1sdasync : std_logic_vector(1 downto 0);
 signal i2c1sclsync : std_logic_vector(1 downto 0);
 alias i2c1mack : std_logic is i2c1ctrl_int(11);
+alias i2c1hardstop : std_logic is i2c1ctrl_int(10);
 alias i2c1startbit : std_logic is i2c1ctrl_int(9);
 alias i2c1stopbit : std_logic is i2c1ctrl_int(8);
 alias i2c1fastmode : std_logic is i2c1ctrl_int(2);
@@ -759,6 +760,9 @@ begin
                                 -- Regular data
                                 i2c1state <= send_data_first;
                             end if;
+                        -- Do we have to send a single STOP condition?
+                        elsif i2c1hardstop = '1' then
+                            i2c1state <= send_stopbit_first;
                         end if;
                     when send_startbit =>
                         -- Generate start condition
@@ -871,13 +875,15 @@ begin
                         else
                             -- Transmission conplete
                             i2c1tc <= '1';
-                            -- Remove STOP bit
+                            -- Clear STOP bit
                             i2c1stopbit <= '0';
                             -- and goto IDLE
                             i2c1state <= idle;
                             -- Copy data to data register and flag ACK
                             i2c1data_int(7 downto 0) <= i2c1rxbuffer(8 downto 1);
                             i2c1ackfail <= i2c1rxbuffer(0);
+                            -- Clear hard stop
+                            i2c1hardstop <= '0';
                             -- Unregister that we are transmitting
                             i2c1istransmitting <= '0';
                         end if;
