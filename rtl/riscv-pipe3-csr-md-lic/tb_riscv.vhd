@@ -50,10 +50,10 @@ architecture sim of tb_riscv is
 component riscv is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
-          -- GPIO
-          I_pina : in data_type;
-          O_pouta : out data_type;
-          -- USART (UART1)
+          -- GPIOA
+          I_gpioapin : in data_type;
+          O_gpioapout : out data_type;
+          -- UART1
           I_uart1rxd : in std_logic;
           O_uart1txd : out std_logic;
           -- I2C1
@@ -78,8 +78,8 @@ end component riscv;
 
 signal clk : std_logic;
 signal areset : std_logic;
-signal pina : data_type;
-signal pouta : data_type;
+signal gpioapin : data_type;
+signal gpioapout : data_type;
 signal uart1txd, uart1rxd : std_logic;
 signal timer2oct : std_logic;
 signal timer2oca : std_logic;
@@ -106,8 +106,8 @@ begin
     dut : riscv
     port map (I_clk => clk,
               I_areset => areset,
-              I_pina => pina,
-              O_pouta => pouta,
+              I_gpioapin => gpioapin,
+              O_gpioapout => gpioapout,
               I_uart1rxd => uart1rxd,
               O_uart1txd => uart1txd,
               IO_i2c1scl => i2c1scl,
@@ -141,15 +141,15 @@ begin
         areset <= '0';
         -- RxD input is idle high
         uart1rxd <= '1';
-        pina <= x"ffffff40";
+        gpioapin <= x"ffffff40";
         wait for 15 ns;
         areset <= '1';
         --wait for 40000 ns;
         wait for 24*20 ns;
-        pina <= x"ffffff41";
+        gpioapin <= x"ffffff41";
         wait for 1*20 ns;
         --wait for 20000 ns;
-        pina <= x"ffffff40";
+        gpioapin <= x"ffffff40";
         
         wait for 500 us;
         
