@@ -36,7 +36,7 @@
 
 -- This file contains the description of a RISC-V RV32IM top level,
 -- including the core (using a three-stage pipeline), and address
--- decoding unit, RAM, ROM, I/O, CSR and LIC.
+-- decoding unit, RAM, ROM, boot ROM, I/O, CSR and LIC.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -50,10 +50,10 @@ use work.processor_common_rom.all;
 entity riscv is
     port (I_clk : in std_logic;
           I_areset : in std_logic;
-          -- GPIO
-          I_pina : in data_type;
-          O_pouta : out data_type;
-          -- USART (UART1)
+          -- GPIOA
+          I_gpioapin : in data_type;
+          O_gpioapout : out data_type;
+          -- UART1
           I_uart1rxd : in std_logic;
           O_uart1txd : out std_logic;
           -- I2C1
@@ -522,8 +522,8 @@ begin
               O_load_misaligned_error => load_misaligned_error_int(0),
               O_store_misaligned_error => store_misaligned_error_int(0),
               -- GPIOA
-              I_gpioapin => I_pina,
-              O_gpioapout => O_pouta,
+              I_gpioapin => I_gpioapin,
+              O_gpioapout => O_gpioapout,
               -- UART1
               I_uart1rxd => I_uart1rxd,
               O_uart1txd => O_uart1txd,
