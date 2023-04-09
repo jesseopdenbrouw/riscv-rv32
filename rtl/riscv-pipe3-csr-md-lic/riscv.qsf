@@ -67,44 +67,44 @@ set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name ENABLE_DRC_SETTINGS ON
 set_location_assignment PIN_P22 -to I_areset
 set_location_assignment PIN_M9 -to I_clk
-set_location_assignment PIN_U13 -to I_pina[0]
-set_location_assignment PIN_V13 -to I_pina[1]
-set_location_assignment PIN_T13 -to I_pina[2]
-set_location_assignment PIN_T12 -to I_pina[3]
-set_location_assignment PIN_AA15 -to I_pina[4]
-set_location_assignment PIN_AB15 -to I_pina[5]
-set_location_assignment PIN_AA14 -to I_pina[6]
-set_location_assignment PIN_AA13 -to I_pina[7]
-set_location_assignment PIN_AB13 -to I_pina[8]
-set_location_assignment PIN_AB12 -to I_pina[9]
-set_location_assignment PIN_M6 -to I_pina[15]
-set_location_assignment PIN_M7 -to I_pina[14]
-set_location_assignment PIN_W9 -to I_pina[13]
-set_location_assignment PIN_U7 -to I_pina[12]
-set_location_assignment PIN_AA2 -to O_pouta[0]
-set_location_assignment PIN_AA1 -to O_pouta[1]
-set_location_assignment PIN_W2 -to O_pouta[2]
-set_location_assignment PIN_Y3 -to O_pouta[3]
-set_location_assignment PIN_N2 -to O_pouta[4]
-set_location_assignment PIN_N1 -to O_pouta[5]
-set_location_assignment PIN_U2 -to O_pouta[6]
-set_location_assignment PIN_U1 -to O_pouta[7]
-set_location_assignment PIN_L2 -to O_pouta[8]
-set_location_assignment PIN_L1 -to O_pouta[9]
-set_location_assignment PIN_U21 -to O_pouta[16]
-set_location_assignment PIN_V21 -to O_pouta[17]
-set_location_assignment PIN_W22 -to O_pouta[18]
-set_location_assignment PIN_W21 -to O_pouta[19]
-set_location_assignment PIN_Y22 -to O_pouta[20]
-set_location_assignment PIN_Y21 -to O_pouta[21]
-set_location_assignment PIN_AA22 -to O_pouta[22]
-set_location_assignment PIN_AA20 -to O_pouta[24]
-set_location_assignment PIN_AB20 -to O_pouta[25]
-set_location_assignment PIN_AA19 -to O_pouta[26]
-set_location_assignment PIN_AA18 -to O_pouta[27]
-set_location_assignment PIN_AB18 -to O_pouta[28]
-set_location_assignment PIN_AA17 -to O_pouta[29]
-set_location_assignment PIN_U22 -to O_pouta[30]
+set_location_assignment PIN_U13 -to I_gpioapin[0]
+set_location_assignment PIN_V13 -to I_gpioapin[1]
+set_location_assignment PIN_T13 -to I_gpioapin[2]
+set_location_assignment PIN_T12 -to I_gpioapin[3]
+set_location_assignment PIN_AA15 -to I_gpioapin[4]
+set_location_assignment PIN_AB15 -to I_gpioapin[5]
+set_location_assignment PIN_AA14 -to I_gpioapin[6]
+set_location_assignment PIN_AA13 -to I_gpioapin[7]
+set_location_assignment PIN_AB13 -to I_gpioapin[8]
+set_location_assignment PIN_AB12 -to I_gpioapin[9]
+set_location_assignment PIN_M6 -to I_gpioapin[15]
+set_location_assignment PIN_M7 -to I_gpioapin[14]
+set_location_assignment PIN_W9 -to I_gpioapin[13]
+set_location_assignment PIN_U7 -to I_gpioapin[12]
+set_location_assignment PIN_AA2 -to O_gpioapout[0]
+set_location_assignment PIN_AA1 -to O_gpioapout[1]
+set_location_assignment PIN_W2 -to O_gpioapout[2]
+set_location_assignment PIN_Y3 -to O_gpioapout[3]
+set_location_assignment PIN_N2 -to O_gpioapout[4]
+set_location_assignment PIN_N1 -to O_gpioapout[5]
+set_location_assignment PIN_U2 -to O_gpioapout[6]
+set_location_assignment PIN_U1 -to O_gpioapout[7]
+set_location_assignment PIN_L2 -to O_gpioapout[8]
+set_location_assignment PIN_L1 -to O_gpioapout[9]
+set_location_assignment PIN_U21 -to O_gpioapout[16]
+set_location_assignment PIN_V21 -to O_gpioapout[17]
+set_location_assignment PIN_W22 -to O_gpioapout[18]
+set_location_assignment PIN_W21 -to O_gpioapout[19]
+set_location_assignment PIN_Y22 -to O_gpioapout[20]
+set_location_assignment PIN_Y21 -to O_gpioapout[21]
+set_location_assignment PIN_AA22 -to O_gpioapout[22]
+set_location_assignment PIN_AA20 -to O_gpioapout[24]
+set_location_assignment PIN_AB20 -to O_gpioapout[25]
+set_location_assignment PIN_AA19 -to O_gpioapout[26]
+set_location_assignment PIN_AA18 -to O_gpioapout[27]
+set_location_assignment PIN_AB18 -to O_gpioapout[28]
+set_location_assignment PIN_AA17 -to O_gpioapout[29]
+set_location_assignment PIN_U22 -to O_gpioapout[30]
 
 set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE "12.5 %"
 
@@ -133,9 +133,9 @@ set_location_assignment PIN_K19 -to O_spi1sck
 set_location_assignment PIN_R15 -to O_spi1mosi
 set_location_assignment PIN_R16 -to I_spi1miso
 set_location_assignment PIN_T19 -to O_spi1nss
-set_location_assignment PIN_T17 -to O_pouta[15]
+set_location_assignment PIN_T17 -to O_gpioapout[15]
 set_location_assignment PIN_K9 -to I_spi2miso
-set_location_assignment PIN_C11 -to O_pouta[14]
+set_location_assignment PIN_C11 -to O_gpioapout[14]
 set_location_assignment PIN_B11 -to O_spi2mosi
 set_location_assignment PIN_H11 -to O_spi2sck
 set_location_assignment PIN_B16 -to IO_i2c1scl
@@ -153,4 +153,5 @@ set_global_assignment -name ALLOW_REGISTER_RETIMING ON
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
