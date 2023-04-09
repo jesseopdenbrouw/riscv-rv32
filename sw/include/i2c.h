@@ -25,8 +25,6 @@ uint32_t i2c1_transmit(uint8_t address, uint8_t *buf, uint32_t len);
 uint8_t i2c1_receive_byte(void);
 /* Receive a buffer of uint8_t from I2C1 */
 uint32_t i2c1_receive(uint8_t address, uint8_t *buf, uint32_t len);
-/* Clear the STAT register */
-void i2c1_clearstat(void);
 
 /* Due to rounding toward 0, some speeds may be a bit to high */
 #define I2C_PRESCALER_FM(A) (((A/3UL/400000UL)-1) << 16)
