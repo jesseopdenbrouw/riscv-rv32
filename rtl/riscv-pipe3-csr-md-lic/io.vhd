@@ -112,6 +112,9 @@ architecture rtl of io is
 
 -- The I/O register file
 signal io : io_type;
+--attribute ram_style : string;
+--attribute ram_style of io : signal is "registers";
+
 -- The I/O register number from address
 signal reg_int : integer range 0 to io_size-1;
 -- Boolean TRUE if the address is on word boundary
@@ -155,6 +158,14 @@ signal uart1rxstate : uartrxstate_type;
 signal uart1rxbittimer : integer range 0 to 65535;
 signal uart1rxshiftcounter : integer range 0 to 15;
 signal uart1rxd_sync : std_logic;
+alias uart1size : std_logic_vector(1 downto 0) is uart1ctrl_int(3 downto 2);
+alias uart1paron : std_logic is uart1ctrl_int(5);
+alias uart1parnevenodd : std_logic is uart1ctrl_int(4);
+alias uart1tc : std_logic is uart1stat_int(4);
+alias uart1pe : std_logic is uart1stat_int(3);
+alias uart1rc : std_logic is uart1stat_int(2);
+alias uart1rf : std_logic is uart1stat_int(1);
+alias uart1fe : std_logic is uart1stat_int(0);
 
 -- Register 12 - 15 not used, reserved
 
@@ -436,33 +447,33 @@ begin
                         -- Stop bits will be automatically added since the remaining
                         -- bits are set to 1. Most right bit is start bit.
                         uart1txbuffer <= (others => '1');
-                        if uart1ctrl_int(3 downto 2) = "10" then
+                        if uart1size = "10" then
                             -- 9 bits data
                             uart1txbuffer(9 downto 0) <= I_datain(8 downto 0) & '0';
                             -- Have parity
-                            if uart1ctrl_int(5) = '1' then
+                            if uart1paron = '1' then
                                 uart1txbuffer(10) <= I_datain(8) xor I_datain(7) xor I_datain(6) xor I_datain(5) xor I_datain(4)
-                                                xor I_datain(3) xor I_datain(2) xor I_datain(1) xor I_datain(0) xor uart1ctrl_int(4);
+                                                xor I_datain(3) xor I_datain(2) xor I_datain(1) xor I_datain(0) xor uart1parnevenodd;
                             end if;
-                        elsif uart1ctrl_int(3 downto 2) = "11" then
+                        elsif uart1size = "11" then
                             -- 7 bits data
                             uart1txbuffer(7 downto 0) <= I_datain(6 downto 0) & '0';
                             -- Have parity
-                            if uart1ctrl_int(5) = '1' then
+                            if uart1paron = '1' then
                                 uart1txbuffer(8) <= I_datain(6) xor I_datain(5) xor I_datain(4) xor I_datain(3)
-                                             xor I_datain(2) xor I_datain(1) xor I_datain(0) xor uart1ctrl_int(4);
+                                             xor I_datain(2) xor I_datain(1) xor I_datain(0) xor uart1parnevenodd;
                             end if;
                         else
                             -- 8 bits data
                             uart1txbuffer(8 downto 0) <= I_datain(7 downto 0) & '0';
                             -- Have parity
-                            if uart1ctrl_int(5) = '1' then
+                            if uart1paron = '1' then
                                 uart1txbuffer(9) <= I_datain(7) xor I_datain(6) xor I_datain(5) xor I_datain(4) xor I_datain(3)
-                                             xor I_datain(2) xor I_datain(1) xor I_datain(0) xor uart1ctrl_int(4);
+                                             xor I_datain(2) xor I_datain(1) xor I_datain(0) xor uart1parnevenodd;
                             end if;
                         end if;
                         -- Signal that we are sending
-                        uart1stat_int(4) <= '0'; 
+                        uart1tc <= '0'; 
                     end if;
                 end if;
                 
@@ -471,10 +482,10 @@ begin
                     if reg_int = uart1data_addr then
                         -- Clear the received status bits
                         -- PE, RC, RF, FE
-                        uart1stat_int(3) <= '0';
-                        uart1stat_int(2) <= '0';
-                        uart1stat_int(1) <= '0';
-                        uart1stat_int(0) <= '0';
+                        uart1pe <= '0';
+                        uart1rc <= '0';
+                        uart1rf <= '0';
+                        uart1fe <= '0';
                     end if;
                 end if;
                 
@@ -487,9 +498,9 @@ begin
                         if uart1txstart = '1' then
                             -- Load the prescaler, set the number of bits (including start bit)
                             uart1txbittimer <= to_integer(unsigned(uart1baud_int));
-                            if uart1ctrl_int(3 downto 2) = "10" then
+                            if uart1size = "10" then
                                 uart1txshiftcounter_var := 10;
-                            elsif uart1ctrl_int(3 downto 2) = "11" then
+                            elsif uart1size = "11" then
                                 uart1txshiftcounter_var := 8;
                             else
                                 uart1txshiftcounter_var := 9;
@@ -520,7 +531,7 @@ begin
                         O_uart1txd <= '1';
                         uart1txstate <= tx_idle;
                         -- Signal character transmitted
-                        uart1stat_int(4) <= '1'; 
+                        uart1tc <= '1'; 
                     when others =>
                         O_uart1txd <= '1';
                         uart1txstate <= tx_idle;
@@ -550,10 +561,10 @@ begin
                             if uart1rxd_sync = '0' then
                                 uart1rxbittimer <= to_integer(unsigned(uart1baud_int));
                                 -- Set reception size
-                                if uart1ctrl_int(3 downto 2) = "10" then
+                                if uart1size = "10" then
                                     -- 9 bits
                                     uart1rxshiftcounter <= 9;
-                                elsif uart1ctrl_int(3 downto 2) = "11" then
+                                elsif uart1size = "11" then
                                     -- 7 bits
                                     uart1rxshiftcounter <= 7;
                                 else
@@ -577,10 +588,10 @@ begin
                             -- Bit counter not finished, so restart timer and shift in data bit
                             uart1rxbittimer <= to_integer(unsigned(uart1baud_int));
                             uart1rxshiftcounter <= uart1rxshiftcounter - 1;
-                            if uart1ctrl_int(3 downto 2) = "10" then
+                            if uart1size = "10" then
                                 -- 9 bits
                                 uart1rxbuffer(8 downto 0) <= uart1rxd_sync & uart1rxbuffer(8 downto 1);
-                            elsif uart1ctrl_int(3 downto 2) = "11" then
+                            elsif uart1size = "11" then
                                 -- 7 bits
                                 uart1rxbuffer(6 downto 0) <= uart1rxd_sync & uart1rxbuffer(6 downto 1);
                             else
@@ -589,7 +600,7 @@ begin
                             end if;
                         else
                             -- Do we have a parity bit?
-                            if uart1ctrl_int(5) = '1' then
+                            if uart1paron = '1' then
                                 uart1rxstate <= rx_parity;
                             else
                                 uart1rxstate <= rx_ready;
@@ -597,18 +608,18 @@ begin
                         end if;
                     -- Check parity, we already there...
                     when rx_parity =>
-                        if uart1ctrl_int(3 downto 2) = "10" then
-                            uart1stat_int(3) <= uart1rxbuffer(8) xor uart1rxbuffer(7) xor uart1rxbuffer(6) xor uart1rxbuffer(5)
+                        if uart1size = "10" then
+                            uart1pe <= uart1rxbuffer(8) xor uart1rxbuffer(7) xor uart1rxbuffer(6) xor uart1rxbuffer(5)
                                                 xor uart1rxbuffer(4) xor uart1rxbuffer(3) xor uart1rxbuffer(2)
-                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1ctrl_int(4);
-                        elsif uart1ctrl_int(3 downto 2) = "11" then
-                            uart1stat_int(3) <= uart1rxbuffer(6) xor uart1rxbuffer(5)
+                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1parnevenodd;
+                        elsif uart1size = "11" then
+                            uart1pe <= uart1rxbuffer(6) xor uart1rxbuffer(5)
                                                 xor uart1rxbuffer(4) xor uart1rxbuffer(3) xor uart1rxbuffer(2)
-                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1ctrl_int(4);
+                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1parnevenodd;
                         else
-                            uart1stat_int(3) <= uart1rxbuffer(7) xor uart1rxbuffer(6) xor uart1rxbuffer(5)
+                            uart1pe <= uart1rxbuffer(7) xor uart1rxbuffer(6) xor uart1rxbuffer(5)
                                                 xor uart1rxbuffer(4) xor uart1rxbuffer(3) xor uart1rxbuffer(2)
-                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1ctrl_int(4);
+                                                xor uart1rxbuffer(1) xor uart1rxbuffer(0) xor uart1rxd_sync xor uart1parnevenodd;
                         end if;
                         uart1rxbittimer <= to_integer(unsigned(uart1baud_int));
                         uart1rxstate <= rx_parity2;
@@ -627,14 +638,14 @@ begin
                         -- Test for a stray 0 in position of (first) stop bit
                         if uart1rxd_sync = '0' then
                             -- Signal frame error
-                            uart1stat_int(0) <= '1';
+                            uart1fe <= '1';
                         end if;
                         -- Any way, copy the received data to the data register
                         uart1data_int <= (others => '0');
-                        if uart1ctrl_int(3 downto 2) = "10" then
+                        if uart1size = "10" then
                             -- 9 bits
                             uart1data_int(8 downto 0) <= uart1rxbuffer(8 downto 0);
-                        elsif uart1ctrl_int(3 downto 2) = "11" then
+                        elsif uart1size = "11" then
                             -- 7 bits
                             uart1data_int(6 downto 0) <= uart1rxbuffer(6 downto 0);
                         else
@@ -642,13 +653,13 @@ begin
                             uart1data_int(7 downto 0) <= uart1rxbuffer(7 downto 0);
                         end if;
                         -- signal reception
-                        uart1stat_int(2) <= '1';
+                        uart1rc <= '1';
                         uart1rxstate <= rx_idle;
                     -- Wrong start bit detected, no data present
                     when rx_fail =>
                         -- Failed to receive a correct start bit...
                         uart1rxstate <= rx_idle;
-                        uart1stat_int(1) <= '1';
+                        uart1rf <= '1';
                     when others =>
                         uart1rxstate <= rx_idle;
                 end case;
