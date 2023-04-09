@@ -19,10 +19,12 @@ is implemented and generates an interrupt if `time` >=
 `timecmp`. The processor can handle up to 16 fast local
 interrupts. Reads from ROM, RAM and I/O require 2 clock
 cycles. Writes require 1 clock cycles. Multiplications
-require 3 clock cycles, divisions require 16+2 clock cycles.
+require 3 clock cycles, divisions require 16+2 clock cycles,
+CSR accesses take 1 clock cycle.
 Jumps/calls/branches taken require 3 clock cycles, the
 processor does not implement branch prediction. Interrupts
-are direct or vectored.
+are direct or vectored. Current Coremark testbench shows
+a CPI of 1.53.
 
 Software is written in C, (C++ is supported but there are
 some limitations) and compiled using the RISC-V GNU C/C++
