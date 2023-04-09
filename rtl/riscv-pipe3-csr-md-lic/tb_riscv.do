@@ -89,10 +89,10 @@ add log -r *
 add wave -divider "Inputs"
 add wave            -label clk clk
 add wave            -label areset areset
-add wave -radix hex -label pina pina
+add wave -radix hex -label gpioapin gpioapin
 add wave -radix hex -label uart1rxd uart1rxd
 add wave -divider "Outputs"
-add wave -radix hex -label pouta pouta
+add wave -radix hex -label gpioapout gpioapout
 add wave -radix hex -label uart1txd uart1txd
 add wave            -label timer2oct timer2oct
 add wave            -label timer2oca timer2oca
