@@ -62,11 +62,11 @@ int main(void)
 		buf[0] = 0x00;
 
 		/* Write to address, the register number */
-		if (i2c1_transmit((TMP102_ADDR << 1) | 0, buf, 1) != 0) {
+		if (i2c1_transmit((TMP102_ADDR << 1) | I2C_WRITE, buf, 1) != 0) {
 			uart1_puts("ACK failed!\r\n");
 		} else {
 			/* All went well, now read two bytes */
-			i2c1_receive((TMP102_ADDR << 1) | 1, buf, 2);
+			i2c1_receive((TMP102_ADDR << 1) | I2C_READ, buf, 2);
 
 			/* Print out the data */
 			snprintf(buffer, sizeof buffer, "HI: 0x%02x, LO: 0x%02x\r\n", buf[0], buf[1]);
