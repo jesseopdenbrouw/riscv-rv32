@@ -161,6 +161,7 @@ signal uart1rxd_sync : std_logic;
 alias uart1size : std_logic_vector(1 downto 0) is uart1ctrl_int(3 downto 2);
 alias uart1paron : std_logic is uart1ctrl_int(5);
 alias uart1parnevenodd : std_logic is uart1ctrl_int(4);
+alias uart1stop2 : std_logic is uart1ctrl_int(0);
 alias uart1tc : std_logic is uart1stat_int(4);
 alias uart1pe : std_logic is uart1stat_int(3);
 alias uart1rc : std_logic is uart1stat_int(2);
@@ -505,8 +506,14 @@ begin
                             else
                                 uart1txshiftcounter_var := 9;
                             end if;
-                            -- Add up posibly parity bit and posibly second stop bit
-                            uart1txshiftcounter <= uart1txshiftcounter_var + to_integer(unsigned(uart1ctrl_int(5 downto 5))) + to_integer(unsigned(uart1ctrl_int(0 downto 0)));
+                            -- Add up possible parity bit and possible second stop bit
+                            if uart1paron = '1' then
+                                uart1txshiftcounter_var := uart1txshiftcounter_var + 1;
+                            end if;
+                            if uart1stop2 = '1' then
+                                uart1txshiftcounter_var := uart1txshiftcounter_var + 1;
+                            end if;
+                            uart1txshiftcounter <= uart1txshiftcounter_var;
                             uart1txstate <= tx_iter;
                         else
                             uart1txstate <= tx_idle;
