@@ -392,6 +392,7 @@ Custom CSR:
 
 \begin{itemize}
 \item \lstinline|mxhw| -- this custom CSR with address 0xfc0 is read-only and reflects the hardware properties of the synthesized processor.
+\item \lstinline|mxspeed| -- this custom CSR with address 0xfc1 is read-only and contains the system frequency of the synthesized processor (see Section~\ref{sec:hardware}).
 \end{itemize}
 %The \lstinline|mcounteren| register is not implemented, because U-mode is not implemented. The \lstinline|menvcfg| and \lstinline|menvcfgh| are not implemented, because only M-mode is implemented.
 
@@ -492,6 +493,7 @@ To find the best compilation result for speed and/or area, we have to tweak the 
 
 
 \section{Processor hardware}
+\label{sec:hardware}
 The processor hardware is composed of the following VHDL files:
 
 \begin{itemize}
