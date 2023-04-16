@@ -55,6 +55,7 @@
 --  mhartid -- r/o (hardwired to 0x00000000)
 --  mconfigptr_addr -- r/o (hardwired to 0x00000000)
 --  mxhw -- r/o (custom hardware description register)
+--  mxspeed -- r/o (custom clock speed register)
 
 
 library ieee;
@@ -126,6 +127,7 @@ type csr_type is record
     minstreth : data_type;
     mconfigptr : data_type;
     mxhw : data_type;
+    mxspeed : data_type;
 end record csr_type;
 signal csr : csr_type;
 
@@ -171,6 +173,7 @@ constant minstreth_addr : integer := 16#b82#; --
 
 -- M mode custom read-only
 constant mxhw_addr : integer := 16#fc0#;
+constant mxspeed_addr : integer := 16#fc1#;
 
 begin
 
@@ -210,7 +213,8 @@ begin
               csr_addr_int = minstret_addr or
               csr_addr_int = mcycleh_addr or
               csr_addr_int = minstreth_addr or
-              csr_addr_int = mxhw_addr then
+              csr_addr_int = mxhw_addr or
+              csr_addr_int = mxspeed_addr then
             O_illegal_instruction_error <= '0';
         else 
             O_illegal_instruction_error <= '1';
@@ -250,6 +254,7 @@ begin
             when mip_addr => O_csr_dataout <= csr.mip;
             when mconfigptr_addr => O_csr_dataout <= csr.mconfigptr;
             when mxhw_addr => O_csr_dataout <= csr.mxhw;
+            when mxspeed_addr => O_csr_dataout <= csr.mxspeed;
             when others => O_csr_dataout <= (others => '-');
         end case;
     end process;
@@ -491,5 +496,7 @@ begin
     csr.mxhw(18) <= '1' when HAVE_BOOTLOADER_ROM else '0';
     csr.mxhw(19) <= '1' when HAVE_REGISTERS_IN_RAM else '0';
     csr.mxhw(31 downto 20) <= (others => '0');
+    
+    csr.mxspeed <= std_logic_vector(to_unsigned(SYSTEM_FREQUENCY, 32));
 
 end architecture rtl;
