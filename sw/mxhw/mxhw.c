@@ -8,11 +8,14 @@ int main(void)
 	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	uint32_t hw = csr_read(0xfc0); // CSR address = 0xfc0
+	uint32_t speed = csr_read(0xfc1); // CSR address = 0xfc1
 
 	if (hw == 0) {
 		uart1_puts("\r\nHardware signals all zero, CSR probably not enabled\r\n");
 		while (1);
 	}
+
+	uart1_printf("CPU speed is: %d\r\n", speed);
 
 	uart1_printf("\r\nread CSR mxhw: 0x%08x\r\n", hw);
 
