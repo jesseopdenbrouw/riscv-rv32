@@ -24,7 +24,7 @@ delay, the S-record file is transmitted to the processor
 and the instructions are placed in the ROM. Make
 sure that NO terminal connection (e.g. Putty) is active.
 
-The registers may be optionally placed in FPGA flip-flips.
+The registers may be optionally placed in FPGA flip-flops.
 This will speed up the design a little bit but also uses
 about 1000 extra flip-flops.
 
