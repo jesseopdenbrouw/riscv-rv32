@@ -1,5 +1,5 @@
 #################################################################################################
-# tb_riscv.do - Modelsim command file for simulation                                            #
+# tb_riscv.do - QuestaSim/ModelSim command file for simulation                                  #
 # ********************************************************************************************* #
 # This file is part of the THUAS RISCV RV32 Project                                             #
 # ********************************************************************************************* #
@@ -31,7 +31,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED  #
 # OF THE POSSIBILITY OF SUCH DAMAGE.                                                            #
 # ********************************************************************************************* #
-# https:/github.com/jesseopdenbrouw/riscv-minimal                                               #
+# https:/github.com/jesseopdenbrouw/riscv-mrv32                                                 #
 #################################################################################################
 
 # Transcript on

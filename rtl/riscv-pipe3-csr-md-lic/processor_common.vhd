@@ -32,7 +32,7 @@
 -- # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED  #
 -- # OF THE POSSIBILITY OF SUCH DAMAGE.                                                            #
 -- # ********************************************************************************************* #
--- # https:/github.com/jesseopdenbrouw/riscv-minimal                                               #
+-- # https:/github.com/jesseopdenbrouw/riscv-rv32                                                  #
 -- #################################################################################################
 
 -- This file contains the used data types and build options for the design
