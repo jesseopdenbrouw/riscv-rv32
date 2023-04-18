@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 		printf("-q           -- quiet, only errors\n");
 		printf("-j           -- run application after upload\n");
 		printf("-d <device>  -- serial device\n");
-		printf("-b <baud>    -- set baudrate (9600 or 115200)\n");
+		printf("-b <baud>    -- set baudrate (9600, 115200 or 230400)\n");
 		printf("-t <timeout> -- timeout in deci seconds\n");
 		printf("-s <sleep>   -- sleep micro seconds after each character\n");
 		printf("Default device is %s\n", portname);
@@ -140,18 +140,18 @@ int main(int argc, char *argv[]) {
 
 	/* Parse options */
 	while ((opt = getopt(argc, argv, "vd:t:js:qb:")) != -1) {
-	        switch (opt) {
-	        case 'd':
-	            portname = optarg;
-	            break;
-	        case 'j':
-	            jump = 1;
-	            break;
-	        case 'v':
-	            verbose = 1;
-	        case 'q':
-	            quiet = 1;
-	            break;
+		switch (opt) {
+		case 'd':
+			portname = optarg;
+			break;
+		case 'j':
+			jump = 1;
+			break;
+		case 'v':
+			verbose = 1;
+		case 'q':
+			quiet = 1;
+			break;
 		case 't':
 		    timeout = atoi(optarg);
 		    if (timeout < 0) {
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 			    baudrate = B9600;
 		    }
 		    break;
-	        default: /* '?' */
+		default: /* '?' */
 		    fprintf(stderr, "Unknown option '%c'\n", opt);
 	            exit(-5);
 	        }
