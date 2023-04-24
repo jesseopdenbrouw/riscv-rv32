@@ -24,9 +24,9 @@
 #endif
 
 /* SPI speed in system clocks / (2^(x+1)) */
-/* 7 = /256, 1 = /4 */
+/* 7 = /256, 3 = /16 */
 #define SD_SLOW  (7)
-#define SD_FAST  (1)
+#define SD_FAST  (3)
 
 #define SD_DEBUG (0)
 
