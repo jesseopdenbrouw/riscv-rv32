@@ -27,6 +27,11 @@ uint32_t i2c1_transmit(uint8_t address, uint8_t *buf, uint32_t len)
 		/* Transfer byte, return if error */
 		ret = i2c1_transmit_byte(*buf++);
 		if (ret) {
+			/* Ack fail, so send STOP, but only if we already didn't sent it */
+			if (i != len-1) {
+				I2C1->CTRL |= I2C_HARDSTOP;
+				while ((I2C1->STAT & I2C_TC) == 0);
+			}
 			return ret;
 		}
 	}
