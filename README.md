@@ -39,7 +39,7 @@ logic cells. The design runs at a speed of approximately 75 MHz.
 ## Memory
 
 The microcontroller uses FPGA onboard RAM blocks to emulate RAM
-and program ROM. There is no suport for external RAM. Programs
+and program ROM. There is no support for external RAM. Programs
 are compiled with the GNU C compiler for RISC-V and the resulting
 executable is transformed to a VHDL synthesizable ROM table.
 
@@ -106,7 +106,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 * Move CSR and LIC into the core.
-* A new signal `I_memvma` and `O_memvma` are introduced to grant read and write access if no interrupt is pending. This lowers the overall clock speed to 75 MHz.
+* Port the processor to a Digilent Arty-S7/50 is in progress.
 
 ## Disclaimer
 
