@@ -38,7 +38,8 @@ LD_SCRIPT = ../ldfiles/riscv.ld
 INCPATH = ../include
 
 # THUAS RISCV library and set search path
-LIBTHUASRV32STRING = -lthuasrv32 -L../lib
+#LIBTHUASRV32STRING = -lthuasrv32 -L../lib
+LIBTHUASRV32STRING = -L../lib
 
 # Architecture and ABI
 # KEEP THIS FOR NOW
