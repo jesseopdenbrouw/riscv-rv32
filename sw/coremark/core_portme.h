@@ -27,11 +27,11 @@ Original Author: Shay Gal-on
 #define CORE_PORTME_H
 
 #include <stdlib.h>
-#include <thuasrv32.h>
 
 /************************/
 /* THUASRV32-specific */
 /************************/
+#include <thuasrv32.h>
 #define ITERATIONS (2000)
 #define FLAGS_STR  "see makefile" // compiler optimization
 
