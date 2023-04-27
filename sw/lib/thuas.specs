@@ -3,9 +3,6 @@
 *thuas:
 -lthuasrv32
 
-*thuas_libc:
-%{!specs=nano.specs:-lc} %{specs=nano.specs:-lc_nano}
-
 *link_gcc_c_sequence:
-%(thuas_link_gcc_c_sequence) --start-group %G %(thuas_libc) %(thuas) --end-group
+%(thuas_link_gcc_c_sequence) --start-group %G %(thuas) --end-group
 
