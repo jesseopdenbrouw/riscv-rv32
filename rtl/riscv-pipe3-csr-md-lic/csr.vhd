@@ -414,6 +414,7 @@ begin
             -- Set all bits hard to 0 except MTIE (7), MSIE (3)
             csr.mie(31 downto 8) <= (others => '0');
             csr.mie(6 downto 4) <= (others => '0');
+            --csr.mie(3) <= '0';
             csr.mie(2 downto 0) <= (others => '0');
 
             -- Set most bits of mstatus to 0
