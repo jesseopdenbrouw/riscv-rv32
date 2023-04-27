@@ -14,8 +14,7 @@ TARGET = interrupt_vectored
 # Compiler flags
 CFLAGS = -g -O2 -Wall -DF_CPU=$(F_CPU) -DBAUD_RATE=$(BAUD_RATE) -DPROG_NAME=$(PROG_NAME) -I$(INCPATH) $(MARCHABISTRING)
 # Linker flags
-#LDFLAGS = -g -lm -Wall -nostartfiles -T $(LD_SCRIPT) $(LIBTHUASRV32STRING) $(MARCHABISTRING) --specs=../lib/thuas.specs --specs=nano.specs $(EXTRA_LINKER_FLAGS)
-LDFLAGS = -g -lm -Wall -nostartfiles -T $(LD_SCRIPT) $(LIBTHUASRV32STRING) $(MARCHABISTRING) --specs=nano.specs $(EXTRA_LINKER_FLAGS)
+LDFLAGS = -g -lm -Wall -nostartfiles -T $(LD_SCRIPT) $(LIBTHUASRV32STRING) $(MARCHABISTRING) --specs=../lib/thuas.specs --specs=nano.specs $(EXTRA_LINKER_FLAGS)
 
 
 #-----
