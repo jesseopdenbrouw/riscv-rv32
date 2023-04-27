@@ -23,6 +23,8 @@ all:
 	$(MAKE) -C bootloader all
 	$(MAKE) -C clock all
 	$(MAKE) -C coremark USER_FLAGS+=-DRUN_COREMARK EFFORT=-O3 clean_all exe
+	$(MAKE) -C ctor_c all
+	$(MAKE) -C ctor_cpp all
 	$(MAKE) -C double all
 	$(MAKE) -C exp all
 	$(MAKE) -C fatfs all
@@ -76,6 +78,8 @@ clean:
 	$(MAKE) -C bootloader clean
 	$(MAKE) -C clock clean
 	$(MAKE) -C coremark clean_all
+	$(MAKE) -C ctor_c clean
+	$(MAKE) -C ctor_cpp clean
 	$(MAKE) -C double clean
 	$(MAKE) -C exp clean
 	$(MAKE) -C fatfs clean
