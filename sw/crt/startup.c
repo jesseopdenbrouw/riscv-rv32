@@ -1,5 +1,5 @@
 /*
- * Startup file for RISC-V bare metal processor
+ * Startup file for THUAS RISC-V bare metal processor
  *
  * (c) 2023, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
  *
@@ -14,6 +14,7 @@
  * in registers. Faster code, but less
  * visible in RAM variables */
 #define WITH_REGISTER
+//#define WITH_DESTRUCTORS
 
 /* Find the name of the program */
 #ifndef PROG_NAME
@@ -29,9 +30,10 @@ extern uint8_t _srodata, _erodata;
 /* Declare the `main' function */
 int main(int argc, char *argv[], char *envp[]);
 
-/* Declare the C library init function */
+/* Declare the construcor and destructor function */
 /* Declare the pre-init universal handler */
 void __libc_init_array(void);
+void __libc_fini_array(void);
 void pre_init_universal_handler(void);
 
 /* argv array for main */
@@ -96,18 +98,27 @@ void _start(void)
 		pdRom++;
 	}
 
-	/* Initialize the C library */
+	/* Call the constructors */
 	__libc_init_array();
 
 	/* At this point, the trap handler is not set up
 	 * properly. Also, the external timer is not set
 	 * up properly. This must be done in main() */
 
-	/* Just call main and stop */
-	exit(main(argc, argv, NULL));
+	/* Call main */
+	int ret = main(argc, argv, NULL);
+
+#ifdef WITH_DESTRUCTORS
+	/* Call the destructors */
+	__libc_fini_array();
+#endif
+
+	/* Stop execution */
+	exit(ret);
 }
 
 /* pre-init trap handler. Here to catch initialization errors */
+__attribute__(( used ))
 __attribute__ ((interrupt))
 void pre_init_universal_handler(void)
 {
