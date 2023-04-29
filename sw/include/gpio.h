@@ -11,8 +11,9 @@
 extern "C" {
 #endif
 
-void gpioa_writepin(uint32_t pins, uint32_t value);
 uint32_t gpioa_readpin(uint32_t pins);
+void gpioa_writepin(uint32_t pins, uint32_t value);
+void gpioa_togglepin(uint32_t pins);
 
 #define GPIO_PIN_SET (1UL)
 #define GPIO_PIN_RESET (0UL)
@@ -49,6 +50,8 @@ uint32_t gpioa_readpin(uint32_t pins);
 #define GPIO_PIN_29 (1UL << 29UL)
 #define GPIO_PIN_30 (1UL << 30UL)
 #define GPIO_PIN_31 (1UL << 31UL)
+
+#define GPIO_PIN_ALL (0xffffffffUL)
 
 #ifdef __cplusplus
 }
