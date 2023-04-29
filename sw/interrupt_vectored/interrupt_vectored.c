@@ -44,8 +44,8 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* Activate TIMER2 compare T interrupt with a cycle of 0.5 Hz */
 	/* for a 50 MHz clock */
-	TIMER2->PRSC = 4999;
-	TIMER2->CMPT = 9999;
+	TIMER2->PRSC = F_CPU/10000UL-1;
+	TIMER2->CMPT = 9999UL;
 	TIMER2->CTRL = (1<<4)|(1<<0);
 
 	/* Activate SPI1 transmission complete interrupt */
@@ -57,6 +57,7 @@ int main(int argc, char *argv[], char *envp[])
 	I2C1->CTRL = (((F_CPU/2UL/100000UL)-1) << 16) | (1 << 3);
 
 	/* Enable RISC-V system timer interrupt */
+	/* The system timer runs at 1 kHz */
 	enable_external_timer_irq();
 
 	/* Enable interrupts */
