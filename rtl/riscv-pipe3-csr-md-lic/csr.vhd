@@ -439,8 +439,9 @@ begin
         end if;
     end process;
 
-    -- Present the saved PC. This is not necessarily the PC in the mtvec CSR.
-    O_mepc <= std_logic_vector(unsigned(csr.mepc)+4) when csr.mcause = x"0000000b" or csr.mcause = x"00000003" else std_logic_vector(unsigned(csr.mepc));
+    -- Present the saved PC.
+    --O_mepc <= std_logic_vector(unsigned(csr.mepc)+4) when csr.mcause = x"0000000b" or csr.mcause = x"00000003" else std_logic_vector(unsigned(csr.mepc));
+    O_mepc <= std_logic_vector(unsigned(csr.mepc));
     
     -- Advertise the interrupt enable status
     O_mstatus_mie <= csr.mstatus(3);
