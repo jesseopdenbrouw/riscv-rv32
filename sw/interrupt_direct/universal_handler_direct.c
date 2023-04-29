@@ -121,7 +121,8 @@ void universal_handler_direct(void)
 	/* Save registers. We need to save all the registers
 	 * including a0 (x10) but note that system calls
 	 * return the status code in a0, so in that case
-	 * we must not restore a0 */
+	 * we must not restore a0. Also save MCAUSE, MEPC,
+	 * the faulted instruction and MTVAL */
 	__asm__ volatile (
 			      "addi    sp,sp,-36*4;"
 		          "sw      x1,1*4(sp);"
@@ -177,8 +178,8 @@ void universal_handler_direct(void)
 
 	/* Read in the mcause CSR */
 	__asm__ volatile ("csrr %0, mcause;"
-		          : "=r" (__mcause) :
- 		          : "memory");
+	                  : "=r" (__mcause) :
+	                  : "memory");
 
 	/* External System Timer compare match interrupt */
 	if (__mcause == SYSTEM_TIMER_IN_MCAUSE) {
@@ -388,40 +389,48 @@ void universal_handler_direct(void)
 	/* Fetch registers. We need to reload all the registers
 	 * with the exception of a0 (x10) because it is used
 	 * as return value from the system calls or reads in a0
-	 * in the indicated regions. Returns with MRET instruction */
-	__asm__ volatile ("lw      x31,31*4(sp);"
-		          "lw      x30,30*4(sp);"
-		          "lw      x29,29*4(sp);"
-		          "lw      x28,28*4(sp);"
-		          "lw      x27,27*4(sp);"
-		          "lw      x26,26*4(sp);"
-		          "lw      x25,25*4(sp);"
-		          "lw      x24,24*4(sp);"
-		          "lw      x23,23*4(sp);"
-		          "lw      x22,22*4(sp);"
-		          "lw      x21,21*4(sp);"
-		          "lw      x20,20*4(sp);"
-		          "lw      x19,19*4(sp);"
-		          "lw      x18,18*4(sp);"
-		          "lw      x17,17*4(sp);"
-		          "lw      x16,16*4(sp);"
-		          "lw      x15,15*4(sp);"
-		          "lw      x14,14*4(sp);"
-		          "lw      x13,13*4(sp);"
-		          "lw      x12,12*4(sp);"
-		          "lw      x11,11*4(sp);"
-
-		          "lw      x9,9*4(sp);"
-		          "lw      x8,8*4(sp);"
-		          "lw      x7,7*4(sp);"
-		          "lw      x6,6*4(sp);"
-		          "lw      x5,5*4(sp);"
-		          "lw      x4,4*4(sp);"
-		          "lw      x3,3*4(sp);"
-		          "lw      x2,2*4(sp);"
-		          "lw      x1,1*4(sp);"
-		          "addi    sp,sp,36*4;"
-		          "mret"
+	 * in the indicated regions. Also increment MEPC with 4
+     * if the trap was due an exception. Returns with MRET
+	 * instruction */
+	__asm__ volatile (
+					"lw      t0,32*4(sp);" /* Load mcause */
+					"blt     t0,zero,1f;"  /* Is interrupt? */
+					"csrr    t0,mepc;"     /* Then skip */
+					"addi    t0,t0,4;"     /* Exception: increment MEPC by 4 */
+					"csrw    mepc,t0;"     /* Write MEPC */
+					"1:;"
+					"lw      x31,31*4(sp);"
+					"lw      x30,30*4(sp);"
+					"lw      x29,29*4(sp);"
+					"lw      x28,28*4(sp);"
+					"lw      x27,27*4(sp);"
+					"lw      x26,26*4(sp);"
+					"lw      x25,25*4(sp);"
+					"lw      x24,24*4(sp);"
+					"lw      x23,23*4(sp);"
+					"lw      x22,22*4(sp);"
+					"lw      x21,21*4(sp);"
+					"lw      x20,20*4(sp);"
+					"lw      x19,19*4(sp);"
+					"lw      x18,18*4(sp);"
+					"lw      x17,17*4(sp);"
+					"lw      x16,16*4(sp);"
+					"lw      x15,15*4(sp);"
+					"lw      x14,14*4(sp);"
+					"lw      x13,13*4(sp);"
+					"lw      x12,12*4(sp);"
+					"lw      x11,11*4(sp);"
+					"lw      x9,9*4(sp);"
+					"lw      x8,8*4(sp);"
+					"lw      x7,7*4(sp);"
+					"lw      x6,6*4(sp);"
+					"lw      x5,5*4(sp);"
+					"lw      x4,4*4(sp);"
+					"lw      x3,3*4(sp);"
+					"lw      x2,2*4(sp);"
+					"lw      x1,1*4(sp);"
+					"addi    sp,sp,36*4;"
+					"mret"
 	      	          :::);
 }
 
