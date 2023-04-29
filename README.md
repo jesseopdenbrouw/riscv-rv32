@@ -106,7 +106,8 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Further optimize the ALU for size and speed.
 * The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
 * Move CSR and LIC into the core.
-* Port the processor to a Digilent Arty-S7/50 is in progress.
+* Port of the processor to a Digilent Arty-S7/50 is in progress.
+* In the current version, `mepc` must be incremented by 4 in software to skip the instruction at the offending exception. This is in line with most designs.
 
 ## Disclaimer
 
