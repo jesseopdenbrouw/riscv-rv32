@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <time.h>
 
 #define VERSION "v0.2"
 
@@ -109,6 +110,7 @@ int main(int argc, char *argv[]) {
 	int first = 1;
 	unsigned long int offset = 0;
 	//int doindent = 1;
+	time_t t = time(NULL);
 
 	/* Options */
 	int indent, opt;
@@ -215,7 +217,8 @@ int main(int argc, char *argv[]) {
 
 	if (full) {
 		fprintf(fout, "-- srec2vhdl table generator\n");
-		fprintf(fout, "-- for input file %s\n\n", argv[optind]);
+		fprintf(fout, "-- for input file '%s'\n", argv[optind]);
+		fprintf(fout, "-- date: %s\n\n", ctime(&t));
 		fprintf(fout, "library ieee;\n");
 		fprintf(fout, "use ieee.std_logic_1164.all;\n\n");
 		fprintf(fout, "library work;\n");
