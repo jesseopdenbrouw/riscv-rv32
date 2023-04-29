@@ -32,7 +32,7 @@ Original Author: Shay Gal-on
 /* THUASRV32-specific */
 /************************/
 #include <thuasrv32.h>
-#define ITERATIONS (2000)
+#define ITERATIONS (4000)
 #define FLAGS_STR  "see makefile" // compiler optimization
 
 /************************/
