@@ -78,7 +78,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* Activate TIMER2 compare match T with a cycle of 0.5 Hz */
 	/* for a 50 MHz clock. Use interrupt. */
-	TIMER2->PRSC = 4999;
+	TIMER2->PRSC = F_CPU/10000-1;
 	TIMER2->CMPT = 9999;
 	TIMER2->CTRL = (1<<4)|(1<<0);
 
