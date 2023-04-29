@@ -29,5 +29,5 @@ This will speed up the design a little bit but also uses
 about 1000 extra flip-flops.
 
 ## Status
-
-Works on the DE0-CV board.
+This version runs without any modification directly on
+the Terasic DE0-CV board.
