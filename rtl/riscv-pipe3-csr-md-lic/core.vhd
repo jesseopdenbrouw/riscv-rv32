@@ -78,7 +78,8 @@ entity core is
           O_pc_to_mepc : out data_type;
           I_mepc : in data_type;
           --Instruction error
-          O_illegal_instruction_error : out std_logic
+          O_illegal_instruction_error : out std_logic;
+          O_instruction_misaligned_error : out std_logic
          );
 end entity core;
 
@@ -389,7 +390,7 @@ begin
                 end case;
             end if;
             -- Lower two bits always 0
-            pc(1 downto 0) <= "00";
+            --pc(1 downto 0) <= "00";
         end if;
     end process;
     -- For fetching instructions
@@ -936,6 +937,9 @@ begin
     -- The execute block
     -- Contains the ALU, the MD unit and result retire unit
     --
+    
+    -- Check if the currently executing instruction address is aligned to word
+    O_instruction_misaligned_error <= '0' when id_ex.pc(1 downto 0) = "00" else '1';
     
     -- ALU
     process (id_ex, control, ex_wb, md, I_memdatain, I_csr_datain) is

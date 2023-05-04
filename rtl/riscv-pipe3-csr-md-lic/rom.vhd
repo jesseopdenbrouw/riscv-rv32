@@ -64,7 +64,6 @@ entity rom is
           I_datain : in data_type;
           O_dataout : out data_type;
           --
-          O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic;
           O_store_misaligned_error : out std_logic
          );
@@ -76,8 +75,6 @@ architecture rtl of rom is
 signal rom : rom_type := rom_contents;
 
 begin
-
-    O_instruction_misaligned_error <= '0' when I_pc(1 downto 0) = "00" else '1';        
 
     -- ROM, for both instructions and read-write data
     process (I_clk, I_areset, I_pc, I_memaddress, I_csrom, I_memsize, I_wren, I_datain) is

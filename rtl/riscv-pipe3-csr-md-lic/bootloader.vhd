@@ -57,7 +57,6 @@ entity bootloader is
           O_instr : out data_type;
           O_dataout : out data_type;
           --
-          O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic
          );
 end entity bootloader;
@@ -1022,7 +1021,6 @@ signal bootrom : bootloader_type := (
 begin
 
     gen_bootrom: if HAVE_BOOTLOADER_ROM generate
-        O_instruction_misaligned_error <= '0' when I_pc(1 downto 0) = "00" else '1';        
 
         -- ROM, for both instructions and read-only data
         process (I_clk, I_areset, I_pc, I_memaddress, I_csboot, I_memsize, I_stall) is
@@ -1080,7 +1078,6 @@ begin
     end generate;
 
     gen_bootrom_not: if not HAVE_BOOTLOADER_ROM generate
-        O_instruction_misaligned_error <= '0';
         O_load_misaligned_error <= '0';
         O_dataout <= (others => 'X');
         O_instr  <= (others => 'X');

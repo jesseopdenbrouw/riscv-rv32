@@ -108,7 +108,8 @@ component core is
           O_pc_to_mepc : out data_type;
           I_mepc : in data_type;
           --Instruction error
-          O_illegal_instruction_error : out std_logic
+          O_illegal_instruction_error : out std_logic;
+          O_instruction_misaligned_error : out std_logic
          );
 end component core;
 component address_decode is
@@ -155,7 +156,6 @@ component rom is
           I_datain : in data_type;
           O_dataout : out data_type;
           --
-          O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic;
           O_store_misaligned_error : out std_logic
          );
@@ -185,7 +185,6 @@ component bootloader is
           O_instr : out data_type;
           O_dataout : out data_type;
           --
-          O_instruction_misaligned_error : out std_logic;
           O_load_misaligned_error : out std_logic
          );
 end component bootloader;
@@ -340,8 +339,7 @@ signal ecall_request_int : std_logic;
 signal ebreak_request_int : std_logic;
 signal illegal_instruction_error_int : std_logic_vector(1 downto 0);
 signal illegal_instruction_error_merge_int : std_logic;
-signal instruction_misaligned_error_int : std_logic_vector(1 downto 0);
-signal instruction_misaligned_error_merge_int : std_logic;
+signal instruction_misaligned_error_int : std_logic;
 signal mcause_int : data_type;
 signal interrupt_request_int : interrupt_request_type;
 signal interrupt_release_int : std_logic;
@@ -391,7 +389,8 @@ begin
               I_mtvec => mtvec2mtvec,
               O_pc_to_mepc => pc_to_mepc_int,
               I_mepc => mepc2mepc,
-              O_illegal_instruction_error => illegal_instruction_error_int(1)
+              O_illegal_instruction_error => illegal_instruction_error_int(1),
+              O_instruction_misaligned_error => instruction_misaligned_error_int
              );
     
     gen_address_decode_boot_rom: if HAVE_BOOTLOADER_ROM generate
@@ -466,7 +465,6 @@ begin
               O_instr => rominstr_int,
               I_datain => dataout_int,
               O_dataout => romdatain_int,
-              O_instruction_misaligned_error => instruction_misaligned_error_int(1),
               O_load_misaligned_error => load_misaligned_error_int(3),
               O_store_misaligned_error => store_misaligned_error_int(2)
              );
@@ -482,15 +480,11 @@ begin
                   I_stall => stall_int,
                   O_instr => bootinstr_int,
                   O_dataout => bootdatain_int,
-                  O_load_misaligned_error => load_misaligned_error_int(2),
-                  O_instruction_misaligned_error => instruction_misaligned_error_int(0)
+                  O_load_misaligned_error => load_misaligned_error_int(2)
                  );
     end generate;
     gen_boot_rom_not: if not HAVE_BOOTLOADER_ROM generate
         load_misaligned_error_int(2) <= '0';
-        instruction_misaligned_error_int(0) <= '0';
-        load_misaligned_error_int(2) <= '0';
-        instruction_misaligned_error_int(0) <= '0';
     end generate;
         
     ram0: ram
@@ -584,7 +578,7 @@ begin
               I_ecall_request => ecall_request_int,
               I_ebreak_request => ebreak_request_int,
               I_illegal_instruction_error_request => illegal_instruction_error_merge_int,
-              I_instruction_misaligned_error_request => instruction_misaligned_error_merge_int,
+              I_instruction_misaligned_error_request => instruction_misaligned_error_int,
               I_load_access_error_request => load_access_error_int,
               I_store_access_error_request => store_access_error_int,
               I_load_misaligned_error_request => load_misaligned_error_merge_int,
@@ -598,7 +592,6 @@ begin
     -- Merge all load and store misaligned errors to one signal
     load_misaligned_error_merge_int <= load_misaligned_error_int(3) or load_misaligned_error_int(2) or load_misaligned_error_int(1) or load_misaligned_error_int(0);
     store_misaligned_error_merge_int <= store_misaligned_error_int(2) or store_misaligned_error_int(1) or store_misaligned_error_int(0);
-    instruction_misaligned_error_merge_int <= instruction_misaligned_error_int(1) or instruction_misaligned_error_int(0);
     illegal_instruction_error_merge_int <= illegal_instruction_error_int(1) or illegal_instruction_error_int(0);
 
 end architecture rtl;
