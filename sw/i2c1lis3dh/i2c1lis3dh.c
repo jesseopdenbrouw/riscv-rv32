@@ -41,7 +41,7 @@ int main(void)
 	uint32_t ret;
 
 	/* Initialize UART1 */
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	/* Initialize I2C1 */
 	i2c1_init(TRAN_SPEED | FAST_MODE_BIT);

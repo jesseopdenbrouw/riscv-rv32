@@ -34,7 +34,7 @@ int main(int argc, char *argv[], char *envp[])
 	set_mtvec(handler_jump_table, TRAP_VECTORED_MODE);
 
 	/* Initialize the USART*/
-	uart1_init(F_CPU/BAUD_RATE-1, UART_RCIE);
+	uart1_init(BAUD_RATE, UART_RCIE);
 
 	/* Activate TIMER1 with a cycle of 100 Hz */
 	/* for a 50 MHz clock. */

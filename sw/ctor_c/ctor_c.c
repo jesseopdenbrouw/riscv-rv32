@@ -6,7 +6,7 @@
 
 __attribute__ ((constructor)) void foo(void)
 {
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 	uart1_puts("foo\r\n");
 }
 
@@ -33,7 +33,7 @@ extern func_ptr_t __fini_array_start[1], __fini_array_end[1];
 
 int main(int argc, char *argv[], char *env[])
 {
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	uart1_puts("From linker symbols:\r\n");
 	uart1_printf(">> %08x %p\r\n", *__init_array_start, __init_array_start);

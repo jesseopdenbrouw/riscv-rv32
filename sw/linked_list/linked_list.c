@@ -40,7 +40,7 @@ int main(void)
 	int count = 0;
 
 
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	uart1_puts("\r\n\r\nLinked list test\r\n");
 

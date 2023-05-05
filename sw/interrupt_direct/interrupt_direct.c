@@ -68,7 +68,7 @@ int main(int argc, char *argv[], char *envp[])
 	set_mtvec(universal_handler_direct, TRAP_DIRECT_MODE);
 
 	/* Initialize the USART*/
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_RCIE);
+	uart1_init(BAUD_RATE, UART_RCIE);
 
 	/* Activate TIMER1 with a cycle of 1 Hz */
 	/* for a 50 MHz clock. Use interrupt. */

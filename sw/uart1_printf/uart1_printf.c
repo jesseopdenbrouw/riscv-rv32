@@ -25,7 +25,7 @@ int main(void) {
 
 	char *pc = buffer;
 
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	/* long long cannot be printed with the nano library */
 	printf("%d %p %.20f %.20f %lld\r\n", j, pc, k, l, m);

@@ -20,7 +20,7 @@ int main(void)
 
 	char buffer[100] = {0};
 
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	uart1_puts("\r\n\r\nInterval testing\r\n");
 

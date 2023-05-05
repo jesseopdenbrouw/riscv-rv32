@@ -20,7 +20,7 @@
 
 #include <thuasrv32.h>
 
-#define VERSION "v0.4"
+#define VERSION "v0.4.1"
 #define BUFLEN (41)
 #define BOOTWAIT (10)
 
@@ -38,21 +38,14 @@ int main(void) {
 	uint8_t c;
 	/* Address */
 	uint32_t addr = 0;
-	/* CPU speed from custom CSR */
-	uint32_t speed = csr_read(0xfc1);
-
 
 	/* Initialize UART1 at 115200 bps */
-	if (speed == 0) {
-		/* Fall back if CSR is not readable */
-		speed = F_CPU;
-	}
-	uart1_init(speed/BAUD_RATE-1, UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	/* Send greeting */
 	uart1_puts("\r\nTHUAS RISC-V Bootloader " VERSION "\r\n");
 	uart1_puts("Clock frequency: ");
-	printdec(speed);
+	printdec(csr_read(0xfc1));
 	uart1_puts("\r\n");
 
 	/* Wait a short while for a key hit */

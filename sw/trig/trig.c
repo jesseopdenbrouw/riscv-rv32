@@ -36,7 +36,7 @@ int main(void)
 	volatile double k, l, m;
 
 
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	uart1_puts("float and double calculations\r\n");
 

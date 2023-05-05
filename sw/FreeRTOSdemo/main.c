@@ -158,7 +158,7 @@ static void prvSetupHardware( void )
     GPIOA->POUT = 0;
 
     /* setup UART at default baud rate, no interrupts (yet) */
-    uart1_init( UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE );
+    uart1_init( BAUD_RATE, UART_CTRL_NONE );
 
     /* check clock tick configuration */
     if( ( uint32_t ) configCPU_CLOCK_HZ != 1000000UL ) {
@@ -267,7 +267,7 @@ void SystemIrqHandler( uint32_t mcause )
 int main() {
 
     /* setup UART at default baud rate, no interrupts */
-    uart1_init( UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE );
+    uart1_init( BAUD_RATE, UART_CTRL_NONE );
     uart1_puts( "ERROR! FreeRTOS has not been compiled. Use >>make USER_FLAGS+=-DRUN_FREERTOS_DEMO clean_all exe<< to compile it.\r\n" );
     return 1;
 }
