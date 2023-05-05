@@ -93,7 +93,7 @@ This document describes the buildup of a simple, one core, RISC-V processor, com
 
 The processor requires three clock cycles to complete an instruction, but the next instructions are fetched and decoded while the current instruction is executed. Jumps, calls and branches taken require three clock cycles because a new instruction has to be fetched. Also, two clock cycles are needed when reading ROM (data), RAM and I/O. ROM and RAM are implemented using onboard RAM block (which are buffered with an output register). The I/O output has a buffer register for reading to speed up the processor. The processor has a basic Control and Status Registers set, offering [M]CYCLE and [M]CYCLEH (completed clock cycles), MTIME and MTIMEH (time since last reset, in microseconds, shadowed from memory mapped registers), [M]INSTRET and [M]INSTRETH (number of retired instructions), and a basic set of CSRs to handle traps. A hardware multiplication requires three clock cycles to complete. A hardware division requires 32+2 or 16+2 clock cycles to complete, depending on the settings. CSR operations require one clock cycle.
 
-The processor executes at top 1 CPI (clocks per instruction) with a sequential flow of instructions. A preliminary test with CoreMark showed an average CPI of 1.53.
+The processor executes at top 1 CPI (clocks per instruction) with a sequential flow of instructions. A preliminary test with CoreMark showed an average CPI of 1.53 with a throughput of 2.22 coremark/MHz.
 
 \section{The processor}
 The RISC-V processor consists of one \textit{core} and some building blocks:
@@ -106,12 +106,13 @@ The core:
 \item The Instruction Decoder decodes the fetched instruction and provides control signals to other building blocks.
 \item The multiply/divide unit calculates integer multiplications, divisions and remainder.
 \item The control unit regulates the data flow and control flow in the core.
+\item The memory unit interfaces with memory and CSR.
 \end{itemize}
 
 The remaining building blocks:
 \begin{itemize}
 \item The ROM contains the program instructions and constant data. When the bootloader is implemented, the ROM may be written.
-\item The bootloader ROM contains the program instructions and constant (read-only) data. The boorloader ROM may be excluded from the design
+\item The bootloader ROM contains the program instructions and constant (read-only) data. The bootloader ROM may be excluded from the design
 \item The RAM contains read-write data (mutable data).
 \item The I/O is an interface with the outside world.
 \item The Address Decoder and Data Router is an interface between the memory (ROM, BOOT, RAM, I/O) and the ALU and registers.
@@ -393,7 +394,7 @@ Custom CSR:
 
 \begin{itemize}
 \item \lstinline|mxhw| -- this custom CSR with address 0xfc0 is read-only and reflects the hardware properties of the synthesized processor.
-\item \lstinline|mxspeed| -- this custom CSR with address 0xfc1 is read-only and contains the system frequency of the synthesized processor (see Section~\ref{sec:hardware}).
+\item \lstinline|mxspeed| -- this custom CSR with address 0xfc1 is read-only and contains the system frequency in Hz of the synthesized processor (see Section~\ref{sec:hardware}).
 \end{itemize}
 %The \lstinline|mcounteren| register is not implemented, because U-mode is not implemented. The \lstinline|menvcfg| and \lstinline|menvcfgh| are not implemented, because only M-mode is implemented.
 
@@ -448,14 +449,13 @@ TIMER1 has a 32-bit count register and increments on every clock cycle. It does 
 
 TIMER2 has a 16-bit count register and a 16-bit prescaler, and increments on every clock cycle. It counts up to compare match T register, after which is will be loaded with 0 again. Compare match (local) interrupts are provided (one vector). Whenever the timer count register is greater than or equal to the compare match T register, an interrupt request is asserted. The interrupt request has to be negated by software. The timer provides three more compare registers (A, B, C). Whenever the timer count register is greater than or equal to a compare register (A, B, C) the respective interrupt request is asserted. The interrupt requests have to be negated by software. A value of 0 in the compare match T register is valid: the counter does not count, but the compare match T (local) interrupt is asserted and the compare match interrupts (A, B, C) are asserted whenever the respective compare match register is 0. The prescaler is always preloaded: if the timer is off, the shadow prescaler register is directly written, if the timer is running, the preload register is written and the shadow register is updated at the the next CMPT match. The CMPT/A/B/C registers may optionally use a preload register. If preload is off, the shadow registers are directly written, if preload is on, the preload registers are written and the shadow registers are updated at the next CMPT match.
 
-\textbf{Preliminary!}
 I2C1 is a minimal I\textsuperscript{2}C controller peripheral (master-only). It cannot react to clock stretching and lost arbitration, so only modern targets (slaves) can be connected in a one-master-only system. Both Standard mode (Sm) with a transmission speed of up to 100 kbps and Fast mode (Fm) with a transmission speed up to 400 kbps are implemented. Before sending the address byte, the send-start bit must be set and a START condition is send to the target when the address is written to the I2C1 data register. Before sending or receiving the last data byte, the send-stop bit must be set and a STOP condition is send to the target after the byte is send or received by the controller. The last byte received will not be acknowledged by the controller. When receiving intermediate bytes, the controller must acknowledge the reception with an ACK. This is controlled by the MACK bit in the control register. Sending a byte is straightforward: just write the byte to the data register. When receiving a byte, a dummy byte (data value of 0xff) must be send to the target. This way, the processor can create a pause in the transmission if needed. Note that the SCL line is kept low between byte transmissions. The baud rate prescaler must be loaded with the number of system clock cycles of \textbf{one-half} bit time minus~1 for Standard mode and \textbf{one-third} bit time minus~1 for Fast mode. Note that the prescaler is part of the control register CTRL and its value must be preserved when setting or clearing other bits. The SCL and SDA inputs are synchronized to the system clock using two 2-bit shift registers.
 
 SPI1 is a full-fledged SPI master. It can transfer 8-bit, 16-bit, 24-bit and 32-bit data in one SPI cycle. It incorporates a programmable prescaler (from /2 to /256 in powers of 2) and all four phases of clock polarity (CPOL) and phase polarity (CPHA), hardware NSS (Slave Select, active low) and programmable Slave Select setup and hold time. It is possible to use a GPIO pin to use software-controlled NSS. Currently, the MISO is not synchronized to the system clock.
 
 SPI2 is a simple SPI master dedicated for the micro SC card reader. It can transfer 8-bit, 16-bit, 24-bit and 32-bit data in one SPI cycle. It does not have an hardware NSS signal and no interrupt capability. A single I/O pin is needed for NSS. Currently, the MISO is not synchronized to the system clock.
 
-The I/O incorporates memory mapped TIMEH:TIME and TIMECMPH:TIMECMP registers. Whenever TIMEH:TIME (as viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECMP (as viewed as a 64-bit register) an interrupt request is asserted. The interrupt request is negated if TIMEH:TIME is less than TIMECMPH:TIMECMP. This has to be handled by software. Currently the TIMEH and TIME registers cannot be written.
+The I/O incorporates memory mapped TIMEH:TIME and TIMECMPH:TIMECMP registers. Whenever TIMEH:TIME (as viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECMP (as viewed as a 64-bit register) an interrupt request is asserted. The interrupt request is negated if TIMEH:TIME is less than TIMECMPH:TIMECMP. This has to be handled by software. Currently the TIMEH and TIME registers cannot be written. Note that TIMEH:TIME counts the number of microseconds since last reset. As such, the system clock frequency must be a integer multiple of 1\,MHz.
 
 \subsection{Implemented instructions}
 For the processor, all RV32IM Unprivileged instructions are implemented but the FENCE instruction act as a no-operation (NOP). ECALL and EBREAK are supported and execute an exception. Also, the Zicsr instructions are implemented. From the Privileged instruction, MRET is used to return from an exception or an interrupt. WFI is not implemented and acts as a no-operation (NOP).
@@ -972,13 +972,14 @@ Some examples are to be used in de simulator only, mainly to test functionality 
 \item \lstinline|bootloader| -- the bootloader program, placed in the bootloader ROM. It has separate startup and linker files. Uses UART1. Works on the board.
 \item \lstinline|clock| -- a simple clock using the CSR MTIME and MTIMEH registers to fetch the time since last reset. Uses UART1. Works on the board.
 \item \lstinline|coremark| -- implementation of the CoreMark test suite. Uses UART1. Works on the board.
-\item \lstinline|ctor_c| -- C test to check if global constructors (and destructors) are called upon program execution. Uses UART1. Works on the board.
+\item \lstinline|ctor_c| -- C test to check if global constructors are called upon program execution. Uses UART1. Works on the board.
 \item \lstinline|ctor_cpp| -- C++ test to check if global constructors are called upon program execution. Uses UART1. Works on the board.
 \item \lstinline|double| -- some floating point double computations. For simulation.
 \item \lstinline|exp| -- calculates Euler's number e. For simulation.
 \item \lstinline|fatfs| -- implementation of FATFS\footnote{\url{http://elm-chan.org/fsw/ff/00index_e.html}}, supports read/write, long filename, codepage 437 (US). FAT16, FAT32 supported. exFAT not tested. Works on the board.
 \item \lstinline|flash| -- flash the DE0-CV board leds, works on the board.
 \item \lstinline|float| -- some floating point float computations. For simulation.
+\item \lstinline|FreeRTOSdemo| -- implementation of blinky demo and full demo of the FreeRTOS real-time operating system. Works on the board. Needs more tests with interrupts.
 \item \lstinline|global| -- test for globals and local statics with initialization. For simulation
 \item \lstinline|hex_display| -- program that reads 8 switches from the board and display them as a 2-digit hexadecimal value on the 7-segment display. Works on the board. Note that on the DE0-CV board, the decimal points cannot be used, because they are not connected to FPGA pins.
 \item \lstinline|i2c1findslaves| -- program that uses the I2C1 peripheral to find slaves on the I\textsuperscript{2}C bus. Prints out the found slaves addresses on the terminal. Works on the board.
@@ -1157,7 +1158,7 @@ A Motorola S-record file can be uploaded with the \lstinline|upload| program fou
 upload -d <device> -b <baud> -t <timeout> -s <sleep> -v -j file
 \end{lstlisting}
 
-The default device is \lstinline|/dev/ttyUSB0| which is the first plugged-in USB-to-U(S)ART converter. The baudrate may be 9600 bps or 115200 bps (default). Timeout is the time the \lstinline|uplead| program waits for expected data from the bootloader. The time is set in deciseconds (0.1 seconds) intervals. The default value is 10 (1.0 seconds). Sleep is the time the \lstinline|upload| program waits after transmitting a character tor the bootloader in microseconds intervals. The default value is 0. The option \lstinline|-v| turns on verbose mode. The option \lstinline[]|-j| instructs \lstinline|upload| to send a ``start application'' command to the bootloader after the S-record file is uploaded. File must be a valid S-record file.
+The default device is \lstinline|/dev/ttyUSB0| which is the first plugged-in USB-to-U(S)ART converter. The baudrate may be 9600 bps or 115200 bps (default). Timeout is the time the \lstinline|uplead| program waits for expected data from the bootloader. The time is set in deciseconds (0.1 seconds) intervals. The default value is 10 (1.0 seconds). Sleep is the time the \lstinline|upload| program waits after transmitting a character to the bootloader in microseconds intervals. The default value is 0. The option \lstinline|-v| turns on verbose mode. The option \lstinline[]|-j| instructs \lstinline|upload| to send a ``start application'' command to the bootloader after the S-record file is uploaded. File must be a valid S-record file.
 
 To upload an S-record file, reset the FPGA or program the FPGA design in the FPGA. Then, within the 5 seconds interval, start the \lstinline|upload| program with options and file name supplied. If the \lstinline|upload| programs manages the contact the bootloader, the S-record file will be uploaded. Depending on the size, uploading may take as short as a few seconds to minutes for a large file. As a rule of thumb, about 2400 file characters per seconds are send (at 115200 bps). Make sure that \emph{no} terminal program (e.g.\@ PuTTY) is active. If the \lstinline|upload| program cannot contact the bootloader, it exits with an error message. If during sending the records, a response from the bootloader is not read, the \lstinline|upload| exits with an error message. This is mostly due to an open terminal connection. To start the application after the upload, supply the \lstinline|-j| option to the \lstinline|upload| program, otherwise the monitor is started. Before starting the application, UART1 is turned off and the output port is set to 0x00000000 (i.e.\@ all port bits are set to 0).
 
@@ -1215,7 +1216,6 @@ Some future plans:
 \item Test more functions of the standard and mathematical libraries.
 \item It is not possible to print \lstinline|long long| (i.e. 64-bit) using \lstinline|printf| et al. When using the format specifier \lstinline|%lld|, \lstinline|printf| just prints \lstinline|ld|. This due to lack of support in the \lstinline|nano| library.
 \item The \lstinline|mtime| (MTIMEH:MTIME) registers are currently read only, but should be writable.
-\item Identified a problem when a trap is requested and the memory is read or written. The instruction is not executed (is not retired), but the memory is accessed, and can have side effects in I/O (i.e. clearing bits or starting hardware). The memory access cannot be stopped, because of the following: if an access loads/stores on a misaligned memory address, an exception is raised. Disabling the memory access with disable the exception, which caused the memory to be accessed again. This is called a combinational loop.
 
 \end{itemize}
 
@@ -1229,8 +1229,9 @@ Before \lstinline|main| is called, the C Runtime startup code (normally in a fil
 \item Load the Global Pointer with a suitable address.
 \item Initialize (clear) the BBS section with 0, for globals/statics without initialization.
 \item Initialize globals/statics \emph{with} initialization.
-\item Initialize the C library.
+\item Call the global constructors.
 \item Call \lstinline|main|.
+\item Call the global destructors.
 \item Call \lstinline|exit|.
 \end{itemize} 
 
@@ -2051,7 +2052,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 
 \subsection{TIME -- RISC-V system timer}
 Note: the external timer interrupt has to be enabled by writing a 1 to \lstinline[breaklines=false]|mie.MTIE|.
-Note: the external timer will assert a pending interrupt if TIMEH:TIME (viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECPM (viewed as a 64-bit register). To negate the pending interrupt, set TIMECMPH:TIMECMP to a higher value than TIMEH:TIME.
+Note: the external timer will assert a pending interrupt if TIMEH:TIME (viewed as a 64-bit register) is greater than or equal to TIMECMPH:TIMECPM (viewed as a 64-bit register). To negate the pending interrupt, set TIMECMPH:TIMECMP to a higher value than TIMEH:TIME. The TIMEH:TIME registers count the number of micro seconds since last reset. As such, the system clock frequency must be a integer multiple of 1\,MHz.
 
 \begin{register}{H}{TIME external timer register TIME}{0xf0}
 \label{time}
