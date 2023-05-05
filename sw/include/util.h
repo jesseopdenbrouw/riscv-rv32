@@ -15,6 +15,8 @@ extern "C" {
 uint32_t parsehex(char *s, char **ppchar);
 /* Print hex number to UART1 */
 void printhex(uint32_t v, int n);
+/* Print signed decimal number to UART1 */
+void printdec(int32_t v);
 /* Get a hex number from UART1 */
 uint32_t gethex(int n);
 /* Delay in milliseconds */
