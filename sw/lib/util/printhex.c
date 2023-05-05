@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <stdint.h>
 
 #include <thuasrv32.h>
@@ -11,7 +10,7 @@ void printhex(uint32_t v, int n) {
 		n = 8;
 	}
 	for (int i = 0; i < n; i++) {
-		uint8_t c = (v & 0x0f) + '0';
+		char c = (v & 0x0f) + '0';
 		if (c > '9') {
 			c += 'a' - '0' - 10;
 		}
