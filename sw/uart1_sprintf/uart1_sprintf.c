@@ -25,7 +25,7 @@ int main(void) {
 
 	char *pc = buffer;
 
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	/* Note: long long cannot be printed, it is not supported
 	 * in the nano library */
