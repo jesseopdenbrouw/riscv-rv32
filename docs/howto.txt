@@ -3,9 +3,6 @@ Have a look at:
 
 * apt install texinfo
 
-* go to your home directory
-* make a directory "build"
-* change to "build"
 * type in command:
 
    git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
