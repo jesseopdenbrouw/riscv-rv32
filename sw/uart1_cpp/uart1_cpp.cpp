@@ -46,7 +46,9 @@ Uart& Uart::getUart1()
 
 Uart1::Uart1()
 {
-	UART1->BAUD = F_CPU/BAUD_RATE - 1;
+	uint32_t speed = csr_read(0xfc1);
+	speed = (speed == 0) ? F_CPU : speed;
+	UART1->BAUD = speed/BAUD_RATE - 1;
 }
 
 /* Prints a character to the UART1 */
