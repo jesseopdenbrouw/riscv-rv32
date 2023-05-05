@@ -870,6 +870,15 @@ begin
                                 when others =>
                                     O_illegal_instruction_error <= '1';
                             end case;
+
+                        -- FENCE, FENCE.I
+                        when "0001111" =>
+                            if func3_v = "000" or func3_v = "001" then
+                                -- Just ignore
+                                null;
+                            else
+                                O_illegal_instruction_error <= '1';
+                            end if;
                             
                         -- Illegal instruction or not implemented
                         when others =>
