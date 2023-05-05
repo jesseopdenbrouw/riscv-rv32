@@ -45,6 +45,10 @@ volatile ee_s32 seed3_volatile = 0x8;
 #endif
 volatile ee_s32 seed4_volatile = ITERATIONS;
 volatile ee_s32 seed5_volatile = 0;
+
+/* THUASRV32 */
+static uint32_t speed;
+
 /* Porting : Timing functions
 	      How to capture time and convert to seconds must be ported to whatever is
 	 supported by the platform. e.g. Read value from on board RTC, read value from
@@ -137,7 +141,7 @@ secs_ret
 time_in_secs(CORE_TICKS ticks)
 {
 	  /* THUASRV32-specific */
-	  secs_ret retval = (secs_ret)(((CORE_TICKS)ticks) / ((CORE_TICKS)F_CPU));
+	  secs_ret retval = (secs_ret)(((CORE_TICKS)ticks) / ((CORE_TICKS)speed));
 	  return retval;
 }
 
@@ -152,12 +156,14 @@ portable_init(core_portable *p, int *argc, char *argv[])
 {
 	/* THUASRV32-specific */
 	char buffer[80];
-	disable_irq(); // no interrupt, thanks
-	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
+	speed = csr_read(0xfc1);
+
+	disable_irq();
+	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	uart1_puts("\r\n\r\nTHUASRV32: starting CoreMark\r\n");
 
-	snprintf(buffer, sizeof buffer, "THUASRV32: Processor running at %lu Hz\r\n", (uint32_t)F_CPU);
+	snprintf(buffer, sizeof buffer, "THUASRV32: Processor running at %lu Hz\r\n", (uint32_t)speed);
 	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "THUASRV32: Executing coremark (%lu iterations). This may take some time...\r\n\r\n", (uint32_t)ITERATIONS);
 	uart1_puts(buffer);
@@ -176,7 +182,6 @@ portable_init(core_portable *p, int *argc, char *argv[])
 
 	/* [m]instret is not set to 0 if we start */
 	start_instret = csr_get_instret();
-
 }
 
 
@@ -190,8 +195,8 @@ portable_fini(core_portable *p)
 	p->portable_id = 0;
 
 	// show executed instructions, required cycles and resulting average CPI
-	uint64_t exe_time = get_time();
 	uint64_t exe_inst = csr_get_instret() - start_instret;
+	uint64_t exe_time = get_time();
 
 	uart1_puts("THUASRV32: Executed instructions: ");
 	uart1_printulonglong(exe_inst);
