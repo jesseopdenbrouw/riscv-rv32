@@ -1,0 +1,136 @@
+# *****************************************************************************
+# USER CONFIGURATION
+# *****************************************************************************
+# User's application sources (*.c, *.cpp, *.s, *.S); add additional files here
+
+TARGET = main
+
+#APP_SRC ?= $(wildcard ./*.c) $(wildcard ./*.s) $(wildcard ./*.cpp) $(wildcard ./*.S)
+APP_SRC = $(TARGET).c
+
+# User's application include folders (don't forget the '-I' before each entry)
+APP_INC ?= -I .
+# User's application include folders - for assembly files only (don't forget the '-I' before each entry)
+ASM_INC ?= -I .
+
+# Optimization
+EFFORT ?= -Os
+
+# CPU architecture and ABI
+#MARCH ?= rv32im
+#MABI  ?= ilp32
+
+# User flags for additional configuration (will be added to compiler flags)
+USER_FLAGS ?= RUN_FREERTOS_DEMO
+
+# Set to 0 to run the comprehensive demo, set to 1 to run the simply blinky demo
+WHICH_DEMO ?= mainCREATE_SIMPLE_BLINKY_DEMO_ONLY=1
+# *****************************************************************************
+
+
+# -----------------------------------------------------------------------------
+# FreeRTOS
+# -----------------------------------------------------------------------------
+ifneq (,$(findstring RUN_FREERTOS_DEMO,$(USER_FLAGS)))
+# FreeRTOS home folder (adapt this!)
+FREERTOS_HOME ?= /mnt/d/PROJECTS/RISCVDEV/FreeRTOS
+
+# FreeRTOS RISC-V specific
+APP_SRC += $(wildcard $(FREERTOS_HOME)/FreeRTOS/Source/portable/GCC/RISC-V/*.c)
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Source/portable/GCC/RISC-V/portASM.S
+
+APP_INC += -I $(FREERTOS_HOME)/FreeRTOS/Source/portable/GCC/RISC-V
+
+# FreeRTOS core
+APP_SRC += $(wildcard $(FREERTOS_HOME)/FreeRTOS/Source/*.c)
+APP_SRC += $(wildcard $(FREERTOS_HOME)/FreeRTOS/Source/portable/MemMang/heap_4.c)
+
+APP_INC += -I $(FREERTOS_HOME)/FreeRTOS/Source/include
+
+# FreeRTOS sources for the full_demo
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/blocktim.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/dynamic.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/EventGroupsDemo.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/GenQTest.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/recmutex.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/TaskNotify.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/TaskNotifyArray.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS/Demo/Common/Minimal/TimerDemo.c
+
+APP_INC += -I $(FREERTOS_HOME)/FreeRTOS/Demo/Common/include
+
+# THUASRV32 specific
+ASM_INC += -DportasmHANDLE_INTERRUPT=SystemIrqHandler
+
+APP_INC += -I chip_specific_extensions/thuasrv32
+
+ASM_INC += -I chip_specific_extensions/thuasrv32
+
+# Demo application
+APP_SRC += blinky_demo/main_blinky.c
+APP_SRC += full_demo/main_full.c
+APP_SRC += full_demo/RegTest.s
+endif
+
+# -----------------
+# FreeRTOS-Plus-CLI
+# -----------------
+ifneq (,$(findstring FREERTOS_PLUS_CLI,$(USER_FLAGS)))
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI/FreeRTOS_CLI.c
+
+APP_INC += -I $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI
+endif
+
+# -----------------
+# FreeRTOS-Plus-TCP
+# -----------------
+ifneq (,$(findstring FREERTOS_PLUS_TCP,$(USER_FLAGS)))
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_ARP.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_DHCP.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_DNS.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_IP.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_Sockets.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_Stream_Buffer.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_TCP_IP.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_TCP_WIN.c
+APP_SRC += $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/FreeRTOS_UDP_IP.c
+
+APP_INC += -I $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/include
+APP_INC += -I $(FREERTOS_HOME)/FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP/source/portable/Compiler/GCC
+endif
+
+
+# Modify this variable to fit your THUASRV32 setup (THUASRV32 home folder)
+THUASRV32_HOME ?= ../
+
+# Program name
+PROG_NAME = \"$(TARGET)\"
+
+# Include common defines
+COMMON_FILE = ../common.make
+
+# Read in common settings
+ifneq ("$(wildcard $(COMMON_FILE))","")
+include $(COMMON_FILE)
+else
+endif
+
+
+.PHONY: all
+all: $(TARGET).elf
+
+$(TARGET).elf : $(APP_SRC)
+	cp $(CRT_PATH)/$(CRT) .
+	$(CC) $(EFFORT) -g -o $(TARGET).elf $(LDFLAGS) -D$(WHICH_DEMO) -D$(USER_FLAGS) -I $(INCPATH) $(APP_INC) $(APP_SRC) $(CRT) $(MARCHABISTRING) -DF_CPU=$(F_CPU) -DBAUD_RATE=$(BAUD_RATE) -DPROG_NAME=$(PROG_NAME) $(SPECSSTRING) $(LIBTHUASRV32STRING) -T $(LD_SCRIPT) -nostartfiles $(EXTRA_LINKER_FLAGS)
+	$(OBJCOPY) -O srec $(TARGET).elf $(TARGET).srec
+	$(SREC2VHDL) -wf0 $(TARGET).srec $(TARGET).vhd
+	$(SIZE) $(TARGET).elf
+
+.PHONY: upload
+# Upload the S-record file
+upload: $(TARGET).srec
+	$(UPLOAD) -v $(TARGET).srec
+
+.PHONY: clean_all
+clean:
+	rm -f $(TARGET).elf $(TARGET).srec $(TARGET).vhd $(CRT)
