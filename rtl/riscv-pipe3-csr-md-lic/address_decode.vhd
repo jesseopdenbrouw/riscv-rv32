@@ -76,7 +76,6 @@ begin
 
     -- Address decoder and data router (may be forward from RS1)
     process (I_memaccess, I_memaddress, I_romdatain, I_bootdatain, I_ramdatain, I_iodatain) is
-    variable address_var : unsigned(31 downto 0);
     begin
         
         O_wrrom <= '0';
@@ -90,6 +89,7 @@ begin
         O_csram <= '0';
         O_csio <= '0';
         
+        -- Currently not used. May be used to fault unimplemented memory.
         O_load_access_error <= '0';
         O_store_access_error <= '0';
         
@@ -100,7 +100,8 @@ begin
             end if;
             if I_memaccess = memaccess_write then
                 O_wrrom <= '1';
-            elsif I_memaccess = memaccess_read then
+            end if;
+            if I_memaccess = memaccess_read then
                 O_waitfordata <= '1';
             end if;
             O_dataout <= I_romdatain;
@@ -108,8 +109,6 @@ begin
         elsif I_memaddress(31 downto 28) = bootloader_high_nibble then
             if I_memaccess = memaccess_read then
                 O_csboot <= '1';
-            end if;
-            if I_memaccess = memaccess_read then
                 O_waitfordata <= '1';
             end if;
             O_dataout <= I_bootdatain;
@@ -120,7 +119,8 @@ begin
             end if;
             if I_memaccess = memaccess_write then
                 O_wrram <='1';
-            elsif I_memaccess = memaccess_read then
+            end if;
+            if I_memaccess = memaccess_read then
                 O_waitfordata <= '1';
             end if;
             O_dataout <= I_ramdatain;
@@ -131,7 +131,8 @@ begin
             end if;
             if I_memaccess = memaccess_write then
                 O_wrio <='1';
-            elsif I_memaccess = memaccess_read then
+            end if;
+            if I_memaccess = memaccess_read then
                 O_waitfordata <= '1';
             end if;
             O_dataout <= I_iodatain;
