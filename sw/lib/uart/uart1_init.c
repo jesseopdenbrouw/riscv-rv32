@@ -15,12 +15,13 @@
 #endif
 
 /* Initialize the Baud Rate Generator and Control Register */
+/* Is baudrate is 0, the BRR is set 0 */
 void uart1_init(uint32_t baudrate, uint32_t ctrl)
 {
 	/* Set baud rate generator */
 	uint32_t speed = csr_read(0xfc1);
 	speed = (speed == 0) ? F_CPU : speed;
-	UART1->BAUD = speed/baudrate-1;
+	UART1->BAUD = (baudrate == 0) ? 0 : speed/baudrate-1;
 	/* Set control register */
 	UART1->CTRL = ctrl;
 }
