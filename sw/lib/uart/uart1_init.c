@@ -14,10 +14,13 @@
 #define BAUD_RATE (9600UL)
 #endif
 
-/* Initialize the Baud Rate Generator */
-void uart1_init(uint32_t prescaler, uint32_t ctrl)
+/* Initialize the Baud Rate Generator and Control Register */
+void uart1_init(uint32_t baudrate, uint32_t ctrl)
 {
 	/* Set baud rate generator */
-	UART1->BAUD = prescaler;
+	uint32_t speed = csr_read(0xfc1);
+	speed = (speed == 0) ? F_CPU : speed;
+	UART1->BAUD = speed/baudrate-1;
+	/* Set control register */
 	UART1->CTRL = ctrl;
 }
