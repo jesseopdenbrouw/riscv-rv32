@@ -146,63 +146,37 @@ ee_u32 default_num_contexts = 1;
 
 /* Function : portable_init
 	      Target specific initialization code
-	      Test for some common mistakes.
 */
-#ifndef RUN_COREMARK
-void
-__attribute__((__noreturn__))
-portable_init(core_portable *p, int *argc, char *argv[])
-#else
 void
 portable_init(core_portable *p, int *argc, char *argv[])
-#endif
 {
 	/* THUASRV32-specific */
 	char buffer[80];
 	disable_irq(); // no interrupt, thanks
-	uart1_init(F_CPU/BAUD_RATE-1, 0x00);
+	uart1_init(UART_PRESCALER(BAUD_RATE), UART_CTRL_NONE);
 
 	uart1_puts("\r\n\r\nTHUASRV32: starting CoreMark\r\n");
-
-// Disable coremark compilation by default
-#ifndef RUN_COREMARK
-	#warning COREMARK HAS NOT BEEN COMPILED! Use >>make USER_FLAGS+=-DRUN_COREMARK clean_all exe<< to compile it.
-
-	// inform the user if you are actually executing this
-	uart1_puts("ERROR! CoreMark has not been compiled. Use >>make USER_FLAGS+=-DRUN_COREMARK clean_all exe<< to compile it.\r\n");
-
-	while(1);
-#endif
 
 	snprintf(buffer, sizeof buffer, "THUASRV32: Processor running at %lu Hz\r\n", (uint32_t)F_CPU);
 	uart1_puts(buffer);
 	snprintf(buffer, sizeof buffer, "THUASRV32: Executing coremark (%lu iterations). This may take some time...\r\n\r\n", (uint32_t)ITERATIONS);
 	uart1_puts(buffer);
 
-/*
-#error \
-	  "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
-*/
-	  if (sizeof(ee_ptr_int) != sizeof(ee_u8 *))
-	  {
-	      ee_printf(
-	          "ERROR! Please define ee_ptr_int to a type that holds a "
-	          "pointer!\n");
-	  }
-	  if (sizeof(ee_u32) != 4)
-	  {
-	      ee_printf("ERROR! Please define ee_u32 to a 32b unsigned type!\n");
-	  }
-	  p->portable_id = 1;
+	if (sizeof(ee_ptr_int) != sizeof(ee_u8 *))
+	{
+		ee_printf(
+				"ERROR! Please define ee_ptr_int to a type that holds a "
+				"pointer!\n");
+	}
+	if (sizeof(ee_u32) != 4)
+	{
+		ee_printf("ERROR! Please define ee_u32 to a 32b unsigned type!\n");
+	}
+	p->portable_id = 1;
 
 	/* [m]instret is not set to 0 if we start */
-	/* Currently, [m]instret cannot be cleared, so we have to get
-	 * a starting point for later */
 	start_instret = csr_get_instret();
 
-#ifndef RUN_COREMARK
-	while(1);
-#endif
 }
 
 
@@ -213,25 +187,19 @@ void
 portable_fini(core_portable *p)
 {
 	char buffer[80];
-	  p->portable_id = 0;
+	p->portable_id = 0;
 
 	// show executed instructions, required cycles and resulting average CPI
-	union {
-	  uint64_t uint64;
-	  uint32_t uint32[sizeof(uint64_t)/sizeof(uint32_t)];
-	} exe_instructions, exe_time;
+	uint64_t exe_time = get_time();
+	uint64_t exe_inst = csr_get_instret() - start_instret;
 
-	exe_time.uint64 = (uint64_t)get_time();
-	exe_instructions.uint64 = csr_get_instret() - start_instret;
-
-	snprintf(buffer, sizeof buffer, "THUASRV32: Executed instructions:       0x%08lx%08lx\r\n", (uint32_t)exe_instructions.uint32[1], (uint32_t)exe_instructions.uint32[0]);
+	uart1_puts("THUASRV32: Executed instructions: ");
+	uart1_printulonglong(exe_inst);
+	uart1_puts("\r\nTHUASRV32: CoreMark core clock cycles: ");
+	uart1_printulonglong(exe_time);
+	snprintf(buffer, sizeof buffer, "\r\nTHUASRV32: Avg CPI: %f clock/instr\r\n", (double)exe_time/(double)exe_inst);
 	uart1_puts(buffer);
-	snprintf(buffer, sizeof buffer, "THUASRV32: CoreMark core clock cycles:  0x%08lx%08lx\r\n", (uint32_t)exe_time.uint32[1], (uint32_t)exe_time.uint32[0]);
-	uart1_puts(buffer);
-
-	snprintf(buffer, sizeof buffer, "THUASRV32: Avg CPI: %f clock/instr\r\n", (double)exe_time.uint64/(double)exe_instructions.uint64);
-	uart1_puts(buffer);
-	snprintf(buffer, sizeof buffer, "THUASRV32: Avg IPC: %f instr/clock\r\n", (double)exe_instructions.uint64/(double)exe_time.uint64);
+	snprintf(buffer, sizeof buffer, "THUASRV32: Avg IPC: %f instr/clock\r\n", (double)exe_inst/(double)exe_time);
 	uart1_puts(buffer);
 
 }
