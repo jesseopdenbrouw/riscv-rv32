@@ -9,10 +9,13 @@
 # The target
 TARGET = coremark
 
+# Put your optimization here
+EFFORT ?= -O3
+
 # Compiler flags
 CFLAGS = -g -Wall -DF_CPU=$(F_CPU) -DBAUD_RATE=$(BAUD_RATE) -DPROG_NAME=$(PROG_NAME) -I$(INCPATH) $(MARCHABISTRING) $(USER_FLAGS) $(EFFORT)
 # Linker flags
-LDFLAGS = -g -lm -Wall -nostartfiles -T $(LD_SCRIPT) $(LIBTHUASRV32STRING) $(MARCHABISTRING) $(SPECSSTRING) $(EXTRA_LINKER_FLAGS) -u _printf_float
+LDFLAGS = -g -lm -Wall -nostartfiles -T $(LD_SCRIPT) $(LIBTHUASRV32STRING) $(MARCHABISTRING) $(SPECSSTRING) $(EXTRA_LINKER_FLAGS) $(EFFORT) -u _printf_float
 
 
 #-----
@@ -40,8 +43,8 @@ OBJS = $(sort $(patsubst %.c, %.o, $(SRCS)))
 # Object file startup
 OBJCRT = $(sort $(patsubst %.c, %.o, $(CRT)))
 
-.PHONY: exe
-exe: $(CRT) $(TARGET).elf
+.PHONY: all
+all: $(CRT) $(TARGET).elf
 
 # Make a copy of the crt in this directory and compile it
 $(CRT):
@@ -64,8 +67,8 @@ $(TARGET).elf: $(OBJS) $(HFILES) $(COMMON_FILE)
 upload: $(TARGET).srec
 	$(UPLOAD) -v $(TARGET).srec
 
-.PHONY: clean_all
+.PHONY: clean
 # Clean all
-clean_all:
+clean:
 	rm -f $(TARGET).elf $(TARGET).srec $(TARGET).vhd $(OBJS) $(CRT)
 
