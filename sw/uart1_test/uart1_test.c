@@ -13,7 +13,9 @@ int main(void)
 {
 
 	/* Set baud rate generator */
-	UART1->BAUD = F_CPU/BAUD_RATE-1;
+	uint32_t speed = csr_read(0xfc1);
+	speed = (speed == 0) ? F_CPU : speed;
+	UART1->BAUD = speed/BAUD_RATE-1;
 
 	/* Set one stop bit, no parity */
 	UART1->CTRL = 0x00;
