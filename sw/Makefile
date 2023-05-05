@@ -6,6 +6,9 @@
 # next build steps. Next is the library.
 # Other targets depend on it.
 #
+# NOTE: the path to the RISC-V GNU C/C++ compiler
+# must be in in the PATH environment variable
+#
 
 
 all: 
@@ -30,6 +33,7 @@ all:
 	$(MAKE) -C fatfs all
 	$(MAKE) -C flash all
 	$(MAKE) -C float all
+	$(MAKE) -C FreeRTOSdemo all
 	$(MAKE) -C global all
 	$(MAKE) -C hex_display all
 	$(MAKE) -C i2c1findslaves all
@@ -85,6 +89,7 @@ clean:
 	$(MAKE) -C fatfs clean
 	$(MAKE) -C flash clean
 	$(MAKE) -C float clean
+	$(MAKE) -C FreeRTOSdemo clean
 	$(MAKE) -C global clean
 	$(MAKE) -C hex_display clean
 	$(MAKE) -C i2c1findslaves clean
