@@ -11,13 +11,11 @@ This project folder is a port of CoreMark (from the official [GitHub repository]
 
 To build the executable (`coremark.srec`) of the benchmark, type:
 
-`> make USER_FLAGS+=-DRUN_COREMARK clean_all exe`
-
-Make sure to define `RUN_COREMARK` *when invoking* `make` (via `USER_FLAGS+=-DRUN_COREMARK`).
+`> make clean all`
 
 To build the executable for a certain CPU configuration and a certain optimization level of the benchmark, type (`Ofast` in this example):
 
-`> make USER_FLAGS+=-DRUN_COREMARK EFFORT=-Ofast clean_all exe`
+`> make EFFORT=-Ofast clean all`
 
 
 # Running
@@ -25,30 +23,31 @@ To build the executable for a certain CPU configuration and a certain optimizati
 Upload the generated executable `coremark.srec` with the `upload` program: `make upload`
 
 ```
-THUAS RISC-V Bootloader v0.2
+THUAS RISC-V Bootloader v0.4
+Clock frequency: 50000000
 **********
 
 THUASRV32: starting CoreMark
 THUASRV32: Processor running at 50000000 Hz
-THUASRV32: Executing coremark (2000 iterations). This may take some time...
+THUASRV32: Executing coremark (4000 iterations). This may take some time...
 
 2K performance run parameters for coremark.
 CoreMark Size    : 666
-Total ticks      : 903162 k
-Total time (secs): 18
+Total ticks      : 1806326 k
+Total time (secs): 36
 Iterations/Sec   : 111
-Iterations       : 2000
-Compiler version : GCC12.1.0
+Iterations       : 4000
+Compiler version : GCC12.2.0
 Compiler flags   : see makefile
 Memory location  : STATIC
 seedcrc          : 0xe9f5
 [0]crclist       : 0xe714
 [0]crcmatrix     : 0x1fd7
 [0]crcstate      : 0x8e3a
-[0]crcfinal      : 0x4983
+[0]crcfinal      : 0x65c5
 Correct operation validated. See README.md for run and reporting rules.
-THUASRV32: Executed instructions:       0x0000000023315058
-THUASRV32: CoreMark core clock cycles:  0x0000000035d52c41
-THUASRV32: Avg CPI: 1.529658 clock/instr
-THUASRV32: Avg IPC: 0.653741 instr/clock
-
+THUASRV32: Executed instructions: 1180857655
+THUASRV32: CoreMark core clock cycles: 1806326068
+THUASRV32: Avg CPI: 1.529673 clock/instr
+THUASRV32: Avg IPC: 0.653734 instr/clock
+```
