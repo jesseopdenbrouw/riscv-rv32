@@ -20,7 +20,7 @@
 
 #include <thuasrv32.h>
 
-#define VERSION "v0.3"
+#define VERSION "v0.4"
 #define BUFLEN (41)
 #define BOOTWAIT (10)
 
@@ -51,6 +51,9 @@ int main(void) {
 
 	/* Send greeting */
 	uart1_puts("\r\nTHUAS RISC-V Bootloader " VERSION "\r\n");
+	uart1_puts("Clock frequency: ");
+	printdec(speed);
+	uart1_puts("\r\n");
 
 	/* Wait a short while for a key hit */
 	GPIOA->POUT = (1<<BOOTWAIT)-1;
