@@ -6,7 +6,7 @@
  * (c) 2023, Jesse E. J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
  *
  * Usage: upload -v -d <device> -t <timeout> filename
- *        -v           -- verbose\n
+ *        -v           -- verbose
  *        -q           -- quiet, only errors
  *        -j           -- run application after upload
  *        -d <device>  -- serial device
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 
 	/* Check for 0 extra arguments */
 	if (argc == 1) {
-		printf("upload -v -d <device> -t <timeout> filename\n");
+		printf("upload -vqj -d <device> -b <baud> -t <timeout> -s <sleep> filename\n");
 		printf("Upload S-record file to THUAS RISC-V processor\n");
 		printf("-v           -- verbose\n");
 		printf("-q           -- quiet, only errors\n");
@@ -234,15 +234,6 @@ int main(int argc, char *argv[]) {
 		exit(-9);
 	}
 
-/*
-	if (line[0] != '?') {
-		printf("Wrong reply from bootloader!\n");
-		fflush(stdout);
-		close(fd);
-		fclose(fin);
-		exit(-10);
-	}
-*/
 	if (verbose) {
 		printf("Contacted bootloader!\n");
 		fflush(stdout);
