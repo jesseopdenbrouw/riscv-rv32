@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 /* Initialize UART1 */
-void uart1_init(uint32_t prescaler, uint32_t ctrl);
+void uart1_init(uint32_t baudrate, uint32_t ctrl);
 /* Write one character to UART1 */
 void uart1_putc(int ch);
 /* Write null-terminated string to UART1 */
@@ -29,8 +29,6 @@ int uart1_printf(const char *format, ...);
 void uart1_printlonglong(int64_t v);
 /* Print a unsigned long long integer */
 void uart1_printulonglong(uint64_t uv);
-
-#define UART_PRESCALER(A) ((F_CPU)/(A)-1)
 
 #define UART_STOP1 (0 << 0)
 #define UART_STOP2 (1 << 0)
