@@ -97,9 +97,9 @@ entity io is
           O_spi2mosi : out std_logic;
           I_spi2miso : in std_logic;
           O_timer2oct : out std_logic;
-          O_timer2oca : out std_logic;
-          O_timer2ocb : out std_logic;
-          O_timer2occ : out std_logic;
+          IO_timer2icoca : inout std_logic;
+          IO_timer2icocb : inout std_logic;
+          IO_timer2icocc : inout std_logic;
           -- Hardware interrupt request
           O_intrio : out data_type;
           -- MTIME and MTIMEH
@@ -290,6 +290,13 @@ signal timer2oct_int : std_logic;
 signal timer2oca_int : std_logic;
 signal timer2ocb_int : std_logic;
 signal timer2occ_int : std_logic;
+signal timer2ocaen_int : std_logic;
+signal timer2ocben_int : std_logic;
+signal timer2occen_int : std_logic;
+signal timer2icasync_int : std_logic_vector(2 downto 0);
+signal timer2icbsync_int : std_logic_vector(2 downto 0);
+signal timer2iccsync_int : std_logic_vector(2 downto 0);
+
 
 -- Registers 50 - 59 not used - reserved
 
@@ -1412,6 +1419,10 @@ begin
                 timer2oca_int <= '0';
                 timer2ocb_int <= '0';
                 timer2occ_int <= '0';
+                -- The IC synchronizers
+                timer2icasync_int <= (others => '0');
+                timer2icbsync_int <= (others => '0');
+                timer2iccsync_int <= (others => '0');
             elsif rising_edge(I_clk) then
                 if write_access_granted = '1' then
                     -- Write Timer Control Register
@@ -1465,6 +1476,39 @@ begin
                             timer2oca_int <= I_datain(19);
                             timer2ocb_int <= I_datain(23);
                             timer2occ_int <= I_datain(27);
+                            -- If the CMPA register is all zero and we start, then
+                            -- set the output compare immediate, but don't flag it
+                            if timer2cmpa_int = x"00000000" and I_datain(0) = '1' then
+                                if I_datain(18 downto 16) = "001" then
+                                    timer2oca_int <= not I_datain(19);
+                                elsif I_datain(18 downto 16) = "010" and I_datain(0) = '1' then
+                                    timer2oca_int <= not I_datain(19);
+                                elsif I_datain(18 downto 16) = "011" and I_datain(0) = '1' then
+                                    timer2oca_int <= I_datain(19);
+                                end if;
+                            end if;
+                            -- If the CMPB register is all zero and we start, then
+                            -- set the output compare immediate, but don't flag it
+                            if timer2cmpb_int = x"00000000" and I_datain(0) = '1' then
+                                if I_datain(22 downto 20) = "001" then
+                                    timer2ocb_int <= not I_datain(23);
+                                elsif I_datain(22 downto 20) = "010" and I_datain(0) = '1' then
+                                    timer2ocb_int <= not I_datain(23);
+                                elsif I_datain(22 downto 20) = "011" and I_datain(0) = '1' then
+                                    timer2ocb_int <= I_datain(23);
+                                end if;
+                            end if;
+                            -- If the CMPC register is all zero and we start, then
+                            -- set the output compare immediate, but don't flag it
+                            if timer2cmpc_int = x"00000000" and I_datain(0) = '1' then
+                                if I_datain(26 downto 24) = "001" then
+                                    timer2occ_int <= not I_datain(27);
+                                elsif I_datain(26 downto 24) = "010" and I_datain(0) = '1' then
+                                    timer2occ_int <= not I_datain(27);
+                                elsif I_datain(26 downto 24) = "011" and I_datain(0) = '1' then
+                                    timer2occ_int <= I_datain(27);
+                                end if;
+                            end if;
                         end if;
                     end if;
                     -- Write Timer Status Register
@@ -1566,44 +1610,46 @@ begin
                             -- else, increment the Counter Register
                             timer2cntr_int <= std_logic_vector(unsigned(timer2cntr_int) + 1);
                         end if;
-                        -- If we hit the Compare Register A
-                        if timer2cntr_int = timer2cmpa_int then
-                            -- Signal hit
-                            timer2stat_int(5) <= '1';
-                        end if;
-                        -- If we hit the Compare Register B...
-                        if timer2cntr_int = timer2cmpb_int then
-                            -- Signal hit
-                            timer2stat_int(6) <= '1';
-                        end if;
-                        -- If we hit the Compare Register C...
-                        if timer2cntr_int = timer2cmpc_int then
-                            -- Signal hit
-                            timer2stat_int(7) <= '1';
-                        end if;
                     else
                         timer2prescaler_int <= std_logic_vector(unsigned(timer2prescaler_int) + 1);
                     end if;
                     -- If we are at the end of prescale counting
                     if timer2prescaler_int >= timer2prscshadow_int then
+                        -- Sync the IC inputs
+                        timer2icasync_int <= timer2icasync_int(1 downto 0) & IO_timer2icoca;
+                        timer2icbsync_int <= timer2icbsync_int(1 downto 0) & IO_timer2icocb;
+                        timer2iccsync_int <= timer2iccsync_int(1 downto 0) & IO_timer2icocc;
+                    
                         -- Check CMPA for mode
                         case timer2ctrl_int(18 downto 16) is
                             -- 000 = do nothing
                             when "000" => timer2oca_int <= '0';
                             -- 001 = toggle on compare match
                             when "001" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                if timer2cmpashadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2oca_int <= not timer2oca_int;
+                                    timer2stat_int(5) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                    timer2oca_int <= not timer2oca_int;
+                                    timer2stat_int(5) <= '1';
                                 end if;
                             -- 010 = activate on compare match, invert PHAA
                             when "010" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                if timer2cmpashadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2oca_int <= not timer2ctrl_int(19);
+                                    timer2stat_int(5) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                    timer2oca_int <= not timer2ctrl_int(19);
+                                    timer2stat_int(5) <= '1';
                                 end if;
                             -- 011 = deactivate on compare match, write PHAA
                             when "011" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                if timer2cmpashadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2oca_int <= timer2ctrl_int(19);
+                                    timer2stat_int(5) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                    timer2oca_int <= timer2ctrl_int(19);
+                                    timer2stat_int(5) <= '1';
                                 end if;
                             -- 100 = edge aligned PWM
                             when "100" =>
@@ -1614,6 +1660,23 @@ begin
                                 else
                                     timer2oca_int <= timer2ctrl_int(19);
                                 end if;
+                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpashadow_int)-1) then
+                                    timer2stat_int(5) <= '1';
+                                end if;
+                            -- 110 - positive edge detected
+                            when "110" =>
+                                if timer2icasync_int(2 downto 1) = "01" then
+                                    -- Copy CNTR to CMPA register and raise interrupt
+                                    timer2cmpa_int <= timer2cntr_int;
+                                    timer2stat_int(5) <= '1';
+                                end if;
+                            -- 111 - negative edge detected
+                            when "111" =>
+                                if timer2icasync_int(2 downto 1) = "10" then
+                                    -- Copy CNTR to CMPA register and raise interrupt
+                                    timer2cmpa_int <= timer2cntr_int;
+                                    timer2stat_int(5) <= '1';
+                                end if;
                             -- Others not allowed
                             when others => timer2oca_int <= '-';
                         end case;
@@ -1623,18 +1686,30 @@ begin
                             when "000" => timer2ocb_int <= '0';
                             -- 001 = toggle on compare match
                             when "001" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                if timer2cmpbshadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2ocb_int <= not timer2ocb_int;
+                                    timer2stat_int(6) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                    timer2ocb_int <= not timer2ocb_int;
+                                    timer2stat_int(6) <= '1';
                                 end if;
                             -- 010 = activate on compare match, invert PHAB
                             when "010" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                if timer2cmpbshadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2ocb_int <= not timer2ctrl_int(23);
+                                    timer2stat_int(6) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                    timer2ocb_int <= not timer2ctrl_int(23);
+                                    timer2stat_int(6) <= '1';
                                 end if;
                             -- 011 = deactivate on compare match, write PHAB
                             when "011" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                if timer2cmpbshadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2ocb_int <= timer2ctrl_int(23);
+                                    timer2stat_int(6) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                    timer2ocb_int <= timer2ctrl_int(23);
+                                    timer2stat_int(6) <= '1';
                                 end if;
                             -- 100 = edge aligned PWM
                             when "100" =>
@@ -1645,6 +1720,23 @@ begin
                                 else
                                     timer2ocb_int <= timer2ctrl_int(23);
                                 end if;
+                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpbshadow_int)-1) then
+                                    timer2stat_int(6) <= '1';
+                                end if;
+                            -- 110 - positive edge detected
+                            when "110" =>
+                                if timer2icbsync_int(2 downto 1) = "01" then
+                                    -- Copy CNTR to CMPB register and raise interrupt
+                                    timer2cmpb_int <= timer2cntr_int;
+                                    timer2stat_int(6) <= '1';
+                                end if;
+                            -- 111 - negative edge detected
+                            when "111" =>
+                                if timer2icbsync_int(2 downto 1) = "10" then
+                                    -- Copy CNTR to CMPB register and raise interrupt
+                                    timer2cmpb_int <= timer2cntr_int;
+                                    timer2stat_int(6) <= '1';
+                                end if;
                             when others => timer2ocb_int <= '-';
                         end case;
                         -- Check CMPC for mode
@@ -1653,18 +1745,30 @@ begin
                             when "000" => timer2occ_int <= '0';
                             -- 001 = toggle on compare match
                             when "001" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                if timer2cmpcshadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2occ_int <= not timer2occ_int;
+                                    timer2stat_int(7) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                    timer2occ_int <= not timer2occ_int;
+                                    timer2stat_int(7) <= '1';
                                 end if;
                             -- 010 = activate on compare match, invert PHAC
                             when "010" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                if timer2cmpcshadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2occ_int <= not timer2ctrl_int(27);
+                                    timer2stat_int(7) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                    timer2occ_int <= not timer2ctrl_int(27);
+                                    timer2stat_int(7) <= '1';
                                 end if;
                             -- 011 = deactivate on compare match, write PHAC
                             when "011" =>
-                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                if timer2cmpcshadow_int = x"00000000" and timer2cntr_int = timer2cmptshadow_int then
                                     timer2occ_int <= timer2ctrl_int(27);
+                                    timer2stat_int(7) <= '1';
+                                elsif timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                    timer2occ_int <= timer2ctrl_int(27);
+                                    timer2stat_int(7) <= '1';
                                 end if;
                             -- 100 = edge aligned PWM
                             when "100" =>
@@ -1674,6 +1778,23 @@ begin
                                     timer2occ_int <= not timer2ctrl_int(27);
                                 else
                                     timer2occ_int <= timer2ctrl_int(27);
+                                end if;
+                                if timer2cntr_int = std_logic_vector(unsigned(timer2cmpcshadow_int)-1) then
+                                    timer2stat_int(7) <= '1';
+                                end if;
+                            -- 110 - positive edge detected
+                            when "110" =>
+                                if timer2iccsync_int(2 downto 1) = "01" then
+                                    -- Copy CNTR to CMPC register and raise interrupt
+                                    timer2cmpc_int <= timer2cntr_int;
+                                    timer2stat_int(7) <= '1';
+                                end if;
+                            -- 111 - negative edge detected
+                            when "111" =>
+                                if timer2iccsync_int(2 downto 1) = "10" then
+                                    -- Copy CNTR to CMPC register and raise interrupt
+                                    timer2cmpc_int <= timer2cntr_int;
+                                    timer2stat_int(7) <= '1';
                                 end if;
                             when others => timer2occ_int <= '-';
                         end case;
@@ -1695,11 +1816,27 @@ begin
                 timer2cmpcshadow_int(31 downto 16) <= (others => '0');
             end if;
         end process;
+        -- Generate Output Enabled
+        timer2ocaen_int <= '1' when timer2ctrl_int(18 downto 16) = "001" or
+                                    timer2ctrl_int(18 downto 16) = "010" or
+                                    timer2ctrl_int(18 downto 16) = "011" or
+                                    timer2ctrl_int(18 downto 16) = "100"
+                               else '0';
+        timer2ocben_int <= '1' when timer2ctrl_int(22 downto 20) = "001" or
+                                    timer2ctrl_int(22 downto 20) = "010" or
+                                    timer2ctrl_int(22 downto 20) = "011" or
+                                    timer2ctrl_int(22 downto 20) = "100"
+                               else '0';
+        timer2occen_int <= '1' when timer2ctrl_int(26 downto 24) = "001" or
+                                    timer2ctrl_int(26 downto 24) = "010" or
+                                    timer2ctrl_int(26 downto 24) = "011" or
+                                    timer2ctrl_int(26 downto 24) = "100"
+                               else '0';
         -- Output the Output Compare match
         O_timer2oct <= timer2oct_int;
-        O_timer2oca <= timer2oca_int;
-        O_timer2ocb <= timer2ocb_int;
-        O_timer2occ <= timer2occ_int;
+        IO_timer2icoca <= timer2oca_int when timer2ocaen_int = '1' else 'Z';
+        IO_timer2icocb <= timer2ocb_int when timer2ocben_int = '1' else 'Z';
+        IO_timer2icocc <= timer2occ_int when timer2occen_int = '1' else 'Z';
     end generate;
     timer2gen_not : if not HAVE_TIMER2 generate
         timer2ctrl_int <= (others => '0');
@@ -1711,9 +1848,9 @@ begin
         timer2cmpb_int <= (others => '0');
         timer2cmpc_int <= (others => '0');
         O_timer2oct <= 'Z';
-        O_timer2oca <= 'Z';
-        O_timer2ocb <= 'Z';
-        O_timer2occ <= 'Z';
+        IO_timer2icoca <= 'Z';
+        IO_timer2icocb <= 'Z';
+        IO_timer2icocc <= 'Z';
    end generate;
 
     --
