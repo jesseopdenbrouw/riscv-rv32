@@ -70,9 +70,9 @@ entity riscv is
           I_spi2miso : in std_logic;
           -- TIMER2
           O_timer2oct : out std_logic;
-          O_timer2oca : out std_logic;
-          O_timer2ocb : out std_logic;
-          O_timer2occ : out std_logic
+          IO_timer2icoca : inout std_logic;
+          IO_timer2icocb : inout std_logic;
+          IO_timer2icocc : inout std_logic
          );
 end entity riscv;
 
@@ -224,9 +224,9 @@ component io is
           I_spi2miso : in std_logic;
           -- TIMER2
           O_timer2oct : out std_logic;
-          O_timer2oca : out std_logic;
-          O_timer2ocb : out std_logic;
-          O_timer2occ : out std_logic;
+          IO_timer2icoca : inout std_logic;
+          IO_timer2icocb : inout std_logic;
+          IO_timer2icocc : inout std_logic;
           -- TIME and TIMEH
           O_mtime : out data_type;
           O_mtimeh : out data_type;
@@ -535,9 +535,9 @@ begin
               I_spi2miso => I_spi2miso,
               -- TIMER2
               O_timer2oct => O_timer2oct,
-              O_timer2oca => O_timer2oca,
-              O_timer2ocb => O_timer2ocb,
-              O_timer2occ => O_timer2occ,
+              IO_timer2icoca => IO_timer2icoca,
+              IO_timer2icocb => IO_timer2icocb,
+              IO_timer2icocc => IO_timer2icocc,
               -- MTIME/MTIMEH
               O_mtime => time_int,
               O_mtimeh => timeh_int,
