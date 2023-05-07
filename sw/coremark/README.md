@@ -17,16 +17,15 @@ To build the executable for a certain CPU configuration and a certain optimizati
 
 `> make EFFORT=-Ofast clean all`
 
+# Scores
+
+The current design has a Coremark speed of 2.22 coremarks/MHz with an average CPI of 1.53.
 
 # Running
 
-Upload the generated executable `coremark.srec` with the `upload` program: `make upload`
+Upload the generated executable `coremark.srec` with the `upload` program: `make upload` using `-O3` optimzation.
 
 ```
-THUAS RISC-V Bootloader v0.4
-Clock frequency: 50000000
-**********
-
 THUASRV32: starting CoreMark
 THUASRV32: Processor running at 50000000 Hz
 THUASRV32: Executing coremark (4000 iterations). This may take some time...
@@ -34,8 +33,8 @@ THUASRV32: Executing coremark (4000 iterations). This may take some time...
 2K performance run parameters for coremark.
 CoreMark Size    : 666
 Total ticks      : 1806326 k
-Total time (secs): 36
-Iterations/Sec   : 111
+Total time (secs): 36.000000
+Iterations/Sec   : 111.111111
 Iterations       : 4000
 Compiler version : GCC12.2.0
 Compiler flags   : see makefile
@@ -46,7 +45,8 @@ seedcrc          : 0xe9f5
 [0]crcstate      : 0x8e3a
 [0]crcfinal      : 0x65c5
 Correct operation validated. See README.md for run and reporting rules.
-THUASRV32: Executed instructions: 1180857655
+CoreMark 1.0 : 111.111111 / GCC12.2.0 see makefile / STATIC
+THUASRV32: Executed instructions: 1180857656
 THUASRV32: CoreMark core clock cycles: 1806326068
 THUASRV32: Avg CPI: 1.529673 clock/instr
 THUASRV32: Avg IPC: 0.653734 instr/clock
