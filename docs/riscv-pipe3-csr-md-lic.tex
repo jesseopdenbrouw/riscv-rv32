@@ -471,26 +471,26 @@ The used Cyclone V is the 5CEBA4F23C7 which has 18480 ALMs available. It has 308
 \label{fig:image-de0-cv}
 \end{figure}
 
-Disabling the bootloader saves one copy of the ROM and the bootloader ROM. Then the used RAM is 786,432 bits (25\,\%). Disabling registers in RAM saves 2048 bits, but increases the ALM count.
+Disabling the bootloader saves one copy of the ROM and the bootloader ROM. Then the used RAM is 786,432 bits (25\,\%). Disabling registers in RAM saves 2048 bits, but increases the ALM count. You may see some warnings from the synthesizer.
 
 It is possible to add the Quartus' Signal Tap (embedded) Logic Analyzer. Follow the instructions on \url{https://people.ece.cornell.edu/land/courses/ece5760/Quartus/Signal_tap.html}. Note that the Signal Tap uses onboard memory.
 
 To find the best compilation result for speed and/or area, we have to tweak the compiler setting for the synthesizer and the fitter. Best is to do a design space exploration, and randomize the seed. Tweaking the seed may show a difference of 5\,MHz on the clock speed.
 
-%Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed is set to 1 and the optimization is set to balanced. The total amount of ALMs is 18480. The total amount of RAM bits is 3153920.
-%
-%\begin{table}[!ht]
-%\caption{FPGA resource utilization.}
-%\label{tab:util}
-%\centering
-%\begin{tabular}{lllll}
-%\toprule
-%     & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
-%Freq & 81.47   & 80.52   & 80.50     & 80.35     \\
-%ALM  & 3392    & 2692    & 3417      & 2714      \\
-%RAM  & 786,432 & 788,480 & 1,343,488 & 1,345,536 \\ \bottomrule
-%\end{tabular}
-%\end{table}
+Table~\ref{tab:util} gives some estimates on the design. In all cases, the seed is set to 1 and the optimization is set to balanced. The total amount of ALMs is 18480. The total amount of RAM bits is 3153920.
+
+\begin{table}[!ht]
+\caption{FPGA resource utilization for the DE0-CV board.}
+\label{tab:util}
+\centering
+\begin{tabular}{lllll}
+\toprule
+     & \begin{tabular}[c]{@{}l@{}}no boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}no boot\\ reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ no reg in ram\end{tabular} & \begin{tabular}[c]{@{}l@{}}boot\\ reg in ram\end{tabular} \\ \midrule
+Freq & 77.97   & 73.07   & 78.25     & 76.13     \\
+ALM  & 3377    & 2735    & 3466      & 2739      \\
+RAM  & 786,432 & 788,480 & 1,343,488 & 1,345,536 \\ \bottomrule
+\end{tabular}
+\end{table}
 
 
 \section{Processor hardware}
@@ -1007,7 +1007,8 @@ Some examples are to be used in de simulator only, mainly to test functionality 
 \item \lstinline|string| -- some string functions. For simulations.
 \item \lstinline|testio| -- simple program that copies the input (switches) to the output (leds). Works on the board.
 \item \lstinline|timer1| -- a simple program that uses TIMER1 interrupt to generate a time base for an interrupt handler. Shows how to set up direct mode interrupts. Works on the board.
-\item \lstinline|timer2| -- Shows how use TIMER2's PWM and OC signals. Works on the board.
+\item \lstinline|timer2pwm| -- Shows how use TIMER2's PWM and Output Compare feature. Works on the board.
+\item \lstinline|timer2ic| -- Shows how use TIMER2's Input Capture feature. Works on the board.
 \item \lstinline|trig| -- some float trigonometry functions for float and double. Prints results to UART1. This is a big binary.
 \item \lstinline|upload| -- a Linux/PC program to upload an S-record file using the bootloader.
 \item \lstinline|uart_cpp| -- Simple C++ UART program. Makes use of a singleton design pattern. Works on the board.
