@@ -343,9 +343,9 @@ When a trap request is asserted, the trap vector is loaded in the next clock cyc
 
 \subsection{Address Decoder and Data Router}
 \label{sec:addressdecoderanddatarouter}
-The Address Decoder and Data Router routes reads and writes to the ROM, bootloader ROM (only reads), RAM and the I/O. The processor uses a 32-bit linear address space for ROM, RAM and I/O. In the default setting, ROM starts at address 0x00000000 and the length is 64 kB. The bootloader ROM starts at address 0x10000000 and the length is 4 kB. Unused ROM addresses return 0x0000000. The RAM starts at address 0x20000000 and length is 32 kB. The I/O starts at address 0xF0000000 and the length is 16 kB by default.
+The Address Decoder and Data Router routes reads and writes to the ROM, bootloader ROM (only reads), RAM and the I/O. The processor uses a 32-bit linear address space for ROM, RAM and I/O. The address space is divided in 16 parts of 256 MB each. In the default setting, ROM starts at address 0x00000000 and the length is 64 kB. The bootloader ROM starts at address 0x10000000 and the length is 4 kB. Unused ROM addresses return 0x0000000. The RAM starts at address 0x20000000 and length is 32 kB. The I/O starts at address 0xF0000000 and the length is 16 kB by default.
 
-When data is read, the data is collected from the accessed memory and put on an internal bus to the ALU. The ALU can perform sign extension (byte and half word accesses) if needed. Please note that reading data from the ROM, bootloader ROM, RAM and I/O requires two clock cycles.
+When data is read, the data is collected from the accessed memory and put on an internal bus to the ALU. The ALU can perform sign extension (byte and half word accesses) if needed. Please note that reading data from the ROM, bootloader ROM, RAM and I/O requires two clock cycles. Writing requires one clock cycle.
 
 Note that instructions can only be fetched from ROM and boot ROM.
 
@@ -447,7 +447,7 @@ UART1 can transmit and receive data at 7, 8 or 9 bits, no/even/odd parity and 1 
 
 TIMER1 has a 32-bit count register and increments on every clock cycle. It does not have a prescaler. It counts up to compare match T register, after which is will be loaded with 0 again. A compare match (local) interrupt is provided (one vector). Whenever the timer count register is greater than or equal to the compare match T register, an interrupt request is asserted in the next clock cycle. The interrupt request has to be negated by software. A value of 0 in the compare match T register is valid: the counter does not count, but the compare match (local) interrupt is asserted.
 
-TIMER2 has a 16-bit count register and a 16-bit prescaler, and increments on every clock cycle. It counts up to compare match T register, after which is will be loaded with 0 again. Compare match (local) interrupts are provided (one vector). Whenever the timer count register is greater than or equal to the compare match T register, an interrupt request is asserted. The interrupt request has to be negated by software. The timer provides three more compare registers (A, B, C). Whenever the timer count register is greater than or equal to a compare register (A, B, C) the respective interrupt request is asserted. The interrupt requests have to be negated by software. A value of 0 in the compare match T register is valid: the counter does not count, but the compare match T (local) interrupt is asserted and the compare match interrupts (A, B, C) are asserted whenever the respective compare match register is 0. The prescaler is always preloaded: if the timer is off, the shadow prescaler register is directly written, if the timer is running, the preload register is written and the shadow register is updated at the the next CMPT match. The CMPT/A/B/C registers may optionally use a preload register. If preload is off, the shadow registers are directly written, if preload is on, the preload registers are written and the shadow registers are updated at the next CMPT match.
+TIMER2 has a 16-bit count register and a 16-bit prescaler, and increments on every clock cycle. The counter can be used to generate signals (Output Compare/PWM) or detect incoming signal edges (Input Capture). When in output mode. the timer counts up to compare match T register, after which is will be loaded with 0 again. Compare match (local) interrupts are provided (one vector). Whenever the timer count register is greater than or equal to the compare match T register, an interrupt request is asserted. The interrupt request has to be negated by software. The timer provides three Channels with compare registers (A, B, C). Whenever the timer count register is greater than or equal to a compare register (A, B, C) the respective interrupt request is asserted. The interrupt requests have to be negated by software. A value of 0 in the compare match T register is valid: the counter does not count, but the compare match T (local) interrupt is asserted and the compare match interrupts (A, B, C) are asserted whenever the respective compare match register is 0. The prescaler is always preloaded: if the timer is off, the shadow prescaler register is directly written, if the timer is running, the preload register is written and the shadow register is updated at the the next CMPT match. The CMPT/A/B/C registers may optionally use a preload register. If preload is off, the shadow registers are directly written, if preload is on, the preload registers are written and the shadow registers are updated at the next CMPT match. In Input Compare mode, the Channels A, B and C can be selected to trigger on a positive or negative edge. When an edge is detected, the current value of CNTR is copied to the accompanying CMP$x$ register and the accompanying interrupt flag is asserted. Note that Channel T cannot be used for PWM and input capture. The input capture circuits use a two-stage synchronizer. 
 
 I2C1 is a minimal I\textsuperscript{2}C controller peripheral (master-only). It cannot react to clock stretching and lost arbitration, so only modern targets (slaves) can be connected in a one-master-only system. Both Standard mode (Sm) with a transmission speed of up to 100 kbps and Fast mode (Fm) with a transmission speed up to 400 kbps are implemented. Before sending the address byte, the send-start bit must be set and a START condition is send to the target when the address is written to the I2C1 data register. Before sending or receiving the last data byte, the send-stop bit must be set and a STOP condition is send to the target after the byte is send or received by the controller. The last byte received will not be acknowledged by the controller. When receiving intermediate bytes, the controller must acknowledge the reception with an ACK. This is controlled by the MACK bit in the control register. Sending a byte is straightforward: just write the byte to the data register. When receiving a byte, a dummy byte (data value of 0xff) must be send to the target. This way, the processor can create a pause in the transmission if needed. Note that the SCL line is kept low between byte transmissions. The baud rate prescaler must be loaded with the number of system clock cycles of \textbf{one-half} bit time minus~1 for Standard mode and \textbf{one-third} bit time minus~1 for Fast mode. Note that the prescaler is part of the control register CTRL and its value must be preserved when setting or clearing other bits. The SCL and SDA inputs are synchronized to the system clock using two 2-bit shift registers.
 
@@ -625,23 +625,23 @@ gpioapout[3]  & Y3       & LEDR3 \\
 gpioapout[2]  & W2       & LEDR2 \\
 gpioapout[1]  & AA1      & LEDR1 \\
 gpioapout[0]  & AA2      & LEDR0 \\
-uart1rxd  & N19      & GPIO\_0\_D15, UART1 receive \\
-uart1txd  & P19      & GPIO\_0\_D17, UART1 transmit  \\
+uart1rxd      & N19      & GPIO\_0\_D15, UART1 receive \\
+uart1txd      & P19      & GPIO\_0\_D17, UART1 transmit  \\
 %uart2rxd  & T20      & GPIO\_0\_D31, UART2 receive \\
 %uart2txd  & T18      & GPIO\_0\_D33, UART2 transmit  \\
-timer2oct & N21      & GPIO\_0\_D10, output compare T \\
-timer2oca & R21      & GPIO\_0\_D12, output compare/PWM A \\
-timer2ocb & N20      & GPIO\_0\_D14, output compare/PWM B \\
-timer2occ & M22      & GPIO\_0\_D16, output compare/PWM C \\
-spi1sck   & K19      & GPIO\_0\_D26, SPI1 clock \\
-spi1mosi  & R16      & GPIO\_0\_D28, SPI1 MOSI \\
-spi1miso  & R16      & GPIO\_0\_D30, SPI1 MISO \\
-spi1nss   & T19      & GPIO\_0\_D32, SPI1 hardware NSS \\
-spi2sck   & H11      & SDCLOCK, SPI2 clock \\
-spi2mosi  & B11      & SDCMD, SPI2 MOSI \\
-spi2miso  & K9       & SDDAT0, SPI2 MISO \\
-i2c1scl   & B16      & GPIO\_0\_D1, I2C1 SCL \\
-i2c1sda   & C16      & GPIO\_0\_D3, I2C1 SDA
+timer2oct     & N21      & GPIO\_0\_D10, output compare T \\
+timer2icoca   & R21      & GPIO\_0\_D12, output compare/PWM/input capture A \\
+timer2icocb   & N20      & GPIO\_0\_D14, output compare/PWM/input capture B \\
+timer2icocc   & M22      & GPIO\_0\_D16, output compare/PWM/input capture C \\
+spi1sck       & K19      & GPIO\_0\_D26, SPI1 clock \\
+spi1mosi      & R16      & GPIO\_0\_D28, SPI1 MOSI \\
+spi1miso      & R16      & GPIO\_0\_D30, SPI1 MISO \\
+spi1nss       & T19      & GPIO\_0\_D32, SPI1 hardware NSS \\
+spi2sck       & H11      & SDCLOCK, SPI2 clock \\
+spi2mosi      & B11      & SDCMD, SPI2 MOSI \\
+spi2miso      & K9       & SDDAT0, SPI2 MISO \\
+i2c1scl       & B16      & GPIO\_0\_D1, I2C1 SCL \\
+i2c1sda       & C16      & GPIO\_0\_D3, I2C1 SDA
 \end{longtable}
 
 Some pins are connected to the onboard GPIO headers. The DE0-CV board has two headers but currently only GPIO 0 is used. See Figure~\ref{fig:de0-cv-gpio}.
@@ -1064,6 +1064,7 @@ Note: uninitialized ROM contents are emitted as don't care, except when the \lst
 %\lstinline|<address>| and \lstinline|<data>| in hexadecimal and Big Endian format. For ROM and RAM read accesses, best set to Little Endian. For I/O accesses, set Big Endian. Make sure to read and write I/O as words. Note that ROM cannot be written.
 
 \section{Address ranges and memory sizes}
+The processor uses a 32-bit linear address space (4 GB) and is divided in 16 blocks of 256 MB each. The top four bits (31 to 28) select a block while the remaining bits select the address within a block.
 By default, the ROM starts at address 0x00000000 and and has a size of 64 kB (16 k words). The Program Counter then starts at 0x00000000. The bootloader ROM starts at address 0x10000000 and has a size of 4 kB (1 k words). The Program Counter then starts at address 0x10000000. The RAM starts at address 0x20000000 and has a size of 32 kB (8 k words). The stack pointer is set to one address above the last RAM byte, by default at 0x20008000. The I/O starts at address 0xF0000000 and has a size of 16 kB (4 k words).
 
 The ROM, bootloader ROM, RAM and I/O may be moved to another start location. The Program Counter is started at the correct address. The placement of the ROM is in 256 MB intervals, which are the 4 most significant bits of a 32-bit address. The same holds for the RAM and the I/O. To move the ROM, open file \lstinline|processor_common.vhd| and go down to the end of the file. There you will see the following lines:
@@ -1545,9 +1546,9 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 \regfield{PIN}{32}{0}{{0}}% READ_ONLY
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.6\textwidth]\begin{reglist}[000000000]
+\begin{regdesc}[0.6\textwidth]\begin{reglist}[000000]
 \itemsep-1.5ex
-\item[Note:] This I/O register can only be read.
+\item[Note:] This I/O register can only be read. Writes are ignored.
 \end{reglist}\end{regdesc}
 
 \begin{register}{H}{Port A output register GPIOA\_POUT}{0x04}%
@@ -1555,7 +1556,7 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 \regfield{POUT}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
-\begin{regdesc}[0.6\textwidth]\begin{reglist}[000000000]
+\begin{regdesc}[0.6\textwidth]\begin{reglist}[000000]
 \itemsep-1.5ex
 \item[Write] The data is written to the output pins.
 \item[Read] The last entered data is read back.
@@ -1886,7 +1887,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 \end{reglist}\end{regdesc}
 
 \subsection{TIMER2 -- a more elaborate timer}
-General purpose 16-bit timer with Output Compare and PWM generation capabilities, preload and interrupts.
+General purpose 16-bit timer with Output Compare, PWM generation and Input Capture capabilities, preload and interrupts.
 
 \begin{register}{H}{TIMER2 control register TIMER2\_CTRL}{0x90}
 \label{timer2ctrl}
@@ -1934,9 +1935,9 @@ General purpose 16-bit timer with Output Compare and PWM generation capabilities
 \item[PREB] Enable compare register B preload.
 \item[PREA] Enable compare register A preload.
 \item[PRET] Enable compare register T preload.
-\item[CIE] Timer compare match C interrupt enable
-\item[BIE] Timer compare match B interrupt enable
-\item[AIE] Timer compare match A interrupt enable
+\item[CIE] Timer compare match/input capture C interrupt enable
+\item[BIE] Timer compare match/input capture B interrupt enable
+\item[AIE] Timer compare match/input capture A interrupt enable
 \item[TIE] Timer compare match T interrupt enable
 \item[OS] One-shot mode
 \item[EN] Enable the timer
@@ -1949,13 +1950,13 @@ If none of the FOC$x$ bits are 1, MODET and MODEA/B/C have the following meaning
 \item[010] Set high on compare match
 \item[011] Set low on compare match
 \item[100] Edge-aligned PWM (only A/B/C, for T not allowed)
-\item[101] not allowed
-\item[110] not allowed
-\item[111] not allowed
+\item[101] reserved
+\item[110] Input capture positive edge (only A/B/C, for T not allowed)
+\item[111] Input capture negative edge (only A/B/C, for T not allowed)
 \end{description}
 If at least one of the FOC$x$ bits is 1, MODET and MODEA/B/C have the following meaning:
 \begin{description}\itemsep-7pt
-\item[000] not allowed
+\item[000] Not used
 \item[001] Toggle output compare
 \item[010] Set high output compare
 \item[011] Set low output compare
@@ -1978,9 +1979,9 @@ In this case, the CTRL register is not written and keeps its original setting.
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
 \itemsep-1.5ex
-\item[CCI] Timer compare match A interrupt. Set to 1 on compare match between the timer Count register and the Compare Match C register. Must be cleared by software by writing a 0.
-\item[BCI] Timer compare match A interrupt. Set to 1 on compare match between the timer Count register and the Compare Match B register. Must be cleared by software by writing a 0.
-\item[ACI] Timer compare match A interrupt. Set to 1 on compare match between the timer Count register and the Compare Match A register. Must be cleared by software by writing a 0.
+\item[CCI] Timer compare match A interrupt. Set to 1 on compare match between the timer Count register and the Compare Match C register. Set on input capture on detecting selected edge. Must be cleared by software by writing a 0.
+\item[BCI] Timer compare match A interrupt. Set to 1 on compare match between the timer Count register and the Compare Match B register. Set on input capture on detecting selected edge. Must be cleared by software by writing a 0.
+\item[ACI] Timer compare match A interrupt. Set to 1 on compare match between the timer Count register and the Compare Match A register. Set on input capture on detecting selected edge. Must be cleared by software by writing a 0.
 \item[TCI] Timer compare match T interrupt. Set to 1 on compare match between the timer Count register and the Compare Match T register. Must be cleared by software by writing a 0.
 \end{reglist}\end{regdesc}
 
@@ -2025,7 +2026,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
-\item[CMPA] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPA, the ACI flag will be set in the next clock cycle.
+\item[CMPA] For Output Compare: This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPA, the ACI flag will be set in the next clock cycle. For Input Capture: The value of CNTR is copied to CMPA on detecting the selected edge, and the ACI flag is set.
 \end{reglist}\end{regdesc}
 
 \begin{register}{H}{TIMER2 compare timer B register TIMER2\_CMPB}{0xa8}
@@ -2036,7 +2037,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
-\item[CMPB] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPB, the BCI flag will be set in the next clock cycle.
+\item[CMPB] For Output Compare: This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPB, the BCI flag will be set in the next clock cycle. For Input Capture: The value of CNTR is copied to CMPB on detecting the selected edge, and the BCI flag is set.
 \end{reglist}\end{regdesc}
 
 \begin{register}{H}{TIMER2 compare timer C register TIMER2\_CMPC}{0xac}
@@ -2047,7 +2048,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
 \itemsep-1.5ex
-\item[CMPC] This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPC, the CCI flag will be set in the next clock cycle.
+\item[CMPC] For Output Compare: This register holds the value at which the Count register is compared. On CNTR compares to greater than or equal to CMPC, the CCI flag will be set in the next clock cycle. For Input Capture: The value of CNTR is copied to CMPC on detecting the selected edge, and the CCI flag is set.
 \end{reglist}\end{regdesc}
 
 \subsection{TIME -- RISC-V system timer}
