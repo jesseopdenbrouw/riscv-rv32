@@ -73,7 +73,7 @@ int main(void)
 			uart1_puts(buffer);
 		}
 
-		for (volatile uint32_t i = 0; i < 5000000; i++);
+		delayms(1000);
 	}
 }
 
