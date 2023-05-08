@@ -20,7 +20,10 @@
 
 void delayms(uint32_t delay)
 {
-	const static uint32_t prems = F_CPU/4000UL+1UL;
+	uint32_t speed = csr_read(0xfc1);
+	speed = (speed == 0) ? F_CPU : speed;
+
+	uint32_t prems = speed/4000UL+1UL;
 	uint32_t ms = delay*prems;
 
 	asm volatile ("   mv t0, %[ms];"
