@@ -95,9 +95,9 @@ add wave -divider "Outputs"
 add wave -radix hex -label gpioapout gpioapout
 add wave -radix hex -label uart1txd uart1txd
 add wave            -label timer2oct timer2oct
-add wave            -label timer2oca timer2oca
-add wave            -label timer2ocb timer2ocb
-add wave            -label timer2occ timer2occ
+add wave            -label timer2icoca timer2icoca
+add wave            -label timer2icocb timer2icocb
+add wave            -label timer2icocc timer2icocc
 --add wave -radix hex -label O_pc_to_mepc dut/pc_to_mepc_int
 add wave -divider "Core - Inputs & Outputs"
 add wave            -label I_interrupts_request dut/core0/I_interrupt_request

@@ -70,9 +70,9 @@ component riscv is
           I_spi2miso : in std_logic;
           -- TIMER2
           O_timer2oct : out std_logic;
-          O_timer2oca : out std_logic;
-          O_timer2ocb : out std_logic;
-          O_timer2occ : out std_logic
+          IO_timer2icoca : inout std_logic;
+          IO_timer2icocb : inout std_logic;
+          IO_timer2icocc : inout std_logic
          );
 end component riscv;
 
@@ -82,9 +82,9 @@ signal gpioapin : data_type;
 signal gpioapout : data_type;
 signal uart1txd, uart1rxd : std_logic;
 signal timer2oct : std_logic;
-signal timer2oca : std_logic;
-signal timer2ocb : std_logic;
-signal timer2occ : std_logic;
+signal timer2icoca : std_logic;
+signal timer2icocb : std_logic;
+signal timer2icocc : std_logic;
 signal spi1sck : std_logic;
 signal spi1mosi : std_logic;
 signal spi1miso : std_logic;
@@ -120,9 +120,9 @@ begin
               O_spi2mosi => spi2mosi,
               I_spi2miso => spi2miso,
               O_timer2oct => timer2oct,
-              O_timer2oca => timer2oca,
-              O_timer2ocb => timer2ocb,
-              O_timer2occ => timer2occ
+              IO_timer2icoca => timer2icoca,
+              IO_timer2icocb => timer2icocb,
+              IO_timer2icocc => timer2icocc
              );
     
     -- Generate a symmetric clock signal, 50 MHz
