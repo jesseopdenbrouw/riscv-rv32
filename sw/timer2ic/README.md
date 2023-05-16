@@ -14,7 +14,7 @@ Channel C is off
 
 ## Note
 
-Tested with a signal period of 1 ms to 10 ms.
+Tested with a square wave signal period of 1 ms to 10 ms.
 
 ## Status
 

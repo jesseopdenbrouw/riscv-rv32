@@ -24,7 +24,7 @@ CSR accesses take 1 clock cycle.
 Jumps/calls/branches taken require 3 clock cycles, the
 processor does not implement branch prediction. Interrupts
 are direct or vectored. Current Coremark testbench shows
-a CPI of 1.53.
+a CPI of 1.53 and a throughput of 2.22 coremark/MHz.
 
 Software is written in C, (C++ is supported but there are
 some limitations) and compiled using the RISC-V GNU C/C++
