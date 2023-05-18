@@ -17,13 +17,15 @@ To build the executable for a certain CPU configuration and a certain optimizati
 
 `> make EFFORT=-Ofast clean all`
 
+Default `EFFORT` is `-O3`.
+
 # Scores
 
 The current design has a Coremark speed of 2.22 coremarks/MHz with an average CPI of 1.53.
 
 # Running
 
-Upload the generated executable `coremark.srec` with the `upload` program: `make upload` using `-O3` optimzation.
+Upload the generated executable `coremark.srec` with the `upload` program: `make upload`.
 
 ```
 THUASRV32: starting CoreMark
