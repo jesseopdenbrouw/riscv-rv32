@@ -53,8 +53,6 @@
 #define BAUD_RATE (115200UL)
 #endif
 
-#ifdef RUN_FREERTOS_DEMO
-
 #include <stdint.h>
 
 /* FreeRTOS kernel includes. */
@@ -259,16 +257,3 @@ void SystemIrqHandler( uint32_t mcause )
 	uart1_puts( "\r\n" );
 }
 
-// ---------- Primitive main in case this demo is not enabled (i.e. RUN_FREERTOS_DEMO is not defined) ----------
-#else
-    #warning FREERTOS DEMO HAS NOT BEEN COMPILED! Use >>make USER_FLAGS+=-DRUN_FREERTOS_DEMO clean_all exe<< to compile it.
-
-#include <thuasrv32.h>
-int main() {
-
-    /* setup UART at default baud rate, no interrupts */
-    uart1_init( BAUD_RATE, UART_CTRL_NONE );
-    uart1_puts( "ERROR! FreeRTOS has not been compiled. Use >>make USER_FLAGS+=-DRUN_FREERTOS_DEMO clean_all exe<< to compile it.\r\n" );
-    return 1;
-}
-#endif
