@@ -37,7 +37,9 @@
 -- The I/O consists of:
 -- A single 32 bits input register and a single 32 bit output
 -- register. There is no data direction register. This may be
--- updated in the future.
+-- updated in the future. A simple external input interrupt is
+-- provided, selecting one of the 32 inputs and rising/falling/both
+-- edges.
 -- One UART with 7/8/9 data bits, N/E/O parity and 1/2 stop
 -- bits. Several UART flags are available: transmit complete,
 -- receive complete, parity error, receive failed and framing
@@ -128,9 +130,14 @@ signal write_access_granted : std_logic;
 -- Port input and output
 constant gpioapin_addr : integer := 0;   -- 0x00.b
 constant gpioapout_addr : integer := 1;  -- 0x04.b
+constant gpioaextc_addr : integer := 6;  -- 0x18.b
+constant gpioaexts_addr : integer := 7;  -- 0x1c.b
 alias gpioapin_int : data_type is io(gpioapin_addr);
 alias gpioapout_int : data_type is io(gpioapout_addr);
+alias gpioaextc_int : data_type is io(gpioaextc_addr);
+alias gpioaexts_int : data_type is io(gpioaexts_addr);
 signal gpioapin_sync : data_type;
+signal gpioaext_sync : std_logic_vector(2 downto 0);
 
 -- registers 2 - 7 not used -- reserved
 
@@ -342,6 +349,8 @@ begin
                 case reg_int is
                     when gpioapin_addr   => O_dataout <= gpioapin_int;
                     when gpioapout_addr  => O_dataout <= gpioapout_int;
+                    when gpioaextc_addr  => O_dataout <= gpioaextc_int;
+                    when gpioaexts_addr  => O_dataout <= gpioaexts_int;
                     when uart1ctrl_addr  => O_dataout <= uart1ctrl_int;
                     when uart1stat_addr  => O_dataout <= uart1stat_int;
                     when uart1data_addr  => O_dataout <= uart1data_int;
@@ -387,11 +396,16 @@ begin
             gpioapin_int <= (others => '0');
             gpioapout_int <= (others => '0');
             gpioapin_sync <= (others => '0');
+            gpioaextc_int <= (others => '0');
+            gpioaexts_int <= (others => '0');
+            gpioaext_sync <= (others => '0');
         elsif rising_edge(I_clk) then
             -- Read data in from outside world
             -- Synchronizer register
             gpioapin_sync <= I_gpioapin; 
             gpioapin_int <= gpioapin_sync;
+            -- External interrupt
+            gpioaext_sync <= gpioaext_sync(1 downto 0) & I_gpioapin(to_integer(unsigned(gpioaextc_int(7 downto 3))));
             -- Only write to I/O when write is enabled AND size is word
             -- Only write to the outputs, not the inputs
             -- Only write if on 4-byte boundary
@@ -399,7 +413,16 @@ begin
             if write_access_granted = '1' then
                 if reg_int = gpioapout_addr then
                     gpioapout_int <= I_datain;
+                elsif reg_int = gpioaextc_addr then
+                    gpioaextc_int <= I_datain;
+                elsif reg_int = gpioaexts_addr then
+                    gpioaexts_int <= I_datain;
                 end if;
+            end if;
+            -- Detect rising edge or falling edge or both
+            if (gpioaextc_int(1) = '1' and gpioaext_sync(2) = '0' and gpioaext_sync(1) = '1') or
+               (gpioaextc_int(2) = '1' and gpioaext_sync(2) = '1' and gpioaext_sync(1) = '0') then
+                gpioaexts_int(0) <= '1';
             end if;
         end if;
     end process;
@@ -1934,8 +1957,7 @@ begin
                              (uart1stat_int(2) = '1' and uart1ctrl_int(6) = '1') else '0';
     -- TIMER1 compare match interrupt
     O_intrio(17) <= '1' when timer1ctrl_int(4) = '1' and timer1stat_int(4) = '1' else '0';
-    -- This next interrupt is for testing only, will be removed
-    O_intrio(16) <= '1' when gpioapin_int(0) = '1' else '0';    
-    
+    -- EXTI external input interrupt
+    O_intrio(16) <= '1' when gpioaexts_int(0) = '1' else '0';
     
 end architecture rtl;
