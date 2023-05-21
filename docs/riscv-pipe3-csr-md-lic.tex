@@ -404,7 +404,7 @@ Writing read-only registers causes an illegal instruction trap. Accessing a non-
 \subsection{Local Interrupt Control unit}
 The Local Interrupt Controller is responsible for selecting which trap request must be serviced by the core. Interrupts have higher priority than exceptions. The state of the serviced trap is visible in the CSR.
 
-The LIC can handle 16 local interrupts (numbered 16 to 31) and the Machine mode external timer interrupt (numbered 7). Other standard RISC-V interrupts (numbered 0 to 6 and 8 to 15) are not available. SPI1 has the highest priority, followed (currently) by the I2C1, TIMER2, UART1 and TIMER1 and external system timer interrupts. Interrupts have higher priority then exceptions.
+The LIC can handle 16 local interrupts (numbered 16 to 31) and the Machine mode external timer interrupt (numbered 7). Other standard RISC-V interrupts (numbered 0 to 6 and 8 to 15) are not available. SPI1 has the highest priority, followed (currently) by the I2C1, TIMER2, UART1, TIMER1, EXTI external input interrupt and external system timer interrupts. Interrupts have higher priority then exceptions.
 
 Exceptions are handled as set forward in Table 3.7 of ``The RISC-V Instruction Set Manual, Volume II: Privileged Architecture'': instruction access fault, instruction address misaligned, ECALL (M mode only), EBREAK, load/store address misaligned, load/store access fault. Note that ECALL and EBREAK are user instructions and can be interrupted by an interrupt (i.e. when the ECALL or EBREAK instruction is executing).
 
@@ -441,7 +441,7 @@ Reading the RAM (byte, half word, word) requires two clock cycles because the RA
 \label{sec/io}
 Currently, the I/O consists of one 32-bit data input and one 32-bit data output, a simple UART with interrupts, a simple timer with interrupt, a more elaborate timer with interrupt, an minimal I\textsuperscript{2}C peripheral with interrupt, a general purpose SPI peripheral with interrupt, a dedicated SPI peripheral for SD card access and the TIME and TIMEH memory mapped time registers with interrupt. Note that the I/O can only be accessed as words and the addresses must be on 4-byte boundaries. If not on a 4-byte boundaries or not word size reads/writes, reads return undefined data whereas writes will not write data. Unaligned accesses cause an exception. A read requires two clock cycles (the pipeline is stalled for one clock cycle), a write requires one clock cycle. Note that not all I/O addresses are used.
 
-GPIOA has separate inputs and output, both 32 bits. This is because some FPGAs/synthesizers don't allow buried tri-state signals, i.e.\@ the tri-state action must be done in the top level entity. Because of that, there is no data direction register. Currently the inputs come from the slide switches and the push buttons. Note that KEY4 a.k.a.\@ FPGA\_RESET is connected to the reset of the processor. The outputs are connected to the 10 red leds and to the two least significant 7-segment displays. Also two output pins are connected to facilitate SPI software generated NSS signals.
+GPIOA has separate inputs and output, both 32 bits. This is because some FPGAs/synthesizers don't allow buried tri-state signals, i.e.\@ the tri-state action must be done in the top level entity. Because of that, there is no data direction register. Currently the inputs come from the slide switches and the push buttons. Note that KEY4 a.k.a.\@ FPGA\_RESET is connected to the reset of the processor. The outputs are connected to the 10 red leds and to the two least significant 7-segment displays. Also two output pins are connected to facilitate SPI software generated NSS signals. The GPIOA module is equipped with a pin input edge detector generating an interrupt is a rising and/or falling edge is detected.
 
 UART1 can transmit and receive data at 7, 8 or 9 bits, no/even/odd parity and 1 or 2 stop bits. Tested speeds are 9600 bps, 115200 bps and 230400 bps. Several status flags are implemented to guide transmission. Receive and transmitted character (local) interrupts are provided (one vector). These interrupt requests must be negated by software. UART1 does not provide hardware flow control.
 
@@ -1544,7 +1544,7 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 
 \begin{register}{H}{Port A input register GPIOA\_PIN}{0x00}%
 \label{pinx}%
-\regfield{PIN}{32}{0}{{0}}% READ_ONLY
+\regfield{PIN}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.6\textwidth]\begin{reglist}[000000]
@@ -1563,6 +1563,30 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 \item[Read] The last entered data is read back.
 \end{reglist}\end{regdesc}
 
+\begin{register}{H}{External input interrupt control register GPIOA\_EXTC}{0x18}%
+\label{extc}%
+\regfield{Reserved}{24}{8}{{0}}%
+\regfield{PIN}{5}{2}{{0}}%
+\regfield{EDGE}{3}{1}{{0}}%
+\regfield{Reserved}{1}{0}{{0}}
+\reglabel{Reset}\regnewline%
+\end{register}
+\begin{regdesc}[0.7\textwidth]\begin{reglist}[000000]
+\itemsep-1.5ex
+\item[PIN] Port pin number as input source.
+\item[EDGE] Edge selection: 00 = off, 01 = rising, 10 = falling, 11 = both. Must be cleared to reset the pending interrupt.
+\end{reglist}\end{regdesc}
+
+\begin{register}{H}{External input interrupt status register GPIOA\_EXTS}{0x1c}%
+\label{exts}%
+\regfield{Reserved}{31}{1}{{0}}%
+\regfield{DETECT}{1}{0}{{0}}
+\reglabel{Reset}\regnewline%
+\end{register}
+\begin{regdesc}[0.7\textwidth]\begin{reglist}[000000]
+\itemsep-1.5ex
+\item[DETECT] Edge detected.
+\end{reglist}\end{regdesc}
 
 \subsection{UART1 -- Universal Asynchronous Receiver/Transmitter}
 
@@ -1606,7 +1630,7 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 \regfield{PE}{1}{3}{{0}}%
 \regfield{RC}{1}{2}{{0}}%
 \regfield{RF}{1}{1}{{0}}%
-\regfield{FE}{1}{0}{{0}}%
+\regfield{FE}{1}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
@@ -1621,7 +1645,7 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 \begin{register}{H}{UART1 data register UART1\_DATA}{0x28}
 \label{uart1data}
 \regfield{Reserved}{22}{9}{{0}}%
-\regfield{Data}{9}{0}{{0}}%
+\regfield{Data}{9}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.6\textwidth]\begin{reglist}[000000000]
@@ -1634,7 +1658,7 @@ The default start address is 0xF0000000. The offset is given in bytes. Note that
 \begin{register}{H}{UART1 baud rate register UART1\_BAUD}{0x2c}
 \label{uart1baud}
 \regfield{Rerserved}{16}{16}{{0}}%
-\regfield{Prescaler}{16}{0}{{0}}%
+\regfield{Prescaler}{16}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.6\textwidth]\begin{reglist}[000000000]
@@ -1697,7 +1721,7 @@ Note: because of the 50\,MHz system frequency, the lowest I\textsuperscript{2}C 
 \begin{register}{H}{I2C1 data register I2C1\_DATA}{0x48}
 \label{i2c11data}
 \regfield{Reserved}{24}{8}{{0}}%
-\regfield{Data}{8}{0}{{0}}%
+\regfield{Data}{8}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
@@ -1756,7 +1780,7 @@ Note: because of the 50\,MHz system frequency, the lowest SPI clock frequency is
 \label{spi1stat}
 \regfield{Reserved}{28}{4}{{0}}%
 \regfield{TC}{1}{3}{{0}}%
-\regfield{Reserved}{3}{0}{{0}}%
+\regfield{Reserved}{3}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
@@ -1765,7 +1789,7 @@ Note: because of the 50\,MHz system frequency, the lowest SPI clock frequency is
 
 \begin{register}{H}{SPI1 data register SPI1\_DATA}{0x68}
 \label{spi1data}
-\regfield{Data}{32}{0}{{0}}%
+\regfield{Data}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
@@ -1818,7 +1842,7 @@ Note: because of the 50\,MHz system frequency, the lowest SPI clock frequency is
 \label{spi2stat}
 \regfield{Reserved}{28}{4}{{0}}%
 \regfield{TC}{1}{3}{{0}}%
-\regfield{Reserved}{3}{0}{{0}}%
+\regfield{Reserved}{3}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
@@ -1827,7 +1851,7 @@ Note: because of the 50\,MHz system frequency, the lowest SPI clock frequency is
 
 \begin{register}{H}{SPI2 data register SPI2\_DATA}{0x78}
 \label{spi2data}
-\regfield{Data}{32}{0}{{0}}%
+\regfield{Data}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
@@ -1846,7 +1870,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 \regfield{Reserved}{27}{5}{{0}}%
 \regfield{TIE}{1}{4}{{0}}%
 \regfield{Reserved}{3}{1}{{000}}%
-\regfield{EN}{1}{0}{{0}}%
+\regfield{EN}{1}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
@@ -1859,7 +1883,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 \label{timer1stat}
 \regfield{Reserved}{27}{5}{{0}}%
 \regfield{TCI}{1}{4}{{0}}%
-\regfield{Reserved}{4}{0}{{0000}}%
+\regfield{Reserved}{4}{0}{{0000}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
@@ -1869,7 +1893,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 
 \begin{register}{H}{TIMER1 count register TIMER1\_CNTR}{0x88}
 \label{timer1cntr}
-\regfield{CNTR}{32}{0}{{0}}%
+\regfield{CNTR}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -1879,7 +1903,7 @@ Simple 32-bit timer peripheral for time base generation, with interrupt.
 
 \begin{register}{H}{TIMER1 compare timer T register TIMER1\_CMPT}{0x8c}
 \label{timer1cmpt}
-\regfield{CMPT}{32}{0}{{0}}%
+\regfield{CMPT}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -1915,7 +1939,7 @@ General purpose 16-bit timer with Output Compare, PWM generation and Input Captu
 \regfield{TIE}{1}{4}{{0}}%
 \regfield{OS}{1}{3}{{0}}%
 \regfield{Reserved}{2}{1}{{00}}%
-\regfield{EN}{1}{0}{{0}}%
+\regfield{EN}{1}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000]
@@ -1951,7 +1975,7 @@ If none of the FOC$x$ bits are 1, MODET and MODEA/B/C have the following meaning
 \item[010] Set high on compare match
 \item[011] Set low on compare match
 \item[100] Edge-aligned PWM (only A/B/C, for T not allowed)
-\item[101] reserved
+\item[101] Reserved
 \item[110] Input capture positive edge (only A/B/C, for T not allowed)
 \item[111] Input capture negative edge (only A/B/C, for T not allowed)
 \end{description}
@@ -1975,7 +1999,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \regfield{BCI}{1}{6}{{0}}%
 \regfield{ACI}{1}{5}{{0}}%
 \regfield{TCI}{1}{4}{{0}}%
-\regfield{Reserved}{4}{0}{{0000}}%
+\regfield{Reserved}{4}{0}{{0000}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[0000]
@@ -2000,7 +2024,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \begin{register}{H}{TIMER2 compare timer T register TIMER2\_CMPT}{0x9c}
 \label{timer2cmpt}
 \regfield{Reserved}{16}{16}{{0}}%
-\regfield{CMPT}{16}{0}{{0}}%
+\regfield{CMPT}{16}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2011,7 +2035,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \begin{register}{H}{TIMER2 prescaler register TIMER2\_PRSC}{0xa0}
 \label{timer2prsc}
 \regfield{Reserved}{16}{16}{{0}}%
-\regfield{PSRC}{16}{0}{{0}}%
+\regfield{PSRC}{16}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2022,7 +2046,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \begin{register}{H}{TIMER2 compare timer A register TIMER2\_CMPA}{0xa4}
 \label{timer2cmpa}
 \regfield{Reserved}{16}{16}{{0}}%
-\regfield{CMPA}{16}{0}{{0}}%
+\regfield{CMPA}{16}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2033,7 +2057,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \begin{register}{H}{TIMER2 compare timer B register TIMER2\_CMPB}{0xa8}
 \label{timer2cmpb}
 \regfield{Reserved}{16}{16}{{0}}%
-\regfield{CMPB}{16}{0}{{0}}%
+\regfield{CMPB}{16}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2044,7 +2068,7 @@ In this case, the CTRL register is not written and keeps its original setting.
 \begin{register}{H}{TIMER2 compare timer C register TIMER2\_CMPC}{0xac}
 \label{timer2cmpc}
 \regfield{Reserved}{16}{16}{{0}}%
-\regfield{CMPC}{16}{0}{{0}}%
+\regfield{CMPC}{16}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2058,7 +2082,7 @@ Note: the external timer will assert a pending interrupt if TIMEH:TIME (viewed a
 
 \begin{register}{H}{TIME external timer register TIME}{0xf0}
 \label{time}
-\regfield{TIME}{32}{0}{{0}}%
+\regfield{TIME}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2068,7 +2092,7 @@ Note: the external timer will assert a pending interrupt if TIMEH:TIME (viewed a
 
 \begin{register}{H}{TIMEH external timer register TIME}{0xf4}
 \label{timeh}
-\regfield{TIMEH}{32}{0}{{0}}%
+\regfield{TIMEH}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000]
@@ -2078,7 +2102,7 @@ Note: the external timer will assert a pending interrupt if TIMEH:TIME (viewed a
 
 \begin{register}{H}{TIMECMP external timer compare register TIMECMP}{0xf8}
 \label{timecmp}
-\regfield{TIMECMP}{32}{0}{{0}}%
+\regfield{TIMECMP}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[00000000]
@@ -2088,7 +2112,7 @@ Note: the external timer will assert a pending interrupt if TIMEH:TIME (viewed a
 
 \begin{register}{H}{TIMECMPH external timer compare register TIMECMP}{0xfc}
 \label{timecmph}
-\regfield{TIMECMPH}{32}{0}{{0}}%
+\regfield{TIMECMPH}{32}{0}{{0}}
 \reglabel{Reset}\regnewline%
 \end{register}
 \begin{regdesc}[0.8\textwidth]\begin{reglist}[000000000]
