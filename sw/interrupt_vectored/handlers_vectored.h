@@ -24,4 +24,8 @@ void timer2_handler(void);
 void spi1_handler(void);
 /* I2C1 transmit and receive complete interrupt */
 void i2c1_handler(void);
+/* External input handler */
+void external_input_handler(void);
+/* Default handler */
+void default_handler(void);
 #endif

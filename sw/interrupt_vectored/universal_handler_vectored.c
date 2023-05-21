@@ -96,7 +96,7 @@ void handler_jump_table(void)
 	__asm__ volatile ("j default_handler;");
 
 	/* Next are the core local interrupts (16 max) */
-	__asm__ volatile ("j default_handler;");
+	__asm__ volatile ("j external_input_handler;");
 	__asm__ volatile ("j timer1_handler;");
 	__asm__ volatile ("j uart1_handler;");
 	__asm__ volatile ("j timer2_handler;");

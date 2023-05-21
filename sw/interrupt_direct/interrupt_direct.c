@@ -89,7 +89,9 @@ int main(int argc, char *argv[], char *envp[])
 	/* Activate I2C1 transmit/receive complete interrupt */
 	/* Standard mode, 100 kHz */
 	I2C1->CTRL = (((F_CPU/2UL/100000UL)-1) << 16) | (1 << 3);
-	
+
+	/* External input pin interrupt, pin 15, rising edge */	
+	GPIOA->EXTC = (15 << 3) | (1 << 1);
 
 	/* Enable RISC-V system timer IRQ */
 	enable_external_timer_irq();

@@ -97,7 +97,7 @@ char **environ = __env;
 #define TIMER2_IN_MCAUSE ((1<<31)+19)
 #define UART1_IN_MCAUSE ((1<<31)+18)
 #define TIMER1_IN_MCAUSE ((1<<31)+17)
-#define DEFAULT_IN_MCAUSE ((1<<31)+16)
+#define EXTI_IN_MCAUSE ((1<<31)+16)
 #define SYSTEM_TIMER_IN_MCAUSE ((1<<31)+7)
 
 /* User callable functions for writing and reading
@@ -205,9 +205,9 @@ void universal_handler_direct(void)
 	} else if (__mcause  == TIMER1_IN_MCAUSE) {
                 timer1_handler();
                 __asm__ volatile ("lw      x10,10*4(sp);" :::);
-	/* Default (test switch) interrupt */
-	} else if (__mcause  == DEFAULT_IN_MCAUSE) {
-                default_handler();
+	/* External input interrupt */
+	} else if (__mcause  == EXTI_IN_MCAUSE) {
+                external_input_handler();
                 __asm__ volatile ("lw      x10,10*4(sp);" :::);
 	/* Check the cause of the exeption/interrupt/trap */
 	} else if (__mcause == ECALL_IN_MCAUSE) {

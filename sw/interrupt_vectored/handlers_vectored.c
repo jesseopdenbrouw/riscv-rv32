@@ -155,3 +155,12 @@ void i2c1_handler(void)
 	GPIOA->POUT ^= 0x20;
 }
 
+/* External pin input interrupt handler */
+__attribute__ ((interrupt))
+void external_input_handler(void)
+{
+	/* Reset pending bit */
+	GPIOA->EXTS = 0x00;
+	/* Toggle output  bit 6 */
+	GPIOA->POUT ^= 0x40;
+}

@@ -143,3 +143,12 @@ void i2c1_handler(void)
 	/* Flip output bit 5 */
 	GPIOA->POUT ^= 0x20;
 }
+
+/* External input interrupt handler */
+void external_input_handler(void)
+{
+	/* Remove pending interrupt bit */
+	GPIOA->EXTS = 0x00;
+	/* Toggle output bit 6 */
+	GPIOA->POUT ^= 0x40;
+}

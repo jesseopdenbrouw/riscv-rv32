@@ -56,6 +56,9 @@ int main(int argc, char *argv[], char *envp[])
 	/* Standard mode, 100 kHz */
 	I2C1->CTRL = (((F_CPU/2UL/100000UL)-1) << 16) | (1 << 3);
 
+	/* External pin input interrupt, rising edge */
+	GPIOA->EXTC = (15 << 3) | (1 << 1);
+
 	/* Enable RISC-V system timer interrupt */
 	/* The system timer runs at 1 kHz */
 	enable_external_timer_irq();
