@@ -103,7 +103,7 @@ settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 * Test more functions of the standard and mathematical libraries.
 * It is not possible to print `long long` (i.e. 64-bit) using `printf` et al. When using the format specifier `%lld`, `printf` just prints `ld`. This due to lack of support in the `nano` library.
 * Further optimize the ALU for size and speed.
-* The `time` (TIMEH:TIME) registers are currently read only, but should be writable.
+* The `time` (TIMEH:TIME) registers are currently read only, but should be writable. We are considering this as an option.
 * Move CSR and LIC into the core.
 * Port of the processor to a Digilent Arty-S7/50 is in progress.
 * In the current version, `mepc` must be incremented by 4 in software to skip the instruction at the offending exception. This is in line with most designs.
