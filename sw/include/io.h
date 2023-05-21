@@ -23,6 +23,9 @@ extern "C" {
 typedef struct {
         volatile uint32_t PIN;
         volatile uint32_t POUT;
+		volatile uint32_t reserved[4];
+		volatile uint32_t EXTC;
+		volatile uint32_t EXTS;
 } GPIO_struct_t;
 
 #define GPIOA_BASE (IO_BASE+0x00000000UL)
@@ -30,6 +33,8 @@ typedef struct {
 
 #define GPIOA_PIN  (*(volatile uint32_t*)(GPIOA_BASE+0x00000000UL))
 #define GPIOA_POUT (*(volatile uint32_t*)(GPIOA_BASE+0x00000004UL))
+#define GPIOA_EXTC (*(volatile uint32_t*)(GPIOA_BASE+0x00000018UL))
+#define GPIOA_EXTS (*(volatile uint32_t*)(GPIOA_BASE+0x0000001cUL))
 
 
 /* UART1 */
