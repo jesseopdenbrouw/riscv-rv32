@@ -177,10 +177,10 @@ package processor_common is
                         
     -- The I/O
     -- NOTE: the I/O is word (32 bits) size, Big Endian
-    --       there is no need to recode the data
+    --       so there is no need to recode the data
     --       The I/O can only handle word size access
     --       Set io_size_bits as if it were bytes
-    -- Default 128 bytes data
+    -- Default 256 bytes data
     constant io_size_bits : integer := 8;
     constant io_size : integer := 2**(io_size_bits-2);
     type io_type is array (0 to io_size-1) of data_type;
