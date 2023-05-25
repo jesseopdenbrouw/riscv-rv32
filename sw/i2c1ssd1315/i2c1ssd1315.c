@@ -22,11 +22,11 @@
 
 #if FAST_MODE == 1
 /* Fast mode (Fm), 400 kHz */
-#define TRAN_SPEED I2C_PRESCALER_FM(F_CPU)
+#define TRAN_SPEED I2C_PRESCALER_FM(csr_read(0xfc1))
 #define FAST_MODE_BIT I2C_FAST_MODE
 #else
 /* Standard mode (Sm), 100 kHz */
-#define TRAN_SPEED I2C_PRESCALER_SM(F_CPU)
+#define TRAN_SPEED I2C_PRESCALER_SM(csr_read(0xfc1))
 #define FAST_MODE_BIT I2C_STANDARD_MODE
 #endif
 
