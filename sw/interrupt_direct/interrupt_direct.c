@@ -72,13 +72,13 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* Activate TIMER1 with a cycle of 1 Hz */
 	/* for a 50 MHz clock. Use interrupt. */
-	TIMER1->CMPT = F_CPU/2-1;
+	TIMER1->CMPT = csr_read(0xfc1)/2-1;
 	/* Bit 0 = enable, bit 4 is interrupt enable */
 	TIMER1->CTRL = (1<<4)|(1<<0);
 
 	/* Activate TIMER2 compare match T with a cycle of 0.5 Hz */
 	/* for a 50 MHz clock. Use interrupt. */
-	TIMER2->PRSC = F_CPU/10000-1;
+	TIMER2->PRSC = csr_read(0xfc1)/10000-1;
 	TIMER2->CMPT = 9999;
 	TIMER2->CTRL = (1<<4)|(1<<0);
 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* Activate I2C1 transmit/receive complete interrupt */
 	/* Standard mode, 100 kHz */
-	I2C1->CTRL = (((F_CPU/2UL/100000UL)-1) << 16) | (1 << 3);
+	I2C1->CTRL = I2C_PRESCALER_FM(csr_read(0xfc1)) | (1 << 3);
 
 	/* External input pin interrupt, pin 15, rising edge */	
 	GPIOA->EXTC = (15 << 3) | (1 << 1);
