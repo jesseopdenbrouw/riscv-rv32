@@ -29,7 +29,7 @@ int main(void)
 	uart1_puts("\r\nI2C1 find slaves\r\n");
 
 	/* Standard mode (Sm), 100 kHz */
-	i2c1_init(I2C_PRESCALER_SM(F_CPU));
+	i2c1_init(I2C_PRESCALER_SM(csr_read(0xfc1)));
 
 	for (uint32_t i = 0x01; i < 0x78; i++) {
 
