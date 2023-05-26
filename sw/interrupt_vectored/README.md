@@ -8,8 +8,7 @@ The TIMER1 interrupt is set to 100 Hz.
 The TIMER2 interrupt is set to 1 Hz
 SPI1 and I2C1 interrupts are triggered once in 10 sec, by executing a transmit action
 The UART receive interrupt is also active.
-
-The low switch of the DE0-CV board triggers a default handler, which holds the processor
+Button `KEY3` of the DE0-CV board is connected to the external input interrupt.
 
 ## Status
 
