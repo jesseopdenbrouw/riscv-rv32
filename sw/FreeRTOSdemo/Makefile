@@ -1,7 +1,6 @@
 # *****************************************************************************
 # USER CONFIGURATION
 # *****************************************************************************
-# User's application sources (*.c, *.cpp, *.s, *.S); add additional files here
 
 TARGET = main
 
@@ -14,13 +13,6 @@ ASM_INC ?= -I .
 
 # Optimization
 EFFORT ?= -Os
-
-# CPU architecture and ABI
-#MARCH ?= rv32im
-#MABI  ?= ilp32
-
-# User flags for additional configuration (will be added to compiler flags)
-#USER_FLAGS ?= RUN_FREERTOS_DEMO
 
 # Set to 0 to run the comprehensive demo, set to 1 to run the simply blinky demo
 WHICH_DEMO ?= mainCREATE_SIMPLE_BLINKY_DEMO_ONLY=0
