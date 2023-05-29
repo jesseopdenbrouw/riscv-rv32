@@ -25,6 +25,11 @@
 #define BAUD_RATE (9600UL)
 #endif
 
+union {
+	double x;
+	uint64_t y;
+} j;
+
 int main(void)
 {
 	char buffer[60];
@@ -35,10 +40,14 @@ int main(void)
 	volatile double y = 0.57;
 	volatile double k, l, m;
 
+	j.x = y;
 
 	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
 	uart1_puts("float and double calculations\r\n");
+
+	sprintf(buffer, "'0.57' = %.20f = %08lx%08lx\r\n", y, (uint32_t) (j.y>>32), (uint32_t) (j.y & 0xffffffff));
+	uart1_puts(buffer);
 
 	/* Record start time */
 	clock_t start = clock();
@@ -50,7 +59,7 @@ int main(void)
 
 	k = sin(y);
 	l = asin(y);
-	m = tan(w);
+	m = tan(y);
 
 	/* Record difference */
 	start = clock() - start;
@@ -66,13 +75,13 @@ int main(void)
 	uart1_puts(buffer);
 
 
-	sprintf(buffer, "sin(%.20f) = %.20f\r\n", w, k);
+	sprintf(buffer, "sin(%.20f) = %.20f\r\n", y, k);
 	uart1_puts(buffer);
 
-	sprintf(buffer, "asin(%.20f) = %.20f\r\n", w, l);
+	sprintf(buffer, "asin(%.20f) = %.20f\r\n", y, l);
 	uart1_puts(buffer);
 
-	sprintf(buffer, "tan(%.20f) = %.20f\r\n", w, m);
+	sprintf(buffer, "tan(%.20f) = %.20f\r\n", y, m);
 	uart1_puts(buffer);
 
 
