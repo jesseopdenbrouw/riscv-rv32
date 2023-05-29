@@ -33,7 +33,7 @@ Original Author: Shay Gal-on
 /************************/
 #include <thuasrv32.h>
 #define ITERATIONS (4000)
-#define FLAGS_STR  "see makefile" // compiler optimization
+#define FLAGS_STR  "-O3" // compiler optimization
 
 /************************/
 /* Data types and settings */
