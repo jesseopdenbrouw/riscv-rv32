@@ -14,20 +14,24 @@
 union {
 	double x;
 	unsigned long long int y;
-} t;
+} t, k;
+
+double x;
 
 int main(void) {
 
 
-	t.x = 0.57;
-	t.x = sin(t.x);
-	printf("%.16f = %016llx\n", t.x, t.y);
+	k.x = 0.57;
 
-	t.x = 0.57;
-	t.x = asin(t.x);
-	printf("%.16f = %016llx\n", t.x, t.y);
+	printf("0.57 = %.20f = %20llx\n", k.x, k.y);
 
-	t.x = 0.57;
-	t.x = tan(t.x);
-	printf("%.16f = %016llx\n", t.x, t.y);
+	t.x = sin(k.x);
+	printf("sin(%.20f) = %.20f = %020llx\n", k.x, t.x, t.y);
+
+	t.x = asin(k.x);
+	printf("asin(%.20f) = %.20f = %020llx\n", k.x, t.x, t.y);
+
+	x = 0.57;
+	t.x = tan(k.x);
+	printf("tan(%.20f) = %.20f = %020llx\n", k.x, t.x, t.y);
 }
