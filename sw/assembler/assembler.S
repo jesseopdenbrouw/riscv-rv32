@@ -16,7 +16,7 @@ _start:
 
 	la x9,handler
 	csrs mtvec,x9
-	csrsi mstatus,(0<<3)
+	csrsi mstatus,(1<<3)
 
 	nop
 	nop
