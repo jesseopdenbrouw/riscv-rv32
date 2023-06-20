@@ -23,27 +23,43 @@ _start:
 	nop
 	nop
 
+	# inhibit counters
 	li x3,-2
 	li x15,-1
-
-	nop
-	nop
 
 	csrrw x3,mcountinhibit,x15
 
 	nop
+
+	# setup posedge trigger on PINA0
+	la x10,0xf0000000
+	li x11,2
+	sw x11,0x18(x10)
+
+	# Set TF UART1 flag
+	sw x11,0x24(x10)
+
+	nop
 	nop
 	nop
 	nop
 
-	csrrw x3,time,x15
+	# Load UART1 STAT reg
+	lw x12,0x28(x10)
+
+	nop
+	nop
 	nop
 	nop
 	nop
 
 einde:	j einde
 
-handler: mret
+handler:
+	# Clear posedge trig'd flag
+	li x11,0
+	sw x11,0x1c(x10)
+	mret
 
 here:	 j here
 
