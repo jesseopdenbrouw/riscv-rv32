@@ -11,18 +11,19 @@ supports exceptions and interrupts. `ECALL`, `EBREAK`
 and `MRET` are supported. `WFI` acts as a no-operation
 (`NOP`). Currently only machine mode is supported. We
 successfully tested a complex program with interrupts
-and exceptions and implemented a basic syscall library usable
-with the `ECALL` instruction as provided by the GNU C
-compiler for RISC-V. `sbrk`, `read`, `write`, `times` and
+and exceptions and implemented a basic syscall library,
+both with the `ECALL` instruction and C functions overriding
+the C library functions. `sbrk`, `read`, `write`, `times` and
 `gettimeofday` are supported. The External (system) Timer
 is implemented and generates an interrupt if `time` >=
 `timecmp`. The processor can handle up to 16 fast local
 interrupts. Reads from ROM, RAM and I/O require 2 clock
-cycles. Writes require 1 clock cycles. Multiplications
-require 3 clock cycles, divisions require 16+2 clock cycles,
+cycles. Writes require 1 clock cycle. Multiplications
+require 3 clock cycles, divisions require 18 clock cycles,
 CSR accesses take 1 clock cycle.
 Jumps/calls/branches taken require 3 clock cycles, the
-processor does not implement branch prediction. Interrupts
+processor does not implement branch prediction. All other
+instructions require 1 clock cycle. Interrupts
 are direct or vectored. Current Coremark testbench shows
 a CPI of 1.53 and a throughput of 2.22 coremark/MHz.
 
