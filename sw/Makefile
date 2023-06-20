@@ -28,6 +28,7 @@ all:
 	$(MAKE) -C coremark all
 	$(MAKE) -C ctor_c all
 	$(MAKE) -C ctor_cpp all
+	$(MAKE) -C dhrystone all
 	$(MAKE) -C double all
 	$(MAKE) -C exp all
 	$(MAKE) -C fatfs all
@@ -85,6 +86,7 @@ clean:
 	$(MAKE) -C coremark clean
 	$(MAKE) -C ctor_c clean
 	$(MAKE) -C ctor_cpp clean
+	$(MAKE) -C dhrystone clean
 	$(MAKE) -C double clean
 	$(MAKE) -C exp clean
 	$(MAKE) -C fatfs clean
