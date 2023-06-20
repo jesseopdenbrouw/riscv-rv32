@@ -120,7 +120,13 @@ add wave -divider "Internals - Memory access"
 add wave            -label memaccess dut/memaccess_int
 add wave            -label memsize dut/memsize_int
 add wave            -label memaddress dut/memaddress_int
+add wave            -label memvma dut/memvma_int
 add wave            -label waitfordata dut/waitfordata_int
+add wave            -label read_access_granted dut/io0/read_access_granted
+add wave            -label read_access_granted_ff dut/io0/read_access_granted_ff
+add wave            -label read_access_granted_second_cycle dut/io0/read_access_granted_second_cycle
+add wave            -label write_access_granted dut/io0/write_access_granted
+add wave            -label O_dataout dut/io0/O_dataout
 add wave -divider "Internals - CSR"
 add wave -radix hex -label CSR dut/csr0/csr
 add wave -divider "Internals - RAM"
