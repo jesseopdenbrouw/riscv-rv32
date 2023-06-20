@@ -125,7 +125,10 @@ signal isword : boolean;
 signal read_access_granted : std_logic;
 -- Write access granted
 signal write_access_granted : std_logic;
-
+-- Flop to wait for second read_access_granted (LOAD)
+signal read_access_granted_ff : std_logic;
+-- Signal is active in second LOAD cycle (read access)
+signal read_access_granted_second_cycle : std_logic;
 
 -- Port input and output
 constant gpioapin_addr : integer := 0;   -- 0x00.b
@@ -332,16 +335,34 @@ begin
     O_load_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '0' else '0';
     O_store_misaligned_error <= '1' when isword = FALSE and I_csio = '1' and I_wren = '1' else '0';
     
-    -- Read or write access, but only if no interrupt is pending
+    -- Read or write access
     read_access_granted <= '1' when isword and I_csio = '1' and I_wren = '0' and I_memvma = '1' else '0';
     write_access_granted <= '1' when isword and I_csio = '1' and I_wren = '1' and I_memvma = '1' else '0';
+    
+    -- This process determines if a side effect of reading a register may proceed.
+    -- Side effect: reading a data register (e.g. UART1, SPI1/2, I2C) clears flags
+    -- in the status register, but only if the read (LOAD) is not interrupted by
+    -- an assertion of an interrupt request.
+    process (I_clk, I_areset) is
+    begin
+        if I_areset = '1' then
+            read_access_granted_ff <= '0';
+        elsif rising_edge(I_clk) then
+            if read_access_granted = '1' and read_access_granted_ff = '0' then
+                read_access_granted_ff <= '1';
+            else
+                read_access_granted_ff <= '0';
+            end if;
+        end if;
+    end process;
+    read_access_granted_second_cycle <= read_access_granted_ff and read_access_granted;
     
     --
     -- Data out to ALU
     --
-    process (I_clk, I_areset) is --, io, isword, reg_int, I_csio, I_wren) is
+    process (I_clk, I_areset) is
     begin
-        -- Only at word boundaries AND chip select
+        -- Reading a register here doesn't have side effects such as clearing bits.
         if I_areset = '1' then
             O_dataout <= (others => '0');
         elsif rising_edge(I_clk) then
@@ -509,7 +530,8 @@ begin
                 end if;
                 
                 -- If data register is read...
-                if read_access_granted = '1' then
+                -- Reading data register clears flags!
+                if read_access_granted_second_cycle = '1' then
                     if reg_int = uart1data_addr then
                         -- Clear the received status bits
                         -- PE, RC, RF, FE
@@ -754,7 +776,8 @@ begin
                     end if;
                 end if;
                 -- If read data register, clear the TC and AF flag
-                if read_access_granted = '1' then
+                -- Reading data register clears flags!
+                if read_access_granted_second_cycle = '1' then
                     if reg_int = i2c1data_addr then
                         i2c1tc <= '0';
                         i2c1ackfail <= '0';
@@ -1039,7 +1062,8 @@ begin
                 end case;
 
                 -- If data register is read...
-                if read_access_granted = '1' then
+                -- Reading data register clears flags!
+                if read_access_granted_second_cycle = '1' then
                     if reg_int = spi1data_addr then
                         -- Clear the received status bit
                         spi1stat_int(3) <= '0';
@@ -1247,7 +1271,8 @@ begin
                 end case;
 
                 -- If data register is read...
-                if read_access_granted = '1' then
+                -- Reading data register clears flags!
+                if read_access_granted_second_cycle = '1' then
                     if reg_int = spi2data_addr then
                         -- Clear the received status bit
                         spi2stat_int(3) <= '0';
