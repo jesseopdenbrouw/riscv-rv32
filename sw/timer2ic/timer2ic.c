@@ -20,29 +20,23 @@ int main(void)
 
 	speed = (speed == 0) ? F_CPU : speed;
 
-	/* Activate TIMER2 with a cycle of 100 Hz */
-	TIMER2->CMPT = cmpt = 0xffffUL; //speed/2000UL-1UL;
+	/* Set TIMER2 for maximum measument */
+	TIMER2->CMPT = cmpt = 0xffffUL;
 	uart1_printf("CMPT: %d\r\n", cmpt);
-	/* Prescaler 0 */
+	/* Prescaler 20 */
 	TIMER2->PRSC = 19UL;
-	/* Timer2 OCA is PWM, 0%, adjusted in loop */
+	/* Timer2 ICA */
 	TIMER2->CMPA = 0UL;
-	/* Timer2 OCB is PWM, 50% */
-	//TIMER2->CMPB = 2UL*speed/40000UL;
-	/* Timer2 OCC is PWM, 75% */
-	//TIMER2->CMPC = 3UL*speed/40000UL;
-	/* Enable timer 2
-	 * CMPT compare match, start phase low
-	 * CMPA/B/C PWM, start phase low
-	 * Preload enable on all count registers
+	/* CMPT/B/C OFF 
+	 * CMPA input compare
 	 * 31: FOCC is off (force OC)
 	 * 30: FOCB is off
 	 * 29: FOCA is off
 	 * 28: FOCT is off
 	 * 27: PHAC is 0 (start phase)
-	 * 26-24: MODEC is PWM
+	 * 26-24: MODEC is off
 	 * 23: PHAB is 0
-	 * 22-20: MODEB is PWM
+	 * 22-20: MODEB is off
 	 * 19: PHAA is 0
 	 * 18-16: MODEA is IC
 	 * 15: PHAT is 0
