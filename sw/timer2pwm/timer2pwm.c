@@ -19,7 +19,7 @@ int main(void)
 
 	/* Activate TIMER2 with a cycle of 1000 Hz */
 	TIMER2->CMPT = cmpt = speed/10000UL-1UL;
-	/* Prescaler 0 */
+	/* Prescaler 10 */
 	TIMER2->PRSC = 9UL;
 	/* Timer2 OCA is PWM, 0%, adjusted in loop */
 	TIMER2->CMPA = 0UL;
