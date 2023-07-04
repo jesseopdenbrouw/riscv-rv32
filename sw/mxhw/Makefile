@@ -11,7 +11,6 @@ CFLAGS = -g -O2 -Wall -DF_CPU=$(F_CPU) -DBAUD_RATE=$(BAUD_RATE) -DPROG_NAME=$(PR
 # Linker flags
 LDFLAGS = -g -lm -Wall -nostartfiles -T $(LD_SCRIPT) $(LIBTHUASRV32STRING) $(MARCHABISTRING) $(SPECSSTRING) $(EXTRA_LINKER_FLAGS)
 
-
 #-----
 #----- do not edit below this point
 #-----
