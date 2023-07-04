@@ -16,11 +16,14 @@
 
 int main(void) {
 
-	long long int m = 0xf000010010000000;
-	uint64_t um = 0xf000010010000000;
+	long long int m = 0x7fffffffffffffff;
+	uint64_t um = 0xffffffffffffffff;
 
 	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 
+	uart1_puts("\r\n");
+	uart1_printlonglong(m);
+	m = -m - 1;
 	uart1_puts("\r\n");
 	uart1_printlonglong(m);
 	uart1_puts("\r\n");
