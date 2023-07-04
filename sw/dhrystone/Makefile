@@ -57,7 +57,7 @@ $(CRT):
 
 # Build the target
 $(TARGET).elf: $(OBJS) $(HFILES) $(COMMON_FILE)
-	$(CC) -O2 -g -o $(TARGET).elf $(OBJS) $(LDFLAGS)
+	$(CC) -g -o $(TARGET).elf $(OBJS) $(LDFLAGS)
 	$(OBJCOPY) -O srec $(TARGET).elf $(TARGET).srec
 	$(SREC2VHDL) -wf0 $(TARGET).srec $(TARGET).vhd
 	$(SIZE) $(TARGET).elf
