@@ -32,7 +32,6 @@
 // # Using printf with uart1                                                                       #
 // #################################################################################################
 
-#include <stdio.h>
 #include <stdarg.h>
 
 #include <thuasrv32.h>
@@ -50,7 +49,7 @@ int uart1_printf(const char *format, ...)
 
 	va_start(args, format);
 	n = vsnprintf(buffer, sizeof buffer, format, args);
-	uart1_puts(buffer);
 	va_end(args);
+	uart1_puts(buffer);
 	return n;
 }
