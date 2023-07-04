@@ -12,17 +12,11 @@
 
 int main(void)
 {
-	uint32_t cmpt;
-	uint32_t speed = csr_read(0xfc1);
-
 	uart1_init(BAUD_RATE, UART_CTRL_NONE);
 	uart1_puts("TIMER2 Input Capture\r\n");
 
-	speed = (speed == 0) ? F_CPU : speed;
-
 	/* Set TIMER2 for maximum measument */
-	TIMER2->CMPT = cmpt = 0xffffUL;
-	uart1_printf("CMPT: %d\r\n", cmpt);
+	TIMER2->CMPT = 0xffffUL;
 	/* Prescaler 20 */
 	TIMER2->PRSC = 19UL;
 	/* Timer2 ICA */
@@ -69,7 +63,13 @@ int main(void)
 		while ((TIMER2->STAT & (1 << 5)) == 0x00) {}
 		/* Get value */
 		uint32_t second = TIMER2->CMPA;
-		uart1_printf("First: %d, second: %d, diff: %d\r\n", first, second, second-first);
+		uart1_puts("First: ");
+		printdec(first);
+		uart1_puts(", second: ");
+		printdec(second);
+		uart1_puts(", diff: ");
+		printdec(second-first);
+		uart1_puts("\r\n");
 		delayms(1000);
 	}
 
