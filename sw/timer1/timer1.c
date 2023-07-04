@@ -49,12 +49,15 @@
 
 int main(void)
 {
+	/* Get clock frequency */
+	uint32_t speed = csr_read(0xfc1);
+	speed = (speed == 0) ? F_CPU : speed;
 
 	/* Redirect all traps to handler */
 	set_mtvec(trap_handler, TRAP_DIRECT_MODE);
 
 	/* Set CMPT register */
-	timer1_setcompare(F_CPU/TIMER1_FREQ-1UL);
+	timer1_setcompare(speed/TIMER1_FREQ-1UL);
 	/* Enable interrupt */
 	timer1_enable_interrupt();
 	/* Enable timer */
