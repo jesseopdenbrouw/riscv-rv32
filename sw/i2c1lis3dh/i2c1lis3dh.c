@@ -39,6 +39,7 @@ int main(void)
 	uint8_t buf[10] = { 0x20, 0x27, 0x00 };
 	int16_t x, y, z;
 	uint32_t ret;
+	char buffer[128];
 
 	/* Initialize UART1 */
 	uart1_init(BAUD_RATE, UART_CTRL_NONE);
@@ -79,7 +80,8 @@ int main(void)
 				int roll = atan2f(y,sqrtf(x*x + z*z)) * 180.0f/(float) M_PI + 0.5f;
 				int pitch = atan2f(-x,sqrtf(y*y + z*z)) * 180.0f/(float) M_PI + 0.5f;
 
-				uart1_printf("x: %5d, y: %5d, z: %5d, pitch: %3d, roll: %3d\r\n", x, y, z, pitch, roll);
+				snprintf(buffer, sizeof buffer, "x: %5d, y: %5d, z: %5d, pitch: %3d, roll: %3d\r\n", x, y, z, pitch, roll);
+				uart1_puts(buffer);
 			} else {
 				uart1_puts("Failed to receive info!\r\n");
 			}
