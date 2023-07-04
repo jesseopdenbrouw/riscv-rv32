@@ -13,7 +13,7 @@ include $(COMMON_FILE)
 else
 endif
 
-CFLAGS = -I../../include -Wall -O2 -g $(MARCHABISTRING )
+CFLAGS = -I../../include -Wall -O2 -g $(MARCHABISTRING)
 
 SRC = $(wildcard *.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
