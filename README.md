@@ -1,4 +1,4 @@
-# riscv-rv32im
+# riscv-rv32
 
 A RISC-V 32-bit microcontroller written in VHDL targeted
 for an FPGA.
@@ -8,7 +8,8 @@ for an FPGA.
 The RISC-V microcontroller uses the RV32IM instruction set
 and the Zicsr and Zicntr extensions. The microcontroller
 supports exceptions and interrupts. `ECALL`, `EBREAK`
-and `MRET` are supported. `WFI` acts as a no-operation
+and `MRET` are supported. `WFI`, `FENCE` and `FENCE.I`
+act as no-operation
 (`NOP`). Currently only machine mode is supported. We
 successfully tested a complex program with interrupts
 and exceptions and implemented a basic syscall library,
@@ -57,17 +58,28 @@ generate waveforms (Output Compare and PWM). The External (system) Timer is
 located in the I/O so it's memory mapped.
 
 ROM starts at 0x00000000, BOOT (if available) starts at 0x10000000,
-RAM starts at0x20000000, I/O starts at 0xF0000000. May be changed
+RAM starts at 0x20000000, I/O starts at 0xF0000000. May be changed
 on 256 MB (top 4 bits) sections.
 
 ## CSR
 
-A number CSR registers are implemented: `time`, `timeh`, `cycle`, `cycleh`,
-`instret`, `instreth`, `mvendorid`, `marchid`, `mimpid`, `mhartid`, `mstatus`,
+A number CSR registers are implemented: `[m]time`, `[m]timeh`, `[m]cycle`, `[m]cycleh`,
+`[m]instret`, `[m]instreth`, `mvendorid`, `marchid`, `mimpid`, `mhartid`, `mstatus`,
 `mstatush`, `misa`, `mie`, `mtvec`, `mscratch`, `mepc`, `mcause`, `mip`,
 `mcountinhibit`. Some of these CSRs are hardwired. Others will be implemented
 when needed. The `time` and `timeh` CSRs produces the time since reset in
-microseconds, shadowed from the External Timer memory mapped registers.
+microseconds, shadowed from the External Timer memory mapped registers. Also
+two custom CSRs are implemented: `mxhw` which holds information of included
+peripherals and `mxspeed` which contains the synthesized clock speed.
+
+## FPGA
+
+The microcontroller is developed on a Cyclone V FPGA (5CEBA4F23C7)
+with the use of the DE0-CV board by Terasic and Intel Quartus Prime
+Lite 22.0. Simulation is possible with QuestaSim Intel Starter Edition.
+You need a (free) license for that. The processor uses about
+2800 ALM (cells) of 18480, depending on the settings. In the default
+settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
 
 ## Software
 
@@ -85,14 +97,12 @@ We provide a basic set of systems call, trapped (ECALL) and non-trapped
 are by default set up by the RISC-V C/C++ compiler, so no extra handling
 is needed.
 
-## FPGA
-
-The microcontroller is developed on a Cyclone V FPGA (5CEBA4F23C7)
-with the use of the DE0-CV board by Terasic and Intel Quartus Prime
-Lite 22.0. Simulation is possible with QuestaSim Intel Starter Edition.
-You need a (free) license for that. The processor uses about
-2800 ALM (cells) of 18480, depending on the settings. In the default
-settings, ROM, BOOT, RAM and registers uses 43% of the available RAM blocks.
+## Bootloader
+By default, the design is equipped with a bootloader. When resetting the
+FPGA, the bootloader waits about 5 seconds before the program in the ROM
+is started. Using the bootloader, a program can written to the ROM (see
+the documentation). The bootloader can also be used to inspect the
+memory contents.
 
 ## Plans (or not) and issues
 
