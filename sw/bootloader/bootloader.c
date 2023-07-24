@@ -51,7 +51,7 @@ int main(void) {
 	/* Wait a short while for a key hit */
 	GPIOA->POUT = (1<<BOOTWAIT)-1;
 	for (count = 1; count <= BOOTWAIT*1024*1024; count++) {
-		/* Modulo power of 2 save a rem instruction */
+		/* Modulo power of 2 saves a rem instruction */
 		if (count % (1024*1024) == 0) {
 			uart1_putc('*');
 			GPIOA->POUT >>= 1;
