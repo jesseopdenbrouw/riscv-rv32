@@ -26,7 +26,7 @@ Jumps/calls/branches taken require 3 clock cycles, the
 processor does not implement branch prediction. All other
 instructions require 1 clock cycle. Interrupts
 are direct or vectored. Current Coremark testbench shows
-a CPI of 1.53 and a throughput of 2.22 coremark/MHz.
+a CPI of 1.53 and a score of 2.22 coremark/MHz.
 
 Software is written in C, (C++ is supported but there are
 some limitations) and compiled using the RISC-V GNU C/C++
@@ -60,6 +60,8 @@ located in the I/O so it's memory mapped.
 ROM starts at 0x00000000, BOOT (if available) starts at 0x10000000,
 RAM starts at 0x20000000, I/O starts at 0xF0000000. May be changed
 on 256 MB (top 4 bits) sections.
+
+The microcontroller does not support caches and external memory.
 
 ## CSR
 

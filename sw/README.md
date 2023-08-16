@@ -21,5 +21,6 @@ files are converted to a VHDL-suitable ROM table for
 inclusion in the processor hardware. See the documentation.
 
 Build the complete set of examples by starting `make` on
-the command line.
+the command line. Make sure that the RISC-V C/C++ compiler
+is in the PATH environment variable.
 
