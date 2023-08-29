@@ -30,22 +30,22 @@ void uart1_printlonglong(int64_t v);
 /* Print a unsigned long long integer */
 void uart1_printulonglong(uint64_t uv);
 
-#define UART_STOP1 (0 << 0)
-#define UART_STOP2 (1 << 0)
-#define UART_SIZE7 (3 << 2)
-#define UART_SIZE8 (0 << 2)
-#define UART_SIZE9 (2 << 2)
-#define UART_PARITY_NONE (0 << 4)
-#define UART_PARITY_EVEN (2 << 4)
-#define UART_PARITY_ODD (3 << 4)
-#define UART_RCIE (1 << 6)
-#define UART_TCIE (1 << 7)
+#define UART_CTRL_STOP1 (0 << 0)
+#define UART_CTRL_STOP2 (1 << 0)
+#define UART_CTRL_SIZE7 (3 << 2)
+#define UART_CTRL_SIZE8 (0 << 2)
+#define UART_CTRL_SIZE9 (2 << 2)
+#define UART_CTRL_PARITY_NONE (0 << 4)
+#define UART_CTRL_PARITY_EVEN (2 << 4)
+#define UART_CTRL_PARITY_ODD (3 << 4)
+#define UART_CTRL_RCIE (1 << 6)
+#define UART_CTRL_TCIE (1 << 7)
 
-#define UART_FE (1 << 0)
-#define UART_RF (1 << 1)
-#define UART_RC (1 << 2)
-#define UART_PE (1 << 3)
-#define UART_TC (1 << 4)
+#define UART_STAT_FE (1 << 0)
+#define UART_STAT_RF (1 << 1)
+#define UART_STAT_RC (1 << 2)
+#define UART_STAT_PE (1 << 3)
+#define UART_STAT_TC (1 << 4)
 
 #define UART_CTRL_NONE (0)
 
