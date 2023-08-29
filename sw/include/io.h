@@ -21,11 +21,11 @@ extern "C" {
  * General purpose I/O
  */
 typedef struct {
-        volatile uint32_t PIN;
-        volatile uint32_t POUT;
-		volatile uint32_t reserved[4];
-		volatile uint32_t EXTC;
-		volatile uint32_t EXTS;
+	volatile uint32_t PIN;         /** Port input */
+	volatile uint32_t POUT;        /** Port output */
+	volatile uint32_t reserved[4];
+	volatile uint32_t EXTC;        /** External interrupt control */
+	volatile uint32_t EXTS;        /** External interrupt status */
 } GPIO_struct_t;
 
 #define GPIOA_BASE (IO_BASE+0x00000000UL)
