@@ -120,6 +120,7 @@ memory contents.
 * Move CSR and LIC into the core.
 * Port of the processor to a Digilent Arty-S7/50 is in progress.
 * In the current version, `mepc` must be incremented by 4 in software to skip the instruction at the offending exception. This is in line with most designs.
+* To start the pre-programmed bootloader, make sure the UART1 RxD pin is connected to a serial device OR make sure this pin is pulled high.
 
 ## Disclaimer
 
