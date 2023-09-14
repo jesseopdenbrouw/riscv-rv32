@@ -37,11 +37,14 @@ void __libc_fini_array(void);
 void pre_init_universal_handler(void);
 
 /* argv array for main */
-char *argv[] = {PROG_NAME,
+char *argv[] = {
+#ifndef NO_ARGC_ARGV
+		PROG_NAME,
 		"THUAS RISC-V RV32IM bare metal processor",
 		"The Hague University of Applied Sciences",
 		"Department of Electrical Engineering",
 		"J.E.J. op den Brouw",
+#endif
 		NULL};
 /* Calculate argc */
 #define argc (sizeof(argv)/sizeof(argv[0])-1)
