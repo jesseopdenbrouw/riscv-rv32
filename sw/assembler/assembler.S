@@ -14,6 +14,20 @@ _start:
 	la gp, __global_pointer$
     la sp, __stack_pointer$ 
 
+	li x7, 0x12345678
+	sw x7, -2048(gp)
+	sw x7, -2044(gp)
+	sw x7, -2040(gp)
+
+	nop
+	nop
+	lw x4, -2048(gp)
+	lw x5, -2048(gp)
+	lw x6, -2048(gp)
+	nop
+	nop
+
+/*
 	la x9,handler
 	csrs mtvec,x9
 	csrsi mstatus,(1<<3)
@@ -47,11 +61,14 @@ _start:
 	# Load UART1 STAT reg
 	lw x12,0x28(x10)
 
+*/
+
 	nop
 	nop
 	nop
 	nop
 	nop
+
 
 einde:	j einde
 
