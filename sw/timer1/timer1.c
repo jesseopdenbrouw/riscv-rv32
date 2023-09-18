@@ -76,6 +76,6 @@ int main(void)
 __attribute__((interrupt))
 void trap_handler(void)
 {
-	GPIOA->POUT ^= 0x04;
+	GPIOA->POUT ^= (1 << 15) | (1 << 2);
 	timer1_clear_interrupt();
 }
