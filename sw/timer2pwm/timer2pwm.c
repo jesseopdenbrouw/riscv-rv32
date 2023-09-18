@@ -23,8 +23,8 @@ int main(void)
 	TIMER2->PRSC = 9UL;
 	/* Timer2 OCA is PWM, 0%, adjusted in loop */
 	TIMER2->CMPA = 0UL;
-	/* Timer2 OCB is PWM, 50% */
-	TIMER2->CMPB = 2UL*speed/40000UL;
+	/* Timer2 OCB is PWM, 25% */
+	TIMER2->CMPB = 1UL*speed/40000UL;
 	/* Timer2 OCC is PWM, 75% */
 	TIMER2->CMPC = 3UL*speed/40000UL;
 	/* Enable timer 2
