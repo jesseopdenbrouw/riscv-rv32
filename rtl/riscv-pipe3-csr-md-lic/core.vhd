@@ -516,6 +516,7 @@ begin
                 id_ex.pc_op <= pc_load_mtvec;
                 control.ecall_request <= '0';
                 control.ebreak_request <= '0';
+                O_illegal_instruction_error <= '0';
             -- We need to stall the operation
             elsif control.stall = '1' then
                 -- Set id_ex.md_start to 0. It is already registered.
