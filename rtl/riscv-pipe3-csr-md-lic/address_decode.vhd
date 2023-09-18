@@ -137,6 +137,12 @@ begin
             end if;
             O_dataout <= I_iodatain;
         else
+            if I_memaccess = memaccess_write then
+                O_store_access_error <= '1';
+            end if;
+            if I_memaccess = memaccess_read then
+                O_load_access_error <= '1';
+            end if;
             O_dataout <= (others => 'X');
         end if;
     end process;
