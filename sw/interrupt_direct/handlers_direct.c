@@ -4,7 +4,7 @@
  * Note: these handlers are called by the universal handler
  *       since we are using direct traps, hence they are callable
  *
- * (c) 2022, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>'
+ * (c) 2023, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
  *
  */
 
@@ -131,7 +131,7 @@ void spi1_handler(void)
 {
 	/* Remove TC interrupt flag */
 	SPI1->STAT &= ~(1<<3);
-	/* Flip output bit 4 */
+	/* Flip output bit 4 (led) */
 	GPIOA->POUT ^= 0x10;
 }
 
@@ -140,7 +140,7 @@ void i2c1_handler(void)
 {
 	/* Remove TC/RC interrupt flags */
 	I2C1->STAT &= ~(3<<3);
-	/* Flip output bit 5 */
+	/* Flip output bit 5 (led) */
 	GPIOA->POUT ^= 0x20;
 }
 
@@ -149,6 +149,6 @@ void external_input_handler(void)
 {
 	/* Remove pending interrupt bit */
 	GPIOA->EXTS = 0x00;
-	/* Toggle output bit 6 */
+	/* Toggle output bit 6 (led) */
 	GPIOA->POUT ^= 0x40;
 }
