@@ -5,7 +5,7 @@
  * called via the jump table since we are using vectored
  * interrupts.
  *
- * (c) 2023, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>'
+ * (c) 2023, Jesse E.J. op den Brouw <J.E.J.opdenBrouw@hhs.nl>
  *
  */
 
