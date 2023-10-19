@@ -12,73 +12,75 @@ _start:
 .option norelax
 
 	la gp, __global_pointer$
-    la sp, __stack_pointer$ 
+	la sp, __stack_pointer$ 
 
-	li x7, 0x12345678
-	sw x7, -2048(gp)
-	sw x7, -2044(gp)
-	sw x7, -2040(gp)
+	# Register trap hanlder and enable
+	# interrupts (direct mode)
 
-	nop
-	nop
-	lw x4, -2048(gp)
-	lw x5, -2048(gp)
-	lw x6, -2048(gp)
-	nop
-	nop
-
-/*
-	la x9,handler
-	csrs mtvec,x9
-	csrsi mstatus,(1<<3)
+	la t0, Universal_Handler
+	csrw mtvec,t0
+	li t0, 0x8 | (0x3<<11)
+	csrw mstatus,t0
 
 	nop
 	nop
-	nop
-	nop
+	la    x7,0xf0000000
+	li    x8,(1 << 1)
+	sw    x8,24(x7)
 
-	# inhibit counters
-	li x3,-2
-	li x15,-1
-
-	csrrw x3,mcountinhibit,x15
-
-	nop
-
-	# setup posedge trigger on PINA0
-	la x10,0xf0000000
-	li x11,2
-	sw x11,0x18(x10)
-
-	# Set TF UART1 flag
-	sw x11,0x24(x10)
-
-	nop
-	nop
-	nop
-	nop
-
-	# Load UART1 STAT reg
-	lw x12,0x28(x10)
-
-*/
-
+	li    x8,1000
+	li    x9,3
 	nop
 	nop
 	nop
 	nop
 	nop
-
+	nop
+	div   x10,x8,x9
+	#csrrw x8,mscratch,x9
+	nop
+	nop
 
 einde:	j einde
 
-handler:
-	# Clear posedge trig'd flag
-	li x11,0
-	sw x11,0x1c(x10)
-	mret
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
 
-here:	 j here
+	nop
+	nop
+	nop
+
+	lw x5,0(x0)
+
+	nop
+	nop
+
+
+Universal_Handler:
+	nop
+	nop
+	nop
+	# Load mcause to check for interrupt
+	csrr x10,mcause
+	blt  x10,x0,over
+
+	# Add 4 to MEPC to skip the offending instruction
+	csrr x10,mepc
+	addi x10,x10,4
+	csrw mepc,x9
+
+over:
+	nop
+
+	sw x0,28(x7)
+	nop
+
+	mret
+#	j Universal_Handler
 
 .option pop
 
