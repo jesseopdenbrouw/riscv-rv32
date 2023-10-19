@@ -1,5 +1,9 @@
 # riscv-rv32
 
+**This design is obsolete.** Please see [https://github.com/jesseopdenbrouw/thuas-riscv](https://github.com/jesseopdenbrouw/thuas-riscv).
+
+
+
 A RISC-V 32-bit microcontroller written in VHDL targeted
 for an FPGA.
 
