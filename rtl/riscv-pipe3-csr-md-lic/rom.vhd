@@ -119,7 +119,7 @@ begin
         O_load_misaligned_error <= '0';
         
         -- By natural size, for data
-        if I_csrom = '1' then
+        if I_csrom = '1' and I_wren = '0' then
             if I_memsize = memsize_word and I_memaddress(1 downto 0) = "00" then
                 O_dataout <= romdata_v(7 downto 0) & romdata_v(15 downto 8) & romdata_v(23 downto 16) & romdata_v(31 downto 24);
             elsif I_memsize = memsize_halfword and I_memaddress(1 downto 0) = "00" then

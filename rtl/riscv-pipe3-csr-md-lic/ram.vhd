@@ -156,7 +156,7 @@ begin
 
         O_load_misaligned_error <= '0';
         -- Output recoding
-        if I_csram = '1' then
+        if I_csram = '1' and I_wren = '0' then
             case I_memsize is
                 -- Byte size
                 when memsize_byte =>
