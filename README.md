@@ -1,6 +1,6 @@
 # riscv-rv32
 
-### **This design is obsolete.** Please see [https://github.com/jesseopdenbrouw/thuas-riscv](https://github.com/jesseopdenbrouw/thuas-riscv).
+### :warning: **This design is obsolete.** Please see [https://github.com/jesseopdenbrouw/thuas-riscv](https://github.com/jesseopdenbrouw/thuas-riscv).
 
 
 
